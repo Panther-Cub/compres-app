@@ -48,6 +48,11 @@ declare global {
       hideMainWindow: () => Promise<{ success: boolean }>;
       showMainWindow: () => Promise<{ success: boolean }>;
       
+      // Settings management
+      getStartupSettings: () => Promise<{ openAtLogin: boolean; defaultWindow: string }>;
+      saveStartupSettings: (settings: { openAtLogin: boolean; defaultWindow: string }) => Promise<{ success: boolean }>;
+      getDefaultWindow: () => Promise<string>;
+      
       // Compression operations
       compressVideos: (data: {
         files: string[];

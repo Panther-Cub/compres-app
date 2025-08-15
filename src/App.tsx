@@ -310,8 +310,28 @@ function App() {
   const handleReset = useCallback(async () => {
     // First reset the compression state
     reset();
-    // Then show the overlay and hide the main window
-    await handleShowOverlay();
+    // Then show the default window based on user settings
+    try {
+      if (window.electronAPI) {
+        const defaultWindow = await window.electronAPI.getDefaultWindow();
+        if (defaultWindow === 'main') {
+          // Keep main window visible (it already is)
+          if (window.electronAPI.hideOverlay) {
+            await window.electronAPI.hideOverlay();
+          }
+        } else {
+          // Show overlay (default behavior)
+          await window.electronAPI.showOverlay();
+          if (window.electronAPI.hideMainWindow) {
+            await window.electronAPI.hideMainWindow();
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error showing default window:', error);
+      // Fallback to overlay if there's an error
+      await handleShowOverlay();
+    }
   }, [reset, handleShowOverlay]);
 
   const settings = {

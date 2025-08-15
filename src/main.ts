@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, Menu, Tray, nativeImage } from 'electron';
 import path from 'path';
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs';
@@ -21,6 +21,8 @@ ffmpeg.setFfprobePath(ffprobePath);
 
 // System resource monitoring
 let systemMonitorInterval: NodeJS.Timeout | null = null;
+let tray: Tray | null = null;
+let settingsWindow: BrowserWindow | null = null;
 
 function startSystemMonitoring() {
   // Disabled for now - causing too much noise
@@ -108,6 +110,214 @@ function createOverlayWindow(): void {
   });
 }
 
+function createTray(): void {
+  // Create tray icon
+  const iconPath = path.join(__dirname, '../assets/Vanilla.icns');
+  const icon = nativeImage.createFromPath(iconPath);
+  
+  // Resize icon for tray (16x16 for macOS, 32x32 for Windows)
+  const trayIcon = icon.resize({ width: 16, height: 16 });
+  
+  tray = new Tray(trayIcon);
+  tray.setToolTip('Compress - Video Compression Tool');
+  
+  // Create context menu
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Open Main Window',
+      click: () => {
+        if (mainWindow) {
+          if (mainWindow.isMinimized()) {
+            mainWindow.restore();
+          }
+          mainWindow.show();
+          mainWindow.focus();
+        }
+        if (overlayWindow) {
+          overlayWindow.hide();
+        }
+      }
+    },
+    {
+      label: 'Show Overlay',
+      click: () => {
+        if (overlayWindow) {
+          overlayWindow.show();
+        }
+        if (mainWindow) {
+          mainWindow.hide();
+        }
+      }
+    },
+    {
+      label: 'Show Default Window',
+      click: () => {
+        showDefaultWindow();
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Settings',
+      click: () => {
+        createSettingsWindow();
+      }
+    },
+    { type: 'separator' },
+    {
+      label: 'Quit',
+      click: () => {
+        app.quit();
+      }
+    }
+  ]);
+  
+  tray.setContextMenu(contextMenu);
+  
+  // Handle tray icon click (show overlay by default)
+  tray.on('click', () => {
+    showDefaultWindow();
+  });
+}
+
+function showDefaultWindow(): void {
+  const settingsPath = path.join(os.homedir(), 'Library', 'Application Support', 'Compress', 'settings.json');
+  let defaultWindow = 'overlay';
+  
+  if (fs.existsSync(settingsPath)) {
+    try {
+      const settingsData = fs.readFileSync(settingsPath, 'utf8');
+      const settings = JSON.parse(settingsData);
+      defaultWindow = settings.defaultWindow || 'overlay';
+    } catch (error) {
+      console.error('Error reading default window setting:', error);
+    }
+  }
+  
+  if (defaultWindow === 'main' && mainWindow) {
+    if (mainWindow.isMinimized()) {
+      mainWindow.restore();
+    }
+    mainWindow.show();
+    mainWindow.focus();
+    if (overlayWindow) {
+      overlayWindow.hide();
+    }
+  } else if (defaultWindow === 'overlay' && overlayWindow) {
+    overlayWindow.show();
+    if (mainWindow) {
+      mainWindow.hide();
+    }
+  }
+}
+
+function createSettingsWindow(): void {
+  // Don't create multiple settings windows
+  if (settingsWindow) {
+    settingsWindow.focus();
+    return;
+  }
+  
+  settingsWindow = new BrowserWindow({
+    width: 500,
+    height: 600,
+    minWidth: 400,
+    minHeight: 500,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      partition: 'persist:settings'
+    },
+    titleBarStyle: 'hiddenInset',
+    vibrancy: 'under-window',
+    visualEffectState: 'active',
+    show: false,
+    resizable: true,
+    movable: true,
+    minimizable: true,
+    maximizable: true
+  });
+
+  // Set Content Security Policy
+  settingsWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+        ]
+      }
+    });
+  });
+
+  const isDev = process.env.NODE_ENV === 'development';
+
+  if (isDev) {
+    settingsWindow.loadURL('http://localhost:3000/settings');
+  } else {
+    settingsWindow.loadFile(path.join(__dirname, 'index.html'), { hash: 'settings' });
+  }
+
+  settingsWindow.once('ready-to-show', () => {
+    settingsWindow?.show();
+    settingsWindow?.focus();
+  });
+
+  settingsWindow.on('closed', () => {
+    settingsWindow = null;
+    // Ensure main window is focused and restored when settings closes
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.show();
+      mainWindow.focus();
+      // Force the main window to be the active window
+      mainWindow.moveTop();
+    }
+  });
+}
+
+async function checkDefaultWindowAndShow(): Promise<void> {
+  try {
+    const settingsPath = path.join(os.homedir(), 'Library', 'Application Support', 'Compress', 'settings.json');
+    let defaultWindow = 'overlay';
+    
+    if (fs.existsSync(settingsPath)) {
+      try {
+        const settingsData = fs.readFileSync(settingsPath, 'utf8');
+        const settings = JSON.parse(settingsData);
+        defaultWindow = settings.defaultWindow || 'overlay';
+      } catch (error) {
+        console.error('Error reading default window setting:', error);
+      }
+    }
+    
+    if (defaultWindow === 'main' && mainWindow) {
+      mainWindow.show();
+      if (overlayWindow) {
+        overlayWindow.hide();
+      }
+    } else if (defaultWindow === 'overlay' && overlayWindow) {
+      overlayWindow.show();
+      if (mainWindow) {
+        mainWindow.hide();
+      }
+    }
+  } catch (error) {
+    console.error('Error checking default window:', error);
+    // Fallback to overlay
+    if (overlayWindow) {
+      overlayWindow.show();
+    }
+    if (mainWindow) {
+      mainWindow.hide();
+    }
+  }
+}
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1200,
@@ -166,9 +376,8 @@ function createWindow(): void {
   // Create overlay window after main window is ready
   mainWindow.once('ready-to-show', () => {
     createOverlayWindow();
-    if (overlayWindow) {
-      overlayWindow.show();
-    }
+    // Check default window setting and show appropriate window
+    checkDefaultWindowAndShow();
   });
 
   // Handle main window close - show overlay again
@@ -203,6 +412,13 @@ function createWindow(): void {
             if (mainWindow) {
               mainWindow.webContents.send('show-about-modal');
             }
+          }
+        },
+        {
+          label: 'Settings...',
+          accelerator: 'Cmd+,',
+          click: () => {
+            createSettingsWindow();
           }
         },
         { type: 'separator' },
@@ -338,23 +554,34 @@ app.whenReady().then(() => {
     console.log('Service worker storage cleared');
     startSystemMonitoring();
     createWindow();
+    createTray();
   }).catch((err: any) => {
     console.warn('Failed to clear service worker storage:', err);
     startSystemMonitoring();
     createWindow();
+    createTray();
   });
 });
 
 app.on('window-all-closed', () => {
   stopSystemMonitoring();
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  // Don't quit the app when all windows are closed - keep it running in tray
+  // if (process.platform !== 'darwin') {
+  //   app.quit();
+  // }
 });
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
+  }
+});
+
+// Clean up tray when app is about to quit
+app.on('before-quit', () => {
+  if (tray) {
+    tray.destroy();
+    tray = null;
   }
 });
 
@@ -913,5 +1140,69 @@ ipcMain.handle('open-file', async (event, filePath: string) => {
   } catch (error) {
     console.error('Error opening file:', error);
     throw error;
+  }
+});
+
+// Settings management IPC handlers
+ipcMain.handle('get-startup-settings', async () => {
+  try {
+    const settingsPath = path.join(os.homedir(), 'Library', 'Application Support', 'Compress', 'settings.json');
+    if (fs.existsSync(settingsPath)) {
+      const settingsData = fs.readFileSync(settingsPath, 'utf8');
+      return JSON.parse(settingsData);
+    }
+    return {
+      openAtLogin: false,
+      defaultWindow: 'overlay' // 'overlay' or 'main'
+    };
+  } catch (error) {
+    console.error('Error reading startup settings:', error);
+    return {
+      openAtLogin: false,
+      defaultWindow: 'overlay'
+    };
+  }
+});
+
+ipcMain.handle('save-startup-settings', async (event, settings: { openAtLogin: boolean; defaultWindow: string }) => {
+  try {
+    const appDataPath = path.join(os.homedir(), 'Library', 'Application Support', 'Compress');
+    const settingsPath = path.join(appDataPath, 'settings.json');
+    
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(appDataPath)) {
+      fs.mkdirSync(appDataPath, { recursive: true });
+    }
+    
+    // Save settings to file
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    
+    // Configure startup behavior
+    if (process.platform === 'darwin') {
+      app.setLoginItemSettings({
+        openAtLogin: settings.openAtLogin,
+        openAsHidden: false
+      });
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Error saving startup settings:', error);
+    throw error;
+  }
+});
+
+ipcMain.handle('get-default-window', async () => {
+  try {
+    const settingsPath = path.join(os.homedir(), 'Library', 'Application Support', 'Compress', 'settings.json');
+    if (fs.existsSync(settingsPath)) {
+      const settingsData = fs.readFileSync(settingsPath, 'utf8');
+      const settings = JSON.parse(settingsData);
+      return settings.defaultWindow || 'overlay';
+    }
+    return 'overlay';
+  } catch (error) {
+    console.error('Error reading default window setting:', error);
+    return 'overlay';
   }
 });

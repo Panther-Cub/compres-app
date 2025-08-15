@@ -49,6 +49,12 @@ interface ElectronAPI {
   showOverlay: () => Promise<{ success: boolean }>;
   hideOverlay: () => Promise<{ success: boolean }>;
   hideMainWindow: () => Promise<{ success: boolean }>;
+  showMainWindow: () => Promise<{ success: boolean }>;
+  
+  // Settings management
+  getStartupSettings: () => Promise<{ openAtLogin: boolean; defaultWindow: string }>;
+  saveStartupSettings: (settings: { openAtLogin: boolean; defaultWindow: string }) => Promise<{ success: boolean }>;
+  getDefaultWindow: () => Promise<string>;
   
   // Event listeners
   onCompressionStarted: (callback: (data: any) => void) => void;
@@ -91,6 +97,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   hideOverlay: () => ipcRenderer.invoke('hide-overlay'),
   hideMainWindow: () => ipcRenderer.invoke('hide-main-window'),
   showMainWindow: () => ipcRenderer.invoke('show-main-window'),
+  
+  // Settings management
+  getStartupSettings: () => ipcRenderer.invoke('get-startup-settings'),
+  saveStartupSettings: (settings) => ipcRenderer.invoke('save-startup-settings', settings),
+  getDefaultWindow: () => ipcRenderer.invoke('get-default-window'),
   
   // Event listeners
   onCompressionStarted: (callback: (data: any) => void) => {

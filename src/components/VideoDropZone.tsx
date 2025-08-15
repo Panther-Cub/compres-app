@@ -109,7 +109,7 @@ const VideoDropZone: React.FC<VideoDropZoneProps> = ({
             </motion.p>
             
             <motion.button 
-              className="text-sm text-foreground/60 hover:text-foreground transition-colors cursor-pointer underline decoration-dotted underline-offset-4"
+              className="text-sm text-foreground/60 hover:text-foreground transition-colors cursor-pointer underline decoration-dotted underline-offset-4 non-draggable"
               onClick={onSelectFiles}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
