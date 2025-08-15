@@ -13,8 +13,8 @@ export const formatDuration = (seconds: number): string => {
 };
 
 export const getFileName = (filePath: string): string => {
-  // Extract just the filename without path
-  const fileName = filePath.split('/').pop() || filePath;
+  // Extract just the filename without path - cross-platform compatible
+  const fileName = filePath.split(/[/\\]/).pop() || filePath;
   const lastDotIndex = fileName.lastIndexOf('.');
   return lastDotIndex > 0 ? fileName.substring(0, lastDotIndex) : fileName;
 };

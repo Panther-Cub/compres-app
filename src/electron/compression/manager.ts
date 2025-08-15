@@ -13,24 +13,20 @@ import {
 } from './utils';
 import {
   compressFileWithPreset,
-  getBasicActiveCompressions,
   compressWithSinglePass,
-  getSinglePassActiveCompressions,
   compressWithTwoPass,
-  getTwoPassActiveCompressions
+  BaseCompressionStrategy
 } from './strategies';
 
 // Manager class to handle compression operations
 export class CompressionManager {
   private mainWindow: BrowserWindow;
   private maxConcurrentCompressions: number;
-  private activeCompressions: Set<string>;
 
   constructor(mainWindow: BrowserWindow) {
     this.mainWindow = mainWindow;
     // Limit concurrent compressions based on system capabilities
     this.maxConcurrentCompressions = Math.max(1, Math.min(4, require('os').cpus().length - 1));
-    this.activeCompressions = new Set();
     console.log(`Compression manager initialized with max ${this.maxConcurrentCompressions} concurrent compressions`);
   }
 
@@ -110,12 +106,12 @@ export class CompressionManager {
         compressionPromises.push(
           compressFileWithPreset(file, presetConfig.presetId, preset, presetConfig.keepAudio, outputDirectory, taskKey, this.mainWindow, advancedSettings)
             .then(result => {
-              getBasicActiveCompressions().delete(taskKey);
+              this.cleanupTask(taskKey);
               results.push(result);
               return result;
             })
             .catch(error => {
-              getBasicActiveCompressions().delete(taskKey);
+              this.cleanupTask(taskKey);
               const errorResult: CompressionResult = { 
                 file: getFileName(file), 
                 preset: presetConfig.presetId, 
@@ -243,33 +239,26 @@ export class CompressionManager {
 
   // Helper method to cleanup task from all strategy maps
   private cleanupTask(taskKey: string): void {
-    getBasicActiveCompressions().delete(taskKey);
-    getSinglePassActiveCompressions().delete(taskKey);
-    getTwoPassActiveCompressions().delete(taskKey);
+    // All strategies now use the same map from the base class
+    BaseCompressionStrategy.getActiveCompressions().delete(taskKey);
   }
 
   // Cancel all active compressions
   cancelCompression(): { success: boolean } {
     console.log('Cancelling all active compressions...');
     
-    // Kill all active compression processes from all strategies
-    const allActiveCompressions = [
-      getBasicActiveCompressions(),
-      getSinglePassActiveCompressions(),
-      getTwoPassActiveCompressions()
-    ];
+    // All strategies now use the same map from the base class
+    const activeCompressions = BaseCompressionStrategy.getActiveCompressions();
 
-    for (const activeCompressions of allActiveCompressions) {
-      for (const [taskKey, command] of Array.from(activeCompressions.entries())) {
-        try {
-          command.kill('SIGKILL');
-          console.log(`Killed compression process: ${taskKey}`);
-        } catch (err) {
-          console.error('Error killing compression process:', err);
-        }
+    for (const [taskKey, command] of Array.from(activeCompressions.entries())) {
+      try {
+        command.kill('SIGKILL');
+        console.log(`Killed compression process: ${taskKey}`);
+      } catch (err) {
+        console.error('Error killing compression process:', err);
       }
-      activeCompressions.clear();
     }
+    activeCompressions.clear();
     
     return { success: true };
   }

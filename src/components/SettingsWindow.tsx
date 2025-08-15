@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Monitor, Zap, Save, X } from 'lucide-react';
+import { Settings, Monitor, Zap, Save } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Label } from './ui/label';

@@ -1,4 +1,8 @@
 // Export all compression strategies
-export { compressFileWithPreset, getActiveCompressions as getBasicActiveCompressions } from './basic';
-export { compressWithSinglePass, getActiveCompressions as getSinglePassActiveCompressions } from './single-pass';
-export { compressWithTwoPass, getActiveCompressions as getTwoPassActiveCompressions } from './two-pass';
+export { compressFileWithPreset } from './basic';
+export { compressWithSinglePass } from './single-pass';
+export { compressWithTwoPass } from './two-pass';
+
+// Export the base class for new strategies
+export { BaseCompressionStrategy } from './base';
+export type { CompressionContext } from './base';

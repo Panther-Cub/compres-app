@@ -13,18 +13,16 @@ interface ElectronAPI {
     error?: string;
   }>>;
   
-  // Video compression
+  // Video compression - FIXED API signatures
   compressVideos: (data: {
     files: string[];
-    presets: string[];
-    keepAudio: boolean;
+    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
     outputDirectory: string;
     advancedSettings?: any;
   }) => Promise<any[]>;
   compressVideosAdvanced: (data: {
     files: string[];
-    presets: string[];
-    keepAudio: boolean;
+    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
     outputDirectory: string;
     advancedSettings: any;
   }) => Promise<any[]>;
@@ -56,7 +54,7 @@ interface ElectronAPI {
   saveStartupSettings: (settings: { openAtLogin: boolean; defaultWindow: string }) => Promise<{ success: boolean }>;
   getDefaultWindow: () => Promise<string>;
   
-  // Event listeners
+  // Event listeners - FIXED: Added missing compression event handlers
   onCompressionStarted: (callback: (data: any) => void) => void;
   onCompressionProgress: (callback: (data: any) => void) => void;
   onCompressionComplete: (callback: (data: any) => void) => void;
@@ -78,7 +76,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getDefaultOutputDirectory: () => ipcRenderer.invoke('get-default-output-directory'),
   batchRenameFiles: (data) => ipcRenderer.invoke('batch-rename-files', data),
   
-  // Video compression
+  // Video compression - FIXED: Updated to match backend signatures
   compressVideos: (data) => ipcRenderer.invoke('compress-videos', data),
   compressVideosAdvanced: (data) => ipcRenderer.invoke('compress-videos-advanced', data),
   getPresets: () => ipcRenderer.invoke('get-presets'),
@@ -103,7 +101,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveStartupSettings: (settings) => ipcRenderer.invoke('save-startup-settings', settings),
   getDefaultWindow: () => ipcRenderer.invoke('get-default-window'),
   
-  // Event listeners
+  // Event listeners - FIXED: Added missing compression event handlers
   onCompressionStarted: (callback: (data: any) => void) => {
     ipcRenderer.on('compression-started', (event, data) => callback(data));
   },

@@ -19,7 +19,7 @@ const PresetRecommendations: React.FC<PresetRecommendationsProps> = ({
     // Check if fileInfo exists and has the required properties
     if (!fileInfo || !fileInfo.width || !fileInfo.height) {
       // Return basic recommendations if we don't have file info
-      return ['web-standard', 'web-mobile', 'thumbnail-preview'];
+      return ['web-optimized', 'mac-hardware', 'thumbnail-preview'];
     }
 
     // Analyze video characteristics
@@ -33,23 +33,23 @@ const PresetRecommendations: React.FC<PresetRecommendationsProps> = ({
     const isLargeFile = size > 100 * 1024 * 1024; // 100MB
 
     // Base recommendations
-    recommendations.push('web-standard');
+    recommendations.push('web-optimized');
 
     // Resolution-based recommendations
     if (isHighRes) {
-      recommendations.push('web-hero');
+      recommendations.push('mac-hevc');
     }
 
-    // Aspect ratio recommendations
+    // Aspect ratio recommendations - using available presets
     if (isVertical) {
-      recommendations.push('social-tiktok');
+      recommendations.push('web-optimized'); // Use web-optimized for vertical videos
     } else if (isSquare) {
-      recommendations.push('social-instagram');
+      recommendations.push('web-optimized'); // Use web-optimized for square videos
     }
 
     // File size recommendations
     if (isLargeFile || isLongVideo) {
-      recommendations.push('web-mobile');
+      recommendations.push('mac-hardware');
       recommendations.push('hevc-efficient');
     }
 

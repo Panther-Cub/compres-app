@@ -14,9 +14,7 @@ import {
 } from '../utils';
 import { ProgressHandler } from '../progressHandler';
 import { ValidationUtils } from '../validation';
-
-// Track active compression processes for cancellation
-const activeCompressions = new Map<string, FFmpegCommand>();
+import { BaseCompressionStrategy } from './base';
 
 export async function compressWithTwoPass(
   file: string,
@@ -43,11 +41,11 @@ export async function compressWithTwoPass(
       // Second pass
       await executeSecondPass(file, presetKey, preset, keepAudio, outputDirectory, settings, taskKey, fileName, outputPath, passLogFile, mainWindow);
       
-      activeCompressions.delete(taskKey);
+      BaseCompressionStrategy.getActiveCompressions().delete(taskKey);
       resolve({ file: fileName, preset: presetKey, outputPath, success: true });
     } catch (err: any) {
       console.error(`Error in two-pass compression for ${fileName} with preset ${presetKey}:`, err.message);
-      activeCompressions.delete(taskKey);
+      BaseCompressionStrategy.getActiveCompressions().delete(taskKey);
       reject({ file: fileName, preset: presetKey, error: err.message, success: false });
     }
   });
@@ -102,7 +100,7 @@ async function executeFirstPass(
       command = command.noAudio();
       
       // Store the command for potential cancellation
-      activeCompressions.set(taskKey, command);
+      BaseCompressionStrategy.getActiveCompressions().set(taskKey, command);
       
       command
         .on('start', () => {
@@ -212,7 +210,7 @@ async function executeSecondPass(
       }
       
       // Store the command for potential cancellation
-      activeCompressions.set(taskKey, command);
+      BaseCompressionStrategy.getActiveCompressions().set(taskKey, command);
       
       command
         .output(outputPath)
@@ -269,8 +267,4 @@ async function executeSecondPass(
       passReject(error);
     }
   });
-}
-
-export function getActiveCompressions(): Map<string, FFmpegCommand> {
-  return activeCompressions;
 }
