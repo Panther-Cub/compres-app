@@ -101,7 +101,7 @@ const CompressionNotification: React.FC<CompressionNotificationProps> = ({
             <motion.button
               onClick={onShowProgress}
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
             >
               {isCompressing ? 'Show progress' : 'View details'}

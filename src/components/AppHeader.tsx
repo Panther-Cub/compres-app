@@ -28,7 +28,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
       >
         <motion.div 
           className="w-6 h-6 bg-foreground/10 rounded-md flex items-center justify-center"
-          whileHover={{ scale: 1.1 }}
+          whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.2 }}
         >
           <Zap className="w-3 h-3 text-foreground/70" />
@@ -47,7 +47,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         >
           {selectedFilesCount > 0 ? `${selectedFilesCount} file${selectedFilesCount > 1 ? 's' : ''}` : 'Drop videos'}
         </motion.span>
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
           <Button
             variant="ghost"
             size="sm"
@@ -58,7 +58,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           </Button>
         </motion.div>
         {onToggleOverlay && (
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant="ghost"
               size="sm"
@@ -71,7 +71,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           </motion.div>
         )}
         <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
           <Button
             variant="ghost"
             size="sm"
@@ -82,7 +82,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           </Button>
         </motion.div>
         <motion.div 
-          whileHover={{ scale: 1.05, y: -1 }} 
+          whileHover={{ scale: 1.02 }} 
           whileTap={{ scale: 0.95 }}
         >
           <Button

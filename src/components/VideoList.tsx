@@ -29,7 +29,7 @@ const VideoList: React.FC<VideoListProps> = ({
         animate="animate"
       >
         <div className="flex items-center gap-2">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant={viewMode === 'grid' ? 'default' : 'ghost'}
               size="sm"
@@ -39,7 +39,7 @@ const VideoList: React.FC<VideoListProps> = ({
               <Grid className="w-3 h-3" />
             </Button>
           </motion.div>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant={viewMode === 'list' ? 'default' : 'ghost'}
               size="sm"
@@ -124,10 +124,10 @@ const VideoList: React.FC<VideoListProps> = ({
                               )}
                             </div>
                           </div>
-                          <motion.div
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                          >
+                                                      <motion.div
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
                             <Button
                               variant="ghost"
                               size="sm"
@@ -184,7 +184,6 @@ const VideoList: React.FC<VideoListProps> = ({
                       initial="initial"
                       animate="animate"
                       exit="exit"
-                      whileHover={{ x: 5 }}
                       transition={{ delay: index * 0.05 }}
                     >
                                               <div className="flex items-center justify-between">
@@ -233,7 +232,6 @@ const VideoList: React.FC<VideoListProps> = ({
                               Show
                             </Button>
                             <motion.div
-                              whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.9 }}
                             >
                               <Button

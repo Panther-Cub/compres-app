@@ -19,7 +19,7 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, onToggle }) => {
   };
 
   return (
-    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
       <Button
         variant="ghost"
         size="sm"

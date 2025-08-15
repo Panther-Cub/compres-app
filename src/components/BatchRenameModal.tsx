@@ -136,7 +136,7 @@ const BatchRenameModal: React.FC<BatchRenameModalProps> = ({
         >
           <div className="flex items-center gap-3">
             <motion.div
-              whileHover={{ scale: 1.1, rotate: 15 }}
+              whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.2 }}
             >
               <FileVideo className="w-5 h-5 text-blue-500" />
@@ -148,7 +148,7 @@ const BatchRenameModal: React.FC<BatchRenameModalProps> = ({
               </p>
             </div>
           </div>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
             <Button
               variant="ghost"
               size="sm"

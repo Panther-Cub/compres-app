@@ -68,7 +68,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
         </button>
         
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-md border border-border bg-background shadow-lg">
+          <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-md border border-border bg-background shadow-sm">
             {React.Children.map(children, (child) => {
               if (React.isValidElement(child)) {
                 return (

@@ -76,11 +76,10 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
       className={`relative group ${sizeClasses[size]} ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
     >
       {currentThumbnail ? (
-        <div className="relative w-full h-full rounded-lg overflow-hidden bg-muted/20 shadow-sm cursor-pointer" onClick={handlePlay}>
+        <div className="relative w-full h-full rounded-lg overflow-hidden bg-muted/20 cursor-pointer" onClick={handlePlay}>
           <img
             src={`file://${currentThumbnail}`}
             alt={fileName}
@@ -100,7 +99,7 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
           </motion.div>
         </div>
       ) : (
-        <div className="relative w-full h-full bg-foreground/10 rounded-lg flex items-center justify-center shadow-sm border border-border/20">
+        <div className="relative w-full h-full bg-foreground/10 rounded-lg flex items-center justify-center border border-border/20">
           <FileVideo className={`${iconSizes[size]} text-foreground/70`} />
           
           {/* Generate thumbnail button */}

@@ -78,7 +78,7 @@ const DefaultsDrawer: React.FC<DefaultsDrawerProps> = ({
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <motion.div
-                    whileHover={{ scale: 1.1, rotate: 15 }}
+                    whileHover={{ scale: 1.02 }}
                     transition={{ duration: 0.2 }}
                   >
                     <Star className="w-4 h-4" />
@@ -127,7 +127,7 @@ const DefaultsDrawer: React.FC<DefaultsDrawerProps> = ({
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ delay: index * 0.05, duration: 0.2 }}
-                            whileHover={{ y: -2 }}
+
                           >
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
@@ -139,7 +139,7 @@ const DefaultsDrawer: React.FC<DefaultsDrawerProps> = ({
                                         initial={{ scale: 0, opacity: 0 }}
                                         animate={{ scale: 1, opacity: 1 }}
                                         exit={{ scale: 0, opacity: 0 }}
-                                        whileHover={{ scale: 1.05 }}
+                                        whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -172,8 +172,8 @@ const DefaultsDrawer: React.FC<DefaultsDrawerProps> = ({
                                       : 'border-border'
                                   }`}
                                   onClick={() => handleDefaultPresetToggle(key)}
-                                  whileHover={{ scale: 1.2 }}
-                                  whileTap={{ scale: 0.8 }}
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.95 }}
                                 />
                               </div>
                             </div>

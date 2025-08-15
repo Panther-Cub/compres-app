@@ -1,7 +1,5 @@
 import React from 'react';
-import { Upload, Video } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { Button } from './ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
 import { macAnimations } from '../lib/animations';
 import type { VideoDropZoneProps } from '../types';
 
@@ -13,59 +11,115 @@ const VideoDropZone: React.FC<VideoDropZoneProps> = ({
   onSelectFiles
 }) => {
   return (
-    <motion.div 
-      className="h-full flex items-center justify-center p-8"
-      variants={macAnimations.fadeIn}
-      initial="initial"
-      animate="animate"
-      exit="exit"
+    <div 
+      className="h-full w-full relative"
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
     >
-      <motion.div
-        className={`drop-zone w-full max-w-md p-12 rounded-2xl text-center transition-all duration-300 ${
-          isDragOver ? 'drag-over' : ''
-        }`}
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        variants={macAnimations.dropZone}
-        whileHover="whileHover"
-        whileDrag="whileDrag"
+      {/* Drag state indicator - covers full window */}
+      <AnimatePresence>
+        {isDragOver && (
+          <motion.div
+            className="fixed inset-0 bg-primary/5 border-4 border-primary/30 z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 bg-gradient-to-br from-background/5 via-transparent to-background/5" />
+      
+      {/* Centered content */}
+      <motion.div 
+        className="absolute inset-0 flex items-center justify-center p-4"
+        variants={macAnimations.fadeIn}
+        initial="initial"
+        animate="animate"
+        exit="exit"
       >
-        <motion.div 
-          className="w-12 h-12 mx-auto bg-foreground/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-          whileHover={{ scale: 1.1 }}
-          transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <Upload className="w-6 h-6 text-foreground/70" />
-        </motion.div>
-        <motion.h3 
-          className="text-xl font-light mt-6 mb-2"
-          variants={macAnimations.slideUp}
-        >
-          Drop your videos here
-        </motion.h3>
-        <motion.p 
-          className="text-base text-muted-foreground mb-6 leading-relaxed"
-          variants={macAnimations.slideUp}
-        >
-          Drag and drop video files to compress them for web optimization
-        </motion.p>
         <motion.div
-          variants={macAnimations.slideUp}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
+          className="flex flex-col items-center justify-center"
+          animate={{
+            scale: isDragOver ? 1.05 : 1
+          }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
-          <Button
-            onClick={onSelectFiles}
-            className="btn text-sm"
-            size="sm"
+          {/* Pulsing ring animation */}
+          <motion.div
+            className="absolute w-32 h-32 rounded-full border border-foreground/10"
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.3, 0.1, 0.3]
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          
+          <motion.div
+            className="absolute w-24 h-24 rounded-full border border-foreground/20"
+            animate={{
+              scale: [1, 1.3, 1],
+              opacity: [0.4, 0.05, 0.4]
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 0.5
+            }}
+          />
+
+          {/* Text container with subtle animation */}
+          <motion.div
+            className="relative text-center flex flex-col items-center"
+            animate={{
+              opacity: [0.7, 1, 0.7]
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
           >
-            <Video className="w-3 h-3 mr-2" />
-            Select Videos
-          </Button>
+            <motion.h3 
+              className="text-xl font-light text-foreground mb-2"
+              animate={{
+                color: isDragOver ? "hsl(var(--primary))" : "hsl(var(--foreground))"
+              }}
+              transition={{ duration: 0.3 }}
+            >
+              Drop in Videos
+            </motion.h3>
+            
+            <motion.p 
+              className="text-xs text-foreground/60 mb-3"
+              animate={{
+                opacity: isDragOver ? 0.9 : 0.7
+              }}
+              transition={{ duration: 0.3 }}
+            >
+              MP4, MOV, AVI, MKV, WebM, and more
+            </motion.p>
+            
+            <motion.button 
+              className="text-sm text-foreground/60 hover:text-foreground transition-colors cursor-pointer underline decoration-dotted underline-offset-4"
+              onClick={onSelectFiles}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              or click here to browse
+            </motion.button>
+          </motion.div>
         </motion.div>
       </motion.div>
-    </motion.div>
+    </div>
   );
 };
 
