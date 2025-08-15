@@ -52,7 +52,7 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             >
               <div>
                 <h3 className="text-sm font-medium mb-2">Version</h3>
-                <p className="text-xs text-muted-foreground">1.0.0</p>
+                <p className="text-xs text-muted-foreground">1.0.0-beta.1</p>
               </div>
 
               <div>

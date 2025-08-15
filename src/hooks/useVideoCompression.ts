@@ -85,6 +85,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
   // Listen for compression events
   useEffect(() => {
     const handleCompressionProgress = (data: any) => {
+      console.log('Received compression progress:', data);
       const { file, preset, percent } = data;
       if (!file || !preset || typeof percent !== 'number') {
         console.warn('Invalid compression progress data:', data);
@@ -92,6 +93,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
       }
 
       const taskKey = getTaskKey(file, preset);
+      console.log(`Setting progress for ${taskKey}: ${percent}%`);
       setCompressionProgress(prev => ({
         ...prev,
         [taskKey]: Math.round(Math.max(0, Math.min(100, percent)))
@@ -310,13 +312,16 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
   const getTotalProgress = useCallback((): number => {
     if (totalTasksRef.current === 0) return 0;
     
-    const completedProgress = completedTasksRef.current * 100;
+    // Calculate total progress across all tasks
     const progressEntries = Object.entries(compressionProgress);
-    const activeProgress = progressEntries.reduce((sum, [_, progress]) => sum + progress, 0);
+    const totalProgress = progressEntries.reduce((sum, [_, progress]) => sum + progress, 0);
     
-    const totalProgress = completedProgress + activeProgress;
-    const totalPossibleProgress = totalTasksRef.current * 100;
-    const percentage = (totalProgress / totalPossibleProgress) * 100;
+    // Add completed tasks (each counts as 100%)
+    const completedProgress = completedTasksRef.current * 100;
+    const totalProgressWithCompleted = totalProgress + completedProgress;
+    
+    // Calculate percentage based on total tasks
+    const percentage = (totalProgressWithCompleted / totalTasksRef.current) / 100 * 100;
     
     return Math.max(0, Math.min(100, Math.round(percentage)));
   }, [compressionProgress]);

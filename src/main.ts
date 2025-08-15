@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, dialog, shell, Menu, Tray, nativeImage } from 'electron';
+import { autoUpdater } from 'electron-updater';
 import path from 'path';
 import ffmpeg from 'fluent-ffmpeg';
 import fs from 'fs';
@@ -59,6 +60,94 @@ console.log('FFmpeg binary exists and is executable');
 // Set ffmpeg paths
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
+
+// Configure auto-updater
+autoUpdater.autoDownload = false; // Don't auto-download, let user choose
+autoUpdater.autoInstallOnAppQuit = true; // Install on quit if update is ready
+
+// Check for updates automatically when app starts (after a delay)
+setTimeout(() => {
+  console.log('Checking for updates automatically...');
+  autoUpdater.checkForUpdates().catch(err => {
+    console.error('Auto-update check failed:', err);
+  });
+}, 5000); // Check 5 seconds after app starts
+
+// Auto-updater event handlers
+autoUpdater.on('checking-for-update', () => {
+  console.log('Checking for updates...');
+  if (mainWindow) {
+    mainWindow.webContents.send('update-status', { status: 'checking' });
+  }
+});
+
+autoUpdater.on('update-available', (info) => {
+  console.log('Update available:', info);
+  
+  // Show notification to user
+  if (tray) {
+    tray.displayBalloon({
+      title: 'Update Available',
+      content: `Version ${info.version} is available. Click to download.`,
+      icon: path.join(__dirname, 'assets', 'Vanilla.icns')
+    });
+  }
+  
+  if (mainWindow) {
+    mainWindow.webContents.send('update-status', { 
+      status: 'available', 
+      version: info.version,
+      releaseNotes: info.releaseNotes 
+    });
+  }
+});
+
+autoUpdater.on('update-not-available', () => {
+  console.log('No updates available');
+  if (mainWindow) {
+    mainWindow.webContents.send('update-status', { status: 'not-available' });
+  }
+});
+
+autoUpdater.on('error', (err) => {
+  console.error('Auto-updater error:', err);
+  if (mainWindow) {
+    mainWindow.webContents.send('update-status', { 
+      status: 'error', 
+      error: err.message 
+    });
+  }
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  console.log('Download progress:', progressObj);
+  if (mainWindow) {
+    mainWindow.webContents.send('update-status', { 
+      status: 'downloading', 
+      progress: progressObj.percent 
+    });
+  }
+});
+
+autoUpdater.on('update-downloaded', (info) => {
+  console.log('Update downloaded:', info);
+  
+  // Show notification to user
+  if (tray) {
+    tray.displayBalloon({
+      title: 'Update Ready',
+      content: `Version ${info.version} is ready to install. Restart the app to apply.`,
+      icon: path.join(__dirname, 'assets', 'Vanilla.icns')
+    });
+  }
+  
+  if (mainWindow) {
+    mainWindow.webContents.send('update-status', { 
+      status: 'downloaded', 
+      version: info.version 
+    });
+  }
+});
 
 // System resource monitoring
 let systemMonitorInterval: NodeJS.Timeout | null = null;
@@ -462,6 +551,17 @@ function createWindow(): void {
             createSettingsWindow();
           }
         },
+        {
+          label: 'Check for Updates...',
+          click: async () => {
+            try {
+              console.log('Checking for updates from menu...');
+              await autoUpdater.checkForUpdates();
+            } catch (error) {
+              console.error('Error checking for updates:', error);
+            }
+          }
+        },
         { type: 'separator' },
         {
           label: 'Quit',
@@ -725,6 +825,40 @@ ipcMain.handle('show-main-window', async () => {
     mainWindow.focus();
   }
   return { success: true };
+});
+
+// Auto-updater IPC handlers
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    console.log('Checking for updates...');
+    await autoUpdater.checkForUpdates();
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error checking for updates:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('download-update', async () => {
+  try {
+    console.log('Downloading update...');
+    await autoUpdater.downloadUpdate();
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error downloading update:', error);
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('install-update', async () => {
+  try {
+    console.log('Installing update...');
+    autoUpdater.quitAndInstall();
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error installing update:', error);
+    return { success: false, error: error.message };
+  }
 });
 
 // IPC handlers

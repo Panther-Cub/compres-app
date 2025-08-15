@@ -67,6 +67,12 @@ interface ElectronAPI {
   
   // Remove listeners
   removeAllListeners: (channel: string) => void;
+  
+  // Auto-updater
+  checkForUpdates: () => Promise<{ success: boolean; error?: string }>;
+  downloadUpdate: () => Promise<{ success: boolean; error?: string }>;
+  installUpdate: () => Promise<{ success: boolean; error?: string }>;
+  onUpdateStatus: (callback: (data: any) => void) => void;
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {
@@ -134,5 +140,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Remove listeners
   removeAllListeners: (channel: string) => {
     ipcRenderer.removeAllListeners(channel);
+  },
+  
+  // Auto-updater
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  installUpdate: () => ipcRenderer.invoke('install-update'),
+  onUpdateStatus: (callback: (data: any) => void) => {
+    ipcRenderer.on('update-status', (event, data) => callback(data));
   }
 } as ElectronAPI);

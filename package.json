@@ -1,6 +1,6 @@
 {
   "name": "compress",
-  "version": "1.0.0",
+  "version": "1.0.0-beta.1",
   "description": "A minimalistic video compression app for web optimization",
   "main": "build/main.js",
   "homepage": "./",
@@ -13,6 +13,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "electron-updater": "^6.6.2",
     "ffmpeg-static": "^5.1.0",
     "ffprobe-static": "^3.1.0",
     "fluent-ffmpeg": "^2.1.2",
@@ -46,7 +47,8 @@
     "electron": "electron .",
     "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron .\"",
     "electron-build": "npm run build && electron-builder",
-    "dist": "npm run build && electron-builder --publish=never"
+    "dist": "npm run build && electron-builder --publish=never",
+    "publish": "npm run build && electron-builder --publish=always"
   },
   "build": {
     "appId": "com.pantherandcub.compress",
@@ -62,8 +64,14 @@
       "node_modules/ffmpeg-static/**/*",
       "node_modules/ffprobe-static/**/*"
     ],
-
     "extends": null,
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Panther-Cub",
+        "repo": "compress-app"
+      }
+    ],
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "assets/Vanilla.icns",

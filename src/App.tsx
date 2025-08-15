@@ -14,12 +14,17 @@ import CompressionNotification from './components/CompressionNotification';
 import AboutModal from './components/AboutModal';
 import CustomPresetModal from './components/CustomPresetModal';
 import DefaultsDrawer from './components/DefaultsDrawer';
+import UpdateNotification from './components/UpdateNotification';
 
 function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [showProgressOverlay, setShowProgressOverlay] = useState(true);
   const [totalProgress, setTotalProgress] = useState(0);
   const [showDefaultsDrawer, setShowDefaultsDrawer] = useState(false);
+  
+  // Update notification state
+  const [showUpdateNotification, setShowUpdateNotification] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<any>(null);
   
   const {
     selectedFiles,
@@ -178,6 +183,15 @@ function App() {
         handleFileSelect(filePaths);
       });
 
+      // Update status events
+      window.electronAPI.onUpdateStatus((data: any) => {
+        console.log('Update status received in App:', data);
+        if (data.status === 'available') {
+          setUpdateInfo(data);
+          setShowUpdateNotification(true);
+        }
+      });
+
       // Cleanup listeners
       return () => {
         if (window.electronAPI) {
@@ -185,6 +199,7 @@ function App() {
           window.electronAPI.removeAllListeners('trigger-file-select');
           window.electronAPI.removeAllListeners('trigger-output-select');
           window.electronAPI.removeAllListeners('overlay-files-dropped');
+          window.electronAPI.removeAllListeners('update-status');
         }
       };
     }
@@ -302,6 +317,22 @@ function App() {
   const handleBuyCoffee = () => {
     // Open Buy Me a Coffee link
     window.open('https://buymeacoffee.com/pantherandcub', '_blank');
+  };
+
+  // Update notification handlers
+  const handleUpdateDownload = async () => {
+    try {
+      if (window.electronAPI) {
+        await window.electronAPI.downloadUpdate();
+      }
+    } catch (error) {
+      console.error('Error downloading update:', error);
+    }
+  };
+
+  const handleUpdateDismiss = () => {
+    setShowUpdateNotification(false);
+    setUpdateInfo(null);
   };
 
   // Removed handleToggleOverlay since we now use handleShowOverlay
@@ -515,6 +546,14 @@ function App() {
           />
         )}
       </AnimatePresence>
+
+      {/* Update Notification */}
+      <UpdateNotification
+        isVisible={showUpdateNotification}
+        updateInfo={updateInfo}
+        onDownload={handleUpdateDownload}
+        onDismiss={handleUpdateDismiss}
+      />
     </motion.div>
   );
 }
