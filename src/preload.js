@@ -1,22 +1,40 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Expose protected methods that allow the renderer process to use
-// the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('electronAPI', {
-  compressVideo: (filePath, options) => ipcRenderer.invoke('compress-video', filePath, options),
-  getFileInfo: (filePath) => ipcRenderer.invoke('get-file-info', filePath),
-  selectFile: () => ipcRenderer.invoke('select-file'),
+  // File selection
+  selectFiles: () => ipcRenderer.invoke('select-files'),
   selectOutputDirectory: () => ipcRenderer.invoke('select-output-directory'),
   
-  // Listen for compression events
+  // Video compression
+  compressVideos: (data) => ipcRenderer.invoke('compress-videos', data),
+  compressVideosAdvanced: (data) => ipcRenderer.invoke('compress-videos-advanced', data),
+  getPresets: () => ipcRenderer.invoke('get-presets'),
+  getFileInfo: (filePath) => ipcRenderer.invoke('get-file-info', filePath),
+  
+  // Event listeners
   onCompressionStarted: (callback) => {
-    ipcRenderer.on('compression-started', callback);
+    ipcRenderer.on('compression-started', (event, data) => callback(data));
   },
   
   onCompressionProgress: (callback) => {
-    ipcRenderer.on('compression-progress', (event, progress) => {
-      callback(progress);
-    });
+    ipcRenderer.on('compression-progress', (event, data) => callback(data));
+  },
+  
+  onCompressionComplete: (callback) => {
+    ipcRenderer.on('compression-complete', (event, data) => callback(data));
+  },
+  
+  // Menu events
+  onShowAboutModal: (callback) => {
+    ipcRenderer.on('show-about-modal', () => callback());
+  },
+  
+  onTriggerFileSelect: (callback) => {
+    ipcRenderer.on('trigger-file-select', () => callback());
+  },
+  
+  onTriggerOutputSelect: (callback) => {
+    ipcRenderer.on('trigger-output-select', () => callback());
   },
   
   // Remove listeners
