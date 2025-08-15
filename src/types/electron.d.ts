@@ -32,6 +32,11 @@ declare global {
       }>>;
       getPresets: () => Promise<Record<string, any>>;
       
+      // Thumbnails and file operations
+      generateThumbnail: (filePath: string) => Promise<string>;
+      showInFinder: (filePath: string) => Promise<{ success: boolean }>;
+      openFile: (filePath: string) => Promise<{ success: boolean }>;
+      
       // Compression operations
       compressVideos: (data: {
         files: string[];

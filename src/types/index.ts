@@ -4,6 +4,7 @@ export interface FileInfo {
   duration: number;
   width: number;
   height: number;
+  thumbnail?: string;
 }
 
 export interface AdvancedSettings {
@@ -95,6 +96,10 @@ export interface VideoWorkspaceProps {
   onToggleDrawer: () => void;
   settings: Settings;
   onBatchRename: (newNames: Record<string, string>) => void;
+  onGenerateThumbnail: (filePath: string) => Promise<string>;
+  onShowInFinder: (filePath: string) => Promise<void>;
+  onOpenFile: (filePath: string) => Promise<void>;
+  onAddMoreVideos: () => void;
 }
 
 export interface VideoListProps {
@@ -105,6 +110,9 @@ export interface VideoListProps {
   onRemoveFile: (filePath: string) => void;
   formatFileSize: (bytes: number) => string;
   formatDuration: (seconds: number) => string;
+  onGenerateThumbnail: (filePath: string) => Promise<string>;
+  onShowInFinder: (filePath: string) => Promise<void>;
+  onOpenFile: (filePath: string) => Promise<void>;
 }
 
 export interface AppHeaderProps {

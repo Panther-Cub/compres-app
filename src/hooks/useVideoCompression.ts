@@ -152,7 +152,15 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     for (const file of files) {
       try {
         const info = await window.electronAPI.getFileInfo(file);
-        newFileInfos[file] = info;
+        
+        // Try to generate thumbnail for the file
+        try {
+          const thumbnail = await window.electronAPI.generateThumbnail(file);
+          newFileInfos[file] = { ...info, thumbnail };
+        } catch (thumbnailErr) {
+          console.warn('Could not generate thumbnail for:', file, thumbnailErr);
+          newFileInfos[file] = info;
+        }
       } catch (err) {
         console.error('Error reading file info for:', file, err);
         // Use basic info if we can't get detailed info

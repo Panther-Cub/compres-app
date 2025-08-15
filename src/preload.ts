@@ -38,6 +38,11 @@ interface ElectronAPI {
   }>;
   cancelCompression: () => Promise<{ success: boolean }>;
   
+  // Thumbnails and file operations
+  generateThumbnail: (filePath: string) => Promise<string>;
+  showInFinder: (filePath: string) => Promise<{ success: boolean }>;
+  openFile: (filePath: string) => Promise<{ success: boolean }>;
+  
   // Event listeners
   onCompressionStarted: (callback: (data: any) => void) => void;
   onCompressionProgress: (callback: (data: any) => void) => void;
@@ -65,6 +70,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getPresets: () => ipcRenderer.invoke('get-presets'),
   getFileInfo: (filePath: string) => ipcRenderer.invoke('get-file-info', filePath),
   cancelCompression: () => ipcRenderer.invoke('cancel-compression'),
+  
+  // Thumbnails and file operations
+  generateThumbnail: (filePath: string) => ipcRenderer.invoke('generate-thumbnail', filePath),
+  showInFinder: (filePath: string) => ipcRenderer.invoke('show-in-finder', filePath),
+  openFile: (filePath: string) => ipcRenderer.invoke('open-file', filePath),
   
   // Event listeners
   onCompressionStarted: (callback: (data: any) => void) => {

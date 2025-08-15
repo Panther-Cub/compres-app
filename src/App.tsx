@@ -216,6 +216,42 @@ function App() {
     }
   };
 
+  const handleGenerateThumbnail = async (filePath: string): Promise<string> => {
+    try {
+      if (!window.electronAPI) {
+        throw new Error('Electron API not available');
+      }
+      return await window.electronAPI.generateThumbnail(filePath);
+    } catch (error) {
+      console.error('Error generating thumbnail:', error);
+      throw error;
+    }
+  };
+
+  const handleShowInFinder = async (filePath: string): Promise<void> => {
+    try {
+      if (!window.electronAPI) {
+        throw new Error('Electron API not available');
+      }
+      await window.electronAPI.showInFinder(filePath);
+    } catch (error) {
+      console.error('Error showing in Finder:', error);
+      throw error;
+    }
+  };
+
+  const handleOpenFile = async (filePath: string): Promise<void> => {
+    try {
+      if (!window.electronAPI) {
+        throw new Error('Electron API not available');
+      }
+      await window.electronAPI.openFile(filePath);
+    } catch (error) {
+      console.error('Error opening file:', error);
+      throw error;
+    }
+  };
+
   const handleBuyCoffee = () => {
     // Open Buy Me a Coffee link
     window.open('https://buymeacoffee.com/pantherandcub', '_blank');
@@ -292,6 +328,10 @@ function App() {
               onToggleDrawer={toggleDrawer}
               settings={settings}
               onBatchRename={handleBatchRename}
+              onGenerateThumbnail={handleGenerateThumbnail}
+              onShowInFinder={handleShowInFinder}
+              onOpenFile={handleOpenFile}
+              onAddMoreVideos={handleSelectFiles}
             />
           )}
         </AnimatePresence>

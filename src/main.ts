@@ -10,6 +10,7 @@ import {
 } from './electron/compression';
 import { getDefaultOutputDirectory } from './electron/compression/utils';
 import os from 'os';
+import { spawn } from 'child_process';
 
 // Use ffmpeg-static for cross-platform compatibility
 const ffmpegPath = require('ffmpeg-static');
@@ -542,4 +543,97 @@ ipcMain.handle('batch-rename-files', async (event, { files, newNames }: {
   }
   
   return results;
+});
+
+// Generate thumbnail for video file
+ipcMain.handle('generate-thumbnail', async (event, filePath: string) => {
+  if (!filePath || typeof filePath !== 'string') {
+    throw new Error('Invalid file path provided');
+  }
+  
+  if (!fs.existsSync(filePath)) {
+    throw new Error('File does not exist');
+  }
+  
+  try {
+    // Create thumbnails directory in app data
+    const appDataPath = path.join(os.homedir(), 'Library', 'Application Support', 'Compress');
+    const thumbnailsDir = path.join(appDataPath, 'thumbnails');
+    
+    if (!fs.existsSync(thumbnailsDir)) {
+      fs.mkdirSync(thumbnailsDir, { recursive: true });
+    }
+    
+    // Generate unique filename for thumbnail
+    const fileHash = require('crypto').createHash('md5').update(filePath).digest('hex');
+    const thumbnailPath = path.join(thumbnailsDir, `${fileHash}.jpg`);
+    
+    // Check if thumbnail already exists
+    if (fs.existsSync(thumbnailPath)) {
+      return thumbnailPath;
+    }
+    
+          return new Promise((resolve, reject) => {
+        // Generate thumbnail at 50% into the video
+        ffmpeg(filePath)
+          .screenshots({
+            timestamps: ['50%'],
+            filename: path.basename(thumbnailPath),
+            folder: path.dirname(thumbnailPath),
+            size: '480x?' // Maintain original video aspect ratio
+          })
+        .on('end', () => {
+          if (fs.existsSync(thumbnailPath)) {
+            resolve(thumbnailPath);
+          } else {
+            reject(new Error('Thumbnail generation failed'));
+          }
+        })
+        .on('error', (err) => {
+          console.error('Thumbnail generation error:', err);
+          reject(new Error(`Failed to generate thumbnail: ${err.message}`));
+        });
+    });
+  } catch (error) {
+    console.error('Error generating thumbnail:', error);
+    throw error;
+  }
+});
+
+// Open file in Finder
+ipcMain.handle('show-in-finder', async (event, filePath: string) => {
+  if (!filePath || typeof filePath !== 'string') {
+    throw new Error('Invalid file path provided');
+  }
+  
+  if (!fs.existsSync(filePath)) {
+    throw new Error('File does not exist');
+  }
+  
+  try {
+    shell.showItemInFolder(filePath);
+    return { success: true };
+  } catch (error) {
+    console.error('Error showing file in Finder:', error);
+    throw error;
+  }
+});
+
+// Open file with default application
+ipcMain.handle('open-file', async (event, filePath: string) => {
+  if (!filePath || typeof filePath !== 'string') {
+    throw new Error('Invalid file path provided');
+  }
+  
+  if (!fs.existsSync(filePath)) {
+    throw new Error('File does not exist');
+  }
+  
+  try {
+    shell.openPath(filePath);
+    return { success: true };
+  } catch (error) {
+    console.error('Error opening file:', error);
+    throw error;
+  }
 });

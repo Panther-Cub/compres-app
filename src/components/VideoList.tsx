@@ -1,7 +1,8 @@
-import React from 'react';
-import { Grid, List, X, FileVideo } from 'lucide-react';
+import React, { useState } from 'react';
+import { Grid, List, X, Play, FolderOpen, ZoomIn, ZoomOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
+import VideoThumbnail from './VideoThumbnail';
 import { containerVariants, macAnimations } from '../lib/animations';
 import type { VideoListProps } from '../types';
 
@@ -12,8 +13,12 @@ const VideoList: React.FC<VideoListProps> = ({
   onViewModeChange, 
   onRemoveFile,
   formatFileSize,
-  formatDuration 
+  formatDuration,
+  onGenerateThumbnail,
+  onShowInFinder,
+  onOpenFile
 }) => {
+  const [gridZoom, setGridZoom] = useState(200); // Default minimum column width
   return (
     <div className="h-full flex flex-col">
       {/* Top Bar */}
@@ -44,6 +49,22 @@ const VideoList: React.FC<VideoListProps> = ({
               <List className="w-3 h-3" />
             </Button>
           </motion.div>
+          
+          {/* Grid Zoom Controls - only show in grid view */}
+          {viewMode === 'grid' && (
+            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-border/20">
+              <ZoomOut className="w-3 h-3 text-muted-foreground" />
+              <input
+                type="range"
+                min="120"
+                max="400"
+                value={gridZoom}
+                onChange={(e) => setGridZoom(Number(e.target.value))}
+                className="w-20 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer slider"
+              />
+              <ZoomIn className="w-3 h-3 text-muted-foreground" />
+            </div>
+          )}
         </div>
         <span className="text-sm text-muted-foreground">
           {selectedFiles.length} file{selectedFiles.length > 1 ? 's' : ''}
@@ -56,77 +77,8 @@ const VideoList: React.FC<VideoListProps> = ({
           {viewMode === 'grid' ? (
             <motion.div 
               key="grid"
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <AnimatePresence>
-                {selectedFiles.map((file, index) => {
-                  const info = fileInfos[file] || {};
-                  return (
-                    <motion.div
-                      key={file}
-                      className="file-card p-4 rounded-lg group"
-                      variants={macAnimations.fileCard}
-                      initial="initial"
-                      animate="animate"
-                      exit="exit"
-                      whileHover="whileHover"
-                      transition={{ delay: index * 0.05 }}
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <motion.div 
-                          className="w-8 h-8 bg-foreground/10 rounded-lg flex items-center justify-center"
-                          whileHover={{ scale: 1.1 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <FileVideo className="w-4 h-4 text-foreground/70" />
-                        </motion.div>
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          whileHover={{ opacity: 1 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <motion.div
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                          >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onRemoveFile(file)}
-                              className="non-draggable opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </motion.div>
-                        </motion.div>
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium truncate">{file.split('/').pop()}</h4>
-                        <div className="space-y-1">
-                          {info.size && (
-                            <p className="text-sm text-muted-foreground">
-                              Size: {formatFileSize(info.size)}
-                            </p>
-                          )}
-                          {info.duration && (
-                            <p className="text-sm text-muted-foreground">
-                              Duration: {formatDuration(info.duration)}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </motion.div>
-          ) : (
-            <motion.div 
-              key="list"
-              className="space-y-2"
+              className="grid gap-4"
+              style={{ gridTemplateColumns: `repeat(auto-fit, minmax(${gridZoom}px, 1fr))` }}
               variants={containerVariants}
               initial="hidden"
               animate="visible"
@@ -138,43 +90,40 @@ const VideoList: React.FC<VideoListProps> = ({
                     <motion.div
                       key={file}
                       className="file-card p-3 rounded-lg group"
-                      variants={macAnimations.listItem}
+                      variants={macAnimations.fileCard}
                       initial="initial"
                       animate="animate"
                       exit="exit"
-                      whileHover={{ x: 5 }}
+                      whileHover="whileHover"
                       transition={{ delay: index * 0.05 }}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <motion.div 
-                            className="w-6 h-6 bg-foreground/10 rounded-md flex items-center justify-center flex-shrink-0"
-                            whileHover={{ scale: 1.1 }}
-                            transition={{ duration: 0.2 }}
-                          >
-                            <FileVideo className="w-3 h-3 text-foreground/70" />
-                          </motion.div>
+                      <div className="flex flex-col space-y-3">
+                        <div className="flex justify-center">
+                                                  <VideoThumbnail
+                          filePath={file}
+                          fileName={file.split('/').pop() || ''}
+                          thumbnail={info.thumbnail}
+                          onGenerateThumbnail={onGenerateThumbnail}
+                          onPlay={onOpenFile}
+                          size="responsive"
+                        />
+                        </div>
+                        <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
                             <h4 className="text-sm font-medium truncate">{file.split('/').pop()}</h4>
-                            <div className="flex items-center gap-4 mt-1">
+                            <div className="space-y-1 mt-1">
                               {info.size && (
-                                <span className="text-sm text-muted-foreground">
-                                  {formatFileSize(info.size)}
-                                </span>
+                                <p className="text-xs text-muted-foreground">
+                                  Size: {formatFileSize(info.size)}
+                                </p>
                               )}
                               {info.duration && (
-                                <span className="text-sm text-muted-foreground">
-                                  {formatDuration(info.duration)}
-                                </span>
+                                <p className="text-xs text-muted-foreground">
+                                  Duration: {formatDuration(info.duration)}
+                                </p>
                               )}
                             </div>
                           </div>
-                        </div>
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          whileHover={{ opacity: 1 }}
-                          transition={{ duration: 0.2 }}
-                        >
                           <motion.div
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
@@ -183,13 +132,121 @@ const VideoList: React.FC<VideoListProps> = ({
                               variant="ghost"
                               size="sm"
                               onClick={() => onRemoveFile(file)}
-                              className="non-draggable opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="non-draggable opacity-60 hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
                             >
                               <X className="w-3 h-3" />
                             </Button>
                           </motion.div>
-                        </motion.div>
+                        </div>
+                        {/* Action buttons */}
+                        <div className="flex justify-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onOpenFile(file)}
+                            className="text-xs px-2 py-1 h-7"
+                          >
+                            <Play className="w-3 h-3 mr-1" />
+                            Play
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onShowInFinder(file)}
+                            className="text-xs px-2 py-1 h-7"
+                          >
+                            <FolderOpen className="w-3 h-3 mr-1" />
+                            Show
+                          </Button>
+                        </div>
                       </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="list"
+              className="space-y-1"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <AnimatePresence>
+                {selectedFiles.map((file, index) => {
+                  const info = fileInfos[file] || {};
+                  return (
+                    <motion.div
+                      key={file}
+                      className="file-card py-1 px-2 rounded-lg group"
+                      variants={macAnimations.listItem}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                      whileHover={{ x: 5 }}
+                      transition={{ delay: index * 0.05 }}
+                    >
+                                              <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                      <VideoThumbnail
+                            filePath={file}
+                            fileName={file.split('/').pop() || ''}
+                            thumbnail={info.thumbnail}
+                            onGenerateThumbnail={onGenerateThumbnail}
+                            onPlay={onOpenFile}
+                            size="small"
+                          />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3">
+                                <h4 className="text-sm font-medium truncate">{file.split('/').pop()}</h4>
+                                {info.size && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatFileSize(info.size)}
+                                  </span>
+                                )}
+                                {info.duration && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {formatDuration(info.duration)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onOpenFile(file)}
+                              className="text-xs px-1.5 py-0.5 h-6"
+                            >
+                              <Play className="w-3 h-3 mr-1" />
+                              Play
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onShowInFinder(file)}
+                              className="text-xs px-1.5 py-0.5 h-6"
+                            >
+                              <FolderOpen className="w-3 h-3 mr-1" />
+                              Show
+                            </Button>
+                            <motion.div
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                            >
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onRemoveFile(file)}
+                                className="non-draggable opacity-60 hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </motion.div>
+                          </div>
+                        </div>
                     </motion.div>
                   );
                 })}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, Settings, Edit3, ArrowLeft } from 'lucide-react';
+import { Play, Settings, Edit3, ArrowLeft, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
@@ -21,7 +21,11 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
   drawerOpen,
   onToggleDrawer,
   settings,
-  onBatchRename
+  onBatchRename,
+  onGenerateThumbnail,
+  onShowInFinder,
+  onOpenFile,
+  onAddMoreVideos
 }) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
   const [showBatchRename, setShowBatchRename] = useState(false);
@@ -65,6 +69,17 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
           </div>
           
           <div className="flex items-center gap-2">
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onAddMoreVideos}
+                className="non-draggable text-sm"
+              >
+                <Plus className="w-3 h-3 mr-2" />
+                Add More Videos
+              </Button>
+            </motion.div>
             {selectedFiles.length > 0 && (
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
@@ -91,6 +106,9 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
             onRemoveFile={onRemoveFile}
             formatFileSize={formatFileSize}
             formatDuration={formatDuration}
+            onGenerateThumbnail={onGenerateThumbnail}
+            onShowInFinder={onShowInFinder}
+            onOpenFile={onOpenFile}
           />
         </div>
 

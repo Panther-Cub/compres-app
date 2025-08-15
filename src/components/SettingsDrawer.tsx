@@ -47,7 +47,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   ];
 
   return (
-    <div className={`absolute top-0 right-0 h-full w-80 drawer bg-background border-l border-border/20 transition-transform duration-150 ease-out z-10 ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+    <div className={`absolute top-0 right-0 h-full w-80 drawer bg-background shadow-none transition-transform duration-150 ease-out z-10 ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
       <div className="h-full flex flex-col">
         {/* Header */}
         <div className="p-4 border-b border-border/20 flex-shrink-0">
@@ -67,7 +67,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all ${
                     isActive
-                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      ? 'bg-primary text-primary-foreground'
                       : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                   }`}
                 >
