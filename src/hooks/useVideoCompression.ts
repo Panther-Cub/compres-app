@@ -120,17 +120,31 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     };
   }, [getTaskKey, markTaskComplete]);
 
-  const handleFileSelect = useCallback(async (files: string[]): Promise<void> => {
+  const handleFileSelect = useCallback(async (files: string[], addToExisting: boolean = false): Promise<void> => {
     setError('');
-    setSelectedFiles(files);
-    setCompressionComplete(false);
-    setCompressionProgress({});
-    setOutputPaths([]);
     
-    // Reset compression tracking
-    compressionTasksRef.current.clear();
-    totalTasksRef.current = 0;
-    completedTasksRef.current = 0;
+    // Either replace or add to existing files
+    if (addToExisting) {
+      setSelectedFiles(prev => {
+        const newFiles = [...prev];
+        for (const file of files) {
+          if (!newFiles.includes(file)) {
+            newFiles.push(file);
+          }
+        }
+        return newFiles;
+      });
+    } else {
+      setSelectedFiles(files);
+      setCompressionComplete(false);
+      setCompressionProgress({});
+      setOutputPaths([]);
+      
+      // Reset compression tracking
+      compressionTasksRef.current.clear();
+      totalTasksRef.current = 0;
+      completedTasksRef.current = 0;
+    }
     
     // In browser mode, we can't get file info, so we'll just use basic info
     if (!window.electronAPI) {
@@ -144,7 +158,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
           height: 0
         };
       }
-      setFileInfos(newFileInfos);
+      setFileInfos(prev => addToExisting ? { ...prev, ...newFileInfos } : newFileInfos);
       return;
     }
     
@@ -172,7 +186,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
         };
       }
     }
-    setFileInfos(newFileInfos);
+    setFileInfos(prev => addToExisting ? { ...prev, ...newFileInfos } : newFileInfos);
   }, []);
 
   const removeFile = useCallback((filePath: string): void => {

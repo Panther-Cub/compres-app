@@ -217,7 +217,7 @@ export interface UseVideoCompressionReturn {
   compressionComplete: boolean;
   outputPaths: string[];
   error: string;
-  handleFileSelect: (files: string[]) => Promise<void>;
+  handleFileSelect: (files: string[], addToExisting?: boolean) => Promise<void>;
   removeFile: (filePath: string) => void;
   compressVideos: (
     presetConfigs: Array<{ presetId: string; keepAudio: boolean }>, 

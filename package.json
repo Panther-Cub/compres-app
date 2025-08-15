@@ -62,16 +62,16 @@
       "node_modules/ffmpeg-static/**/*",
       "node_modules/ffprobe-static/**/*"
     ],
+
+    "extends": null,
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "assets/Vanilla.icns",
       "target": "zip",
       "artifactName": "${productName}-${version}-mac.${ext}",
       "identity": null,
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist"
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
     }
   },
   "eslintConfig": {

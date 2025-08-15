@@ -129,6 +129,19 @@ function App() {
     }
   }, [handleFileSelect]);
 
+  const handleAddMoreVideos = useCallback(async () => {
+    try {
+      if (window.electronAPI) {
+        const filePaths = await window.electronAPI.selectFiles();
+        if (filePaths && filePaths.length > 0) {
+          handleFileSelect(filePaths, true); // Add to existing files
+        }
+      }
+    } catch (error) {
+      console.error('Error adding more videos:', error);
+    }
+  }, [handleFileSelect]);
+
   // Update total progress when compression progress changes
   useEffect(() => {
     if (isCompressing) {
@@ -409,7 +422,7 @@ function App() {
               onGenerateThumbnail={handleGenerateThumbnail}
               onShowInFinder={handleShowInFinder}
               onOpenFile={handleOpenFile}
-              onAddMoreVideos={handleSelectFiles}
+              onAddMoreVideos={handleAddMoreVideos}
             />
           )}
         </AnimatePresence>
