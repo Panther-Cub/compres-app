@@ -65,12 +65,60 @@ ffmpeg.setFfprobePath(ffprobePath);
 autoUpdater.autoDownload = false; // Don't auto-download, let user choose
 autoUpdater.autoInstallOnAppQuit = true; // Install on quit if update is ready
 
+// Set update server URL explicitly
+autoUpdater.setFeedURL({
+  provider: 'github',
+  owner: 'Panther-Cub',
+  repo: 'compress-app',
+  private: false
+});
+
+console.log('Auto-updater configured for:', {
+  provider: 'github',
+  owner: 'Panther-Cub',
+  repo: 'compress-app'
+});
+
+// Add more detailed logging
+try {
+  const electronLog = require('electron-log');
+  autoUpdater.logger = electronLog;
+  electronLog.transports.file.level = 'info';
+} catch (error) {
+  console.log('electron-log not available, using console logging');
+}
+
 // Check for updates automatically when app starts (after a delay)
 setTimeout(() => {
   console.log('Checking for updates automatically...');
-  autoUpdater.checkForUpdates().catch(err => {
-    console.error('Auto-update check failed:', err);
-  });
+  
+  // Add timeout to prevent hanging
+  const timeout = setTimeout(() => {
+    console.error('Update check timed out after 30 seconds');
+    if (mainWindow) {
+      mainWindow.webContents.send('update-status', { 
+        status: 'error', 
+        error: 'Update check timed out' 
+      });
+    }
+  }, 30000);
+  
+  autoUpdater.checkForUpdates()
+    .then((result) => {
+      clearTimeout(timeout);
+      console.log('Auto-update check completed:', result);
+    })
+    .catch(err => {
+      clearTimeout(timeout);
+      console.error('Auto-update check failed:', err);
+      // Send error status to renderer
+      if (mainWindow) {
+        mainWindow.webContents.send('update-status', { 
+          status: 'error', 
+          error: err.message || 'Failed to check for updates' 
+        });
+      }
+    });
 }, 5000); // Check 5 seconds after app starts
 
 // Auto-updater event handlers
@@ -114,7 +162,7 @@ autoUpdater.on('error', (err) => {
   if (mainWindow) {
     mainWindow.webContents.send('update-status', { 
       status: 'error', 
-      error: err.message 
+      error: err.message || 'Unknown error occurred' 
     });
   }
 });
@@ -556,9 +604,17 @@ function createWindow(): void {
           click: async () => {
             try {
               console.log('Checking for updates from menu...');
-              await autoUpdater.checkForUpdates();
-            } catch (error) {
-              console.error('Error checking for updates:', error);
+              const result = await autoUpdater.checkForUpdates();
+              console.log('Menu update check result:', result);
+            } catch (error: any) {
+              console.error('Error checking for updates from menu:', error);
+              // Send error status to renderer
+              if (mainWindow) {
+                mainWindow.webContents.send('update-status', { 
+                  status: 'error', 
+                  error: error.message || 'Failed to check for updates' 
+                });
+              }
             }
           }
         },
@@ -706,10 +762,8 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   stopSystemMonitoring();
-  // Don't quit the app when all windows are closed - keep it running in tray
-  // if (process.platform !== 'darwin') {
-  //   app.quit();
-  // }
+  console.log('All windows closed, quitting app...');
+  app.quit();
 });
 
 app.on('activate', () => {
@@ -718,11 +772,32 @@ app.on('activate', () => {
   }
 });
 
-// Clean up tray when app is about to quit
+// Clean up when app is about to quit
 app.on('before-quit', () => {
+  console.log('App is quitting, cleaning up...');
+  
+  // Clean up tray
   if (tray) {
     tray.destroy();
     tray = null;
+  }
+  
+  // Close overlay window
+  if (overlayWindow) {
+    overlayWindow.destroy();
+    overlayWindow = null;
+  }
+  
+  // Close main window
+  if (mainWindow) {
+    mainWindow.destroy();
+    mainWindow = null;
+  }
+  
+  // Close settings window
+  if (settingsWindow) {
+    settingsWindow.destroy();
+    settingsWindow = null;
   }
 });
 
@@ -830,12 +905,13 @@ ipcMain.handle('show-main-window', async () => {
 // Auto-updater IPC handlers
 ipcMain.handle('check-for-updates', async () => {
   try {
-    console.log('Checking for updates...');
-    await autoUpdater.checkForUpdates();
-    return { success: true };
+    console.log('Checking for updates via IPC...');
+    const result = await autoUpdater.checkForUpdates();
+    console.log('Update check result:', result);
+    return { success: true, result };
   } catch (error: any) {
     console.error('Error checking for updates:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error.message || 'Unknown error occurred' };
   }
 });
 
