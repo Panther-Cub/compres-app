@@ -1,34 +1,44 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { macAnimations } from './lib/animations';
+import { themeManager } from './lib/theme';
 import OverlayDropZone from './components/OverlayDropZone';
+import type { Theme } from './types';
+
 import './index.css';
 
 function OverlayApp() {
-  // Sync theme with main window
+  const [, setCurrentTheme] = useState<Theme>('system');
+
+  // Use the centralized theme system
   useEffect(() => {
-    const syncTheme = () => {
-      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.classList.toggle('dark', isDark);
-    };
+    // Get initial theme
+    const initialTheme = themeManager.getCurrentTheme();
+    setCurrentTheme(initialTheme);
 
-    // Check initial theme
-    syncTheme();
+    // Subscribe to theme changes
+    const unsubscribe = themeManager.subscribe((theme) => {
+      setCurrentTheme(theme);
+    });
 
-    // Listen for theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', syncTheme);
+    // Force apply theme immediately and multiple times to ensure it's correct
+    themeManager.forceApplyTheme();
+    
+    // Apply again after a short delay to ensure it sticks
+    setTimeout(() => themeManager.forceApplyTheme(), 100);
+    setTimeout(() => themeManager.forceApplyTheme(), 500);
 
-    return () => mediaQuery.removeEventListener('change', syncTheme);
+    return unsubscribe;
   }, []);
 
   return (
     <motion.div 
-      className="h-full w-full bg-transparent overflow-hidden"
+      className="h-full w-full bg-background text-foreground overflow-hidden"
       variants={macAnimations.fadeIn}
       initial="initial"
       animate="animate"
     >
+
       <OverlayDropZone />
     </motion.div>
   );

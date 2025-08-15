@@ -23,9 +23,37 @@ import {
 // Manager class to handle compression operations
 export class CompressionManager {
   private mainWindow: BrowserWindow;
+  private maxConcurrentCompressions: number;
+  private activeCompressions: Set<string>;
 
   constructor(mainWindow: BrowserWindow) {
     this.mainWindow = mainWindow;
+    // Limit concurrent compressions based on system capabilities
+    this.maxConcurrentCompressions = Math.max(1, Math.min(4, require('os').cpus().length - 1));
+    this.activeCompressions = new Set();
+    console.log(`Compression manager initialized with max ${this.maxConcurrentCompressions} concurrent compressions`);
+  }
+
+  // Process promises with concurrency control
+  private async processWithConcurrencyControl<T>(promises: Promise<T>[]): Promise<T[]> {
+    const results: T[] = [];
+    const chunks = this.chunkArray(promises, this.maxConcurrentCompressions);
+    
+    for (const chunk of chunks) {
+      const chunkResults = await Promise.all(chunk);
+      results.push(...chunkResults);
+    }
+    
+    return results;
+  }
+
+  // Helper to chunk array into smaller arrays
+  private chunkArray<T>(array: T[], chunkSize: number): T[][] {
+    const chunks: T[][] = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+      chunks.push(array.slice(i, i + chunkSize));
+    }
+    return chunks;
   }
 
   // Basic compression for multiple files
@@ -101,8 +129,8 @@ export class CompressionManager {
       }
     }
     
-    // Process all compressions in parallel
-    await Promise.all(compressionPromises);
+    // Process compressions with concurrency control
+    await this.processWithConcurrencyControl(compressionPromises);
     
     console.log('All compressions completed:', results);
     return results;
@@ -181,8 +209,8 @@ export class CompressionManager {
       }
     }
     
-    // Process all compressions in parallel
-    await Promise.all(compressionPromises);
+    // Process compressions with concurrency control
+    await this.processWithConcurrencyControl(compressionPromises);
     
     console.log('All advanced compressions completed:', results);
     return results;

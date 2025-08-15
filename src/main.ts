@@ -10,7 +10,6 @@ import {
 } from './electron/compression';
 import { getDefaultOutputDirectory } from './electron/compression/utils';
 import os from 'os';
-import { spawn } from 'child_process';
 
 // Use ffmpeg-static for cross-platform compatibility
 const ffmpegPath = require('ffmpeg-static');
@@ -19,6 +18,22 @@ const ffprobePath = require('ffprobe-static').path;
 // Set ffmpeg paths
 ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
+
+// System resource monitoring
+let systemMonitorInterval: NodeJS.Timeout | null = null;
+
+function startSystemMonitoring() {
+  // Disabled for now - causing too much noise
+  console.log('System monitoring disabled');
+  return;
+}
+
+function stopSystemMonitoring() {
+  if (systemMonitorInterval) {
+    clearInterval(systemMonitorInterval);
+    systemMonitorInterval = null;
+  }
+}
 
 let mainWindow: BrowserWindow | null = null;
 let overlayWindow: BrowserWindow | null = null;
@@ -49,7 +64,8 @@ function createOverlayWindow(): void {
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
       webSecurity: true,
-      allowRunningInsecureContent: false
+      allowRunningInsecureContent: false,
+      partition: 'persist:main'
     },
     show: false
   });
@@ -103,7 +119,8 @@ function createWindow(): void {
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
       webSecurity: true,
-      allowRunningInsecureContent: false
+      allowRunningInsecureContent: false,
+      partition: 'persist:main'
     },
     titleBarStyle: 'hiddenInset',
     vibrancy: 'under-window',
@@ -298,9 +315,38 @@ function createWindow(): void {
   Menu.setApplicationMenu(menu);
 }
 
-app.whenReady().then(createWindow);
+// Configure app session to prevent service worker database issues
+app.commandLine.appendSwitch('disable-features', 'VizDisplayCompositor');
+
+// Mac-specific performance optimizations for video processing
+app.commandLine.appendSwitch('enable-features', 'VaapiVideoDecoder');
+app.commandLine.appendSwitch('ignore-gpu-blacklist');
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
+
+// Memory management for video processing
+app.commandLine.appendSwitch('max-old-space-size', '4096');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
+
+app.whenReady().then(() => {
+  // Clear any existing service worker data on startup
+  const session = require('electron').session;
+  session.defaultSession.clearStorageData({
+    storages: ['serviceworkers']
+  }).then(() => {
+    console.log('Service worker storage cleared');
+    startSystemMonitoring();
+    createWindow();
+  }).catch((err: any) => {
+    console.warn('Failed to clear service worker storage:', err);
+    startSystemMonitoring();
+    createWindow();
+  });
+});
 
 app.on('window-all-closed', () => {
+  stopSystemMonitoring();
   if (process.platform !== 'darwin') {
     app.quit();
   }

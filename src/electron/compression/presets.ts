@@ -2,73 +2,45 @@ import { VideoPreset } from './types';
 
 // Video presets configuration
 export const videoPresets: Record<string, VideoPreset> = {
-  'web-hero': {
-    name: 'Web Hero',
-    description: 'High quality for hero sections and main content',
-    settings: {
-      videoCodec: 'libx264',
-      videoBitrate: '2500k',
-      audioCodec: 'aac',
-      audioBitrate: '128k',
-      resolution: '1920x1080',
-      fps: 30,
-      crf: 22,
-      preset: 'slow'
-    }
-  },
-  'web-standard': {
-    name: 'Web Standard',
-    description: 'Balanced quality and file size for web pages',
-    settings: {
-      videoCodec: 'libx264',
-      videoBitrate: '1500k',
-      audioCodec: 'aac',
-      audioBitrate: '96k',
-      resolution: '1280x720',
-      fps: 30,
-      crf: 25,
-      preset: 'medium'
-    }
-  },
-  'web-mobile': {
-    name: 'Web Mobile',
-    description: 'Optimized for mobile devices and slower connections',
-    settings: {
-      videoCodec: 'libx264',
-      videoBitrate: '800k',
-      audioCodec: 'aac',
-      audioBitrate: '64k',
-      resolution: '854x480',
-      fps: 24,
-      crf: 28,
-      preset: 'fast'
-    }
-  },
-  'social-instagram': {
-    name: 'Instagram',
-    description: 'Optimized for Instagram feed and stories',
-    settings: {
-      videoCodec: 'libx264',
-      videoBitrate: '1200k',
-      audioCodec: 'aac',
-      audioBitrate: '96k',
-      resolution: '1080x1080',
-      fps: 30,
-      crf: 26,
-      preset: 'medium'
-    }
-  },
-  'social-tiktok': {
-    name: 'TikTok',
-    description: 'Optimized for TikTok and vertical video platforms',
+  'web-optimized': {
+    name: 'Web Optimized',
+    description: 'Optimized for web streaming with good quality and small file size',
     settings: {
       videoCodec: 'libx264',
       videoBitrate: '1000k',
       audioCodec: 'aac',
-      audioBitrate: '96k',
-      resolution: '1080x1920',
+      audioBitrate: '64k',
+      resolution: '1280x720',
       fps: 30,
       crf: 27,
+      preset: 'medium'
+    }
+  },
+  'mac-hardware': {
+    name: 'Mac Hardware Accelerated',
+    description: 'Uses Mac VideoToolbox for faster encoding',
+    settings: {
+      videoCodec: 'h264_videotoolbox',
+      videoBitrate: '1000k',
+      audioCodec: 'aac',
+      audioBitrate: '64k',
+      resolution: '1280x720',
+      fps: 30,
+      crf: 27,
+      preset: 'medium'
+    }
+  },
+  'mac-hevc': {
+    name: 'Mac HEVC Hardware',
+    description: 'Hardware-accelerated HEVC encoding for maximum efficiency',
+    settings: {
+      videoCodec: 'hevc_videotoolbox',
+      videoBitrate: '800k',
+      audioCodec: 'aac',
+      audioBitrate: '64k',
+      resolution: '1280x720',
+      fps: 30,
+      crf: 28,
       preset: 'medium'
     }
   },

@@ -84,6 +84,9 @@ const OverlayDropZone: React.FC = () => {
       animate="animate"
       exit="exit"
     >
+      {/* Subtle background pattern */}
+      <div className="absolute inset-0 bg-gradient-to-br from-background/5 via-transparent to-background/5" />
+      
       {/* Toggle button to main window */}
       <motion.div 
         className="absolute top-3 right-3 z-10 non-draggable"
@@ -104,12 +107,9 @@ const OverlayDropZone: React.FC = () => {
         </Button>
       </motion.div>
 
-      {/* Subtle background pattern */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background/5 via-transparent to-background/5" />
-      
       {/* Main content container */}
       <motion.div
-        className="relative flex flex-col items-center justify-center"
+        className="relative flex flex-col items-center justify-center z-10"
         animate={{
           scale: isDragOver ? 1.05 : 1
         }}
@@ -117,7 +117,7 @@ const OverlayDropZone: React.FC = () => {
       >
         {/* Pulsing ring animation */}
         <motion.div
-          className="absolute w-20 h-20 rounded-full border border-foreground/10"
+          className="absolute w-32 h-32 rounded-full border border-foreground/10"
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.1, 0.3]
@@ -130,7 +130,7 @@ const OverlayDropZone: React.FC = () => {
         />
         
         <motion.div
-          className="absolute w-16 h-16 rounded-full border border-foreground/20"
+          className="absolute w-24 h-24 rounded-full border border-foreground/20"
           animate={{
             scale: [1, 1.3, 1],
             opacity: [0.4, 0.05, 0.4]
@@ -156,9 +156,9 @@ const OverlayDropZone: React.FC = () => {
           }}
         >
           <motion.h3 
-            className="text-xl font-light text-foreground/80 mb-2"
+            className="text-xl font-light text-foreground mb-2"
             animate={{
-              color: isDragOver ? "hsl(var(--primary))" : "hsl(var(--foreground)/0.8)"
+              color: isDragOver ? "hsl(var(--primary))" : "hsl(var(--foreground))"
             }}
             transition={{ duration: 0.3 }}
           >
@@ -166,12 +166,8 @@ const OverlayDropZone: React.FC = () => {
           </motion.h3>
           
           <motion.button 
-            className="text-sm text-foreground/50 hover:text-foreground/70 transition-colors cursor-pointer underline decoration-dotted underline-offset-4 non-draggable"
+            className="text-sm text-foreground/60 hover:text-foreground transition-colors cursor-pointer underline decoration-dotted underline-offset-4 non-draggable"
             onClick={handleClick}
-            animate={{
-              opacity: isDragOver ? 0.8 : 0.5
-            }}
-            transition={{ duration: 0.3 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -183,11 +179,11 @@ const OverlayDropZone: React.FC = () => {
         <AnimatePresence>
           {isDragOver && (
             <motion.div
-              className="absolute inset-0 bg-primary/5 border-2 border-primary/20 rounded-3xl"
-              initial={{ opacity: 0, scale: 0.8 }}
+              className="absolute w-screen h-screen bg-primary/5 border-4 border-primary/30 rounded-none"
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
             />
           )}
         </AnimatePresence>

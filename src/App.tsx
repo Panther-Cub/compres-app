@@ -5,6 +5,7 @@ import { useVideoCompression } from './hooks/useVideoCompression';
 import { useSettings } from './hooks/useSettings';
 import { useTheme } from './hooks/useTheme';
 import { macAnimations } from './lib/animations';
+import { themeManager } from './lib/theme';
 import AppHeader from './components/AppHeader';
 import VideoDropZone from './components/VideoDropZone';
 import VideoWorkspace from './components/VideoWorkspace';
@@ -69,6 +70,12 @@ function App() {
   } = useSettings();
 
   const { theme, toggleTheme } = useTheme();
+
+  // Use the centralized theme system
+  useEffect(() => {
+    // Force apply theme immediately to ensure it's correct
+    themeManager.forceApplyTheme();
+  }, []);
 
   // Drag and drop handlers
   const [isDragOver, setIsDragOver] = useState(false);

@@ -99,14 +99,14 @@ const VideoList: React.FC<VideoListProps> = ({
                     >
                       <div className="flex flex-col space-y-3">
                         <div className="flex justify-center">
-                                                  <VideoThumbnail
-                          filePath={file}
-                          fileName={file.split('/').pop() || ''}
-                          thumbnail={info.thumbnail}
-                          onGenerateThumbnail={onGenerateThumbnail}
-                          onPlay={onOpenFile}
-                          size="responsive"
-                        />
+                          <VideoThumbnail
+                            filePath={file}
+                            fileName={file.split('/').pop() || ''}
+                            thumbnail={info.thumbnail}
+                            onGenerateThumbnail={onGenerateThumbnail}
+                            onPlay={onOpenFile}
+                            size="responsive"
+                          />
                         </div>
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
@@ -189,14 +189,14 @@ const VideoList: React.FC<VideoListProps> = ({
                     >
                                               <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                      <VideoThumbnail
-                            filePath={file}
-                            fileName={file.split('/').pop() || ''}
-                            thumbnail={info.thumbnail}
-                            onGenerateThumbnail={onGenerateThumbnail}
-                            onPlay={onOpenFile}
-                            size="small"
-                          />
+                            <VideoThumbnail
+                              filePath={file}
+                              fileName={file.split('/').pop() || ''}
+                              thumbnail={info.thumbnail}
+                              onGenerateThumbnail={onGenerateThumbnail}
+                              onPlay={onOpenFile}
+                              size="small"
+                            />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-3">
                                 <h4 className="text-sm font-medium truncate">{file.split('/').pop()}</h4>
