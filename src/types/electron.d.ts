@@ -23,20 +23,25 @@ declare global {
       }>;
       selectFiles: () => Promise<string[]>;
       selectOutputDirectory: () => Promise<string>;
+      getDefaultOutputDirectory: () => Promise<string>;
+      batchRenameFiles: (data: { files: string[]; newNames: Record<string, string> }) => Promise<Array<{
+        success: boolean;
+        oldPath: string;
+        newPath?: string;
+        error?: string;
+      }>>;
       getPresets: () => Promise<Record<string, any>>;
       
       // Compression operations
       compressVideos: (data: {
         files: string[];
-        presets: string[];
-        keepAudio: boolean;
+        presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
         outputDirectory: string;
         advancedSettings?: any;
       }) => Promise<any[]>;
       compressVideosAdvanced: (data: {
         files: string[];
-        presets: string[];
-        keepAudio: boolean;
+        presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
         outputDirectory: string;
         advancedSettings: any;
       }) => Promise<any[]>;

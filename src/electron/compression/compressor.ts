@@ -15,26 +15,24 @@ function getCompressionManager(mainWindow: BrowserWindow): CompressionManager {
 // Main compression functions - simplified interface
 export async function compressVideos(
   files: string[],
-  presets: string[],
-  keepAudio: boolean,
+  presetConfigs: Array<{ presetId: string; keepAudio: boolean }>,
   outputDirectory: string,
   mainWindow: BrowserWindow,
   advancedSettings?: any
 ) {
   const manager = getCompressionManager(mainWindow);
-  return await manager.compressVideos(files, presets, keepAudio, outputDirectory, advancedSettings);
+  return await manager.compressVideos(files, presetConfigs, outputDirectory, advancedSettings);
 }
 
 export async function compressVideosAdvanced(
   files: string[],
-  presets: string[],
-  keepAudio: boolean,
+  presetConfigs: Array<{ presetId: string; keepAudio: boolean }>,
   outputDirectory: string,
   advancedSettings: any,
   mainWindow: BrowserWindow
 ) {
   const manager = getCompressionManager(mainWindow);
-  return await manager.compressVideosAdvanced(files, presets, keepAudio, outputDirectory, advancedSettings);
+  return await manager.compressVideosAdvanced(files, presetConfigs, outputDirectory, advancedSettings);
 }
 
 // Cancel compression

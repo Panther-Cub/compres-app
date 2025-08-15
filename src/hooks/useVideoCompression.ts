@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { 
   UseVideoCompressionReturn, 
   FileInfo, 
-  AdvancedSettings, 
-  CompressionData 
+  AdvancedSettings
 } from '../types';
 import { getFileName } from '../utils/formatters';
 
@@ -32,23 +31,15 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
   const lastProgressLogRef = useRef<number>(0);
 
   // Helper function to get task key - use consistent file naming
-  const getTaskKey = (file: string, preset: string): string => {
+  const getTaskKey = useCallback((file: string, preset: string): string => {
     // Use the same file naming logic as the manager
     const fileName = getFileName(file);
-    return `${fileName}-${preset}`;
-  };
+    return `${fileName}::${preset}`;
+  }, []);
 
   // Helper function to check if all tasks are complete
   const checkAllTasksComplete = useCallback((): boolean => {
     return completedTasksRef.current === totalTasksRef.current && totalTasksRef.current > 0;
-  }, []);
-
-  // Helper function to update progress
-  const updateProgress = useCallback((taskKey: string, progress: number): void => {
-    setCompressionProgress(prev => ({
-      ...prev,
-      [taskKey]: progress
-    }));
   }, []);
 
   // Helper function to mark task as complete
@@ -61,8 +52,12 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
       task.error = error;
       completedTasksRef.current++;
       
-      // Update progress
-      updateProgress(taskKey, 100);
+      // Remove from progress state since task is complete
+      setCompressionProgress(prev => {
+        const newProgress = { ...prev };
+        delete newProgress[taskKey];
+        return newProgress;
+      });
       
       // Add to output paths if successful
       if (outputPath) {
@@ -85,47 +80,45 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
         }
       }
     }
-  }, [updateProgress, checkAllTasksComplete]);
+  }, [checkAllTasksComplete]);
 
-  // Set up event listeners for compression events
+  // Listen for compression events
   useEffect(() => {
-    if (window.electronAPI) {
-      window.electronAPI.onCompressionStarted((data: CompressionData) => {
-        const taskKey = getTaskKey(data.file, data.preset);
-        const task = compressionTasksRef.current.get(taskKey);
-        if (task) {
-          task.status = 'compressing';
-          task.progress = 0;
-          updateProgress(taskKey, 0);
-        }
-      });
+    const handleCompressionProgress = (data: any) => {
+      const { file, preset, percent } = data;
+      if (!file || !preset || typeof percent !== 'number') {
+        console.warn('Invalid compression progress data:', data);
+        return;
+      }
 
-      window.electronAPI.onCompressionProgress((data: CompressionData) => {
-        const taskKey = getTaskKey(data.file, data.preset);
-        const progress = Math.max(0, Math.min(100, Math.round(data.percent || 0)));
-        
-        updateProgress(taskKey, progress);
-        
-        const task = compressionTasksRef.current.get(taskKey);
-        if (task) {
-          task.progress = progress;
-        }
-      });
+      const taskKey = getTaskKey(file, preset);
+      setCompressionProgress(prev => ({
+        ...prev,
+        [taskKey]: Math.round(Math.max(0, Math.min(100, percent)))
+      }));
+    };
 
-      window.electronAPI.onCompressionComplete((data: CompressionData) => {
-        const taskKey = getTaskKey(data.file, data.preset);
-        markTaskComplete(taskKey, data.outputPath);
-      });
+    const handleCompressionComplete = (data: any) => {
+      const { file, preset } = data;
+      if (!file || !preset) {
+        console.warn('Invalid compression complete data:', data);
+        return;
+      }
 
-      return () => {
-        if (window.electronAPI) {
-          window.electronAPI.removeAllListeners('compression-started');
-          window.electronAPI.removeAllListeners('compression-progress');
-          window.electronAPI.removeAllListeners('compression-complete');
-        }
-      };
-    }
-  }, [updateProgress, markTaskComplete]);
+      const taskKey = getTaskKey(file, preset);
+      markTaskComplete(taskKey);
+    };
+
+    // Add event listeners
+    window.electronAPI.onCompressionProgress(handleCompressionProgress);
+    window.electronAPI.onCompressionComplete(handleCompressionComplete);
+
+    // Cleanup
+    return () => {
+      window.electronAPI.removeAllListeners('compression-progress');
+      window.electronAPI.removeAllListeners('compression-complete');
+    };
+  }, [getTaskKey, markTaskComplete]);
 
   const handleFileSelect = useCallback(async (files: string[]): Promise<void> => {
     setError('');
@@ -192,12 +185,11 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
   }, []);
 
   const compressVideos = useCallback(async (
-    selectedPresets: string[], 
-    keepAudio: boolean, 
+    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>, 
     outputDirectory: string, 
     advancedSettings?: AdvancedSettings
   ): Promise<void> => {
-    if (selectedFiles.length === 0 || selectedPresets.length === 0) {
+    if (selectedFiles.length === 0 || presetConfigs.length === 0) {
       setError('No files or presets selected');
       return;
     }
@@ -223,13 +215,13 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     const initialProgress: Record<string, number> = {};
     
     for (const file of selectedFiles) {
-      for (const preset of selectedPresets) {
+      for (const presetConfig of presetConfigs) {
         // Use consistent file naming with the manager
         const fileName = getFileName(file);
-        const taskKey = getTaskKey(fileName, preset);
+        const taskKey = getTaskKey(fileName, presetConfig.presetId);
         const task: CompressionTask = {
           file: fileName,
-          preset,
+          preset: presetConfig.presetId,
           status: 'pending',
           progress: 0
         };
@@ -248,16 +240,14 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
         if (advancedSettings) {
           await window.electronAPI.compressVideosAdvanced({
             files: selectedFiles,
-            presets: selectedPresets,
-            keepAudio,
+            presetConfigs,
             outputDirectory,
             advancedSettings
           });
         } else {
           await window.electronAPI.compressVideos({
             files: selectedFiles,
-            presets: selectedPresets,
-            keepAudio,
+            presetConfigs,
             outputDirectory,
             advancedSettings: undefined
           });
@@ -278,7 +268,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
         }
       }
     }
-  }, [selectedFiles, markTaskComplete]);
+  }, [selectedFiles, markTaskComplete, getTaskKey]);
 
   const reset = useCallback((): void => {
     setSelectedFiles([]);
@@ -293,54 +283,55 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     compressionTasksRef.current.clear();
     totalTasksRef.current = 0;
     completedTasksRef.current = 0;
-    lastProgressLogRef.current = 0;
   }, []);
 
   const getTotalProgress = useCallback((): number => {
     if (totalTasksRef.current === 0) return 0;
     
-    // Calculate total progress based on actual compression progress state
+    const completedProgress = completedTasksRef.current * 100;
     const progressEntries = Object.entries(compressionProgress);
-    if (progressEntries.length === 0) return 0;
+    const activeProgress = progressEntries.reduce((sum, [_, progress]) => sum + progress, 0);
     
-    // Calculate total progress as sum of all progress values
-    const totalProgress = progressEntries.reduce((sum, [_, progress]) => sum + progress, 0);
-    
-    // Calculate percentage based on total possible progress (100% per task)
+    const totalProgress = completedProgress + activeProgress;
     const totalPossibleProgress = totalTasksRef.current * 100;
     const percentage = (totalProgress / totalPossibleProgress) * 100;
     
-    const finalProgress = Math.max(0, Math.min(100, Math.round(percentage)));
-    
-    // Only log progress changes to reduce console spam
-    if (Math.abs(finalProgress - lastProgressLogRef.current) >= 5) {
-      console.log(`Total Progress: ${finalProgress}% (${completedTasksRef.current}/${totalTasksRef.current} tasks complete)`);
-      lastProgressLogRef.current = finalProgress;
-    }
-    
-    return finalProgress;
+    return Math.max(0, Math.min(100, Math.round(percentage)));
   }, [compressionProgress]);
 
   const closeProgress = useCallback((): void => {
-    if (compressionComplete) {
-      reset();
-    }
-  }, [compressionComplete, reset]);
-
-  const cancelCompression = useCallback((): void => {
-    if (window.electronAPI) {
-      window.electronAPI.cancelCompression();
-    }
-    setIsCompressing(false);
     setCompressionComplete(false);
-    
-    // Mark all pending and compressing tasks as cancelled
-    Array.from(compressionTasksRef.current.entries()).forEach(([taskKey, task]) => {
-      if (task.status === 'pending' || task.status === 'compressing') {
-        markTaskComplete(taskKey, undefined, 'Cancelled');
+    setOutputPaths([]);
+    setError('');
+  }, []);
+
+  const cancelCompression = useCallback(async (): Promise<void> => {
+    if (!isCompressing) {
+      console.warn('Attempted to cancel compression when not compressing');
+      return;
+    }
+
+    try {
+      if (window.electronAPI) {
+        await window.electronAPI.cancelCompression();
       }
-    });
-  }, [markTaskComplete]);
+      console.log('Compression cancellation requested');
+    } catch (error) {
+      console.error('Error canceling compression:', error);
+      throw error;
+    } finally {
+      setIsCompressing(false);
+      setCompressionProgress({});
+      setCompressionComplete(false);
+      setOutputPaths([]);
+      setError('');
+      
+      // Reset compression tracking
+      compressionTasksRef.current.clear();
+      totalTasksRef.current = 0;
+      completedTasksRef.current = 0;
+    }
+  }, [isCompressing]);
 
   return {
     selectedFiles,

@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AlertCircle } from 'lucide-react';
 import { useVideoCompression } from './hooks/useVideoCompression';
 import { useSettings } from './hooks/useSettings';
-import { useFileHandling } from './hooks/useFileHandling';
 import { useTheme } from './hooks/useTheme';
 import AppHeader from './components/AppHeader';
 import VideoDropZone from './components/VideoDropZone';
@@ -11,11 +10,13 @@ import ProgressOverlay from './components/ProgressOverlay';
 import CompressionNotification from './components/CompressionNotification';
 import AboutModal from './components/AboutModal';
 import CustomPresetModal from './components/CustomPresetModal';
+import DefaultsDrawer from './components/DefaultsDrawer';
 
 function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [showProgressOverlay, setShowProgressOverlay] = useState(true);
   const [totalProgress, setTotalProgress] = useState(0);
+  const [showDefaultsDrawer, setShowDefaultsDrawer] = useState(false);
   
   const {
     selectedFiles,
@@ -36,9 +37,10 @@ function App() {
 
   const {
     selectedPresets,
-    keepAudio,
-    setKeepAudio,
+    presetSettings,
+    setPresetSettings,
     outputDirectory,
+    defaultOutputDirectory,
     presets,
     drawerOpen,
     showAdvanced,
@@ -46,23 +48,63 @@ function App() {
     advancedSettings,
     handlePresetToggle,
     handleSelectOutputDirectory,
+    setDefaultOutputDirectory,
     toggleDrawer,
     toggleAdvanced,
     handleAdvancedSettingsChange,
     handleSaveCustomPreset,
     handleCustomPresetSave,
-    setShowCustomPresetModal
+    setShowCustomPresetModal,
+    // New default settings methods
+    defaultPresets,
+    setDefaultPresets,
+    defaultPresetSettings,
+    setDefaultPresetSettings,
+    defaultAdvancedSettings,
+    setDefaultAdvancedSettings,
+    saveUserDefaults,
+    resetToDefaults
   } = useSettings();
 
-  const {
-    isDragOver,
-    handleDragOver,
-    handleDragLeave,
-    handleDrop,
-    handleSelectFiles
-  } = useFileHandling(handleFileSelect);
-
   const { theme, toggleTheme } = useTheme();
+
+  // Drag and drop handlers
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const filePaths = files.map(file => file.path);
+    
+    if (filePaths.length > 0) {
+      handleFileSelect(filePaths);
+    }
+  }, [handleFileSelect]);
+
+  const handleSelectFiles = useCallback(async () => {
+    try {
+      if (window.electronAPI) {
+        const filePaths = await window.electronAPI.selectFiles();
+        if (filePaths && filePaths.length > 0) {
+          handleFileSelect(filePaths);
+        }
+      }
+    } catch (error) {
+      console.error('Error selecting files:', error);
+    }
+  }, [handleFileSelect]);
 
   // Update total progress when compression progress changes
   useEffect(() => {
@@ -108,9 +150,68 @@ function App() {
 
   const handleCompress = (): void => {
     setShowProgressOverlay(true);
-    // Pass advanced settings if they're being used
-    const shouldUseAdvanced = showAdvanced && Object.keys(advancedSettings).length > 0;
-    compressVideos(selectedPresets, keepAudio, outputDirectory, shouldUseAdvanced ? advancedSettings : undefined);
+    
+    // Only use advanced settings if they're enabled AND have been modified from defaults
+    const defaultAdvancedSettings = {
+      crf: 25,
+      videoBitrate: '1500k',
+      audioBitrate: '96k',
+      fps: 30,
+      resolution: '1280x720',
+      preserveAspectRatio: true,
+      twoPass: false,
+      fastStart: true,
+      optimizeForWeb: true
+    };
+    
+    const hasCustomAdvancedSettings = showAdvanced && 
+      JSON.stringify(advancedSettings) !== JSON.stringify(defaultAdvancedSettings);
+    
+    // Create preset-specific settings for compression
+    const presetConfigs = selectedPresets.map(presetId => ({
+      presetId,
+      keepAudio: presetSettings[presetId]?.keepAudio ?? true
+    }));
+    
+    compressVideos(
+      presetConfigs, 
+      outputDirectory, 
+      hasCustomAdvancedSettings ? advancedSettings : undefined
+    );
+  };
+
+  const handleBatchRename = async (newNames: Record<string, string>): Promise<void> => {
+    try {
+      if (!window.electronAPI) {
+        console.warn('Electron API not available - cannot rename files');
+        return;
+      }
+      
+      const results = await window.electronAPI.batchRenameFiles({
+        files: selectedFiles,
+        newNames
+      });
+      
+      // Check for any errors
+      const errors = results.filter(r => !r.success);
+      if (errors.length > 0) {
+        console.error('Some files could not be renamed:', errors);
+        // You could show a notification here
+        return;
+      }
+      
+      // Update the selected files with new paths
+      const newFilePaths = selectedFiles.map(oldPath => {
+        const result = results.find(r => r.oldPath === oldPath);
+        return result?.newPath || oldPath;
+      });
+      
+      // Re-select files with new paths
+      await handleFileSelect(newFilePaths);
+      
+    } catch (error) {
+      console.error('Error during batch rename:', error);
+    }
   };
 
   const handleBuyCoffee = () => {
@@ -122,17 +223,30 @@ function App() {
     presets,
     selectedPresets,
     onPresetToggle: handlePresetToggle,
-    keepAudio,
-    onKeepAudioChange: setKeepAudio,
+    presetSettings,
+    onPresetSettingsChange: setPresetSettings,
     outputDirectory,
     onSelectOutputDirectory: handleSelectOutputDirectory,
+    defaultOutputDirectory,
+    onSetDefaultOutputDirectory: setDefaultOutputDirectory,
+    drawerOpen,
+    onToggleDrawer: toggleDrawer,
     advancedSettings,
     onAdvancedSettingsChange: handleAdvancedSettingsChange,
     showAdvanced,
     onToggleAdvanced: toggleAdvanced,
     onSaveCustomPreset: handleSaveCustomPreset,
     selectedFiles,
-    fileInfos
+    fileInfos,
+    // New default settings props
+    defaultPresets,
+    setDefaultPresets,
+    defaultPresetSettings,
+    setDefaultPresetSettings,
+    defaultAdvancedSettings,
+    setDefaultAdvancedSettings,
+    saveUserDefaults,
+    resetToDefaults
   };
 
   return (
@@ -143,6 +257,7 @@ function App() {
         theme={theme}
         onToggleTheme={toggleTheme}
         onShowAbout={() => setShowAbout(true)}
+        onShowDefaults={() => setShowDefaultsDrawer(true)}
       />
       
       <main className="h-full pt-10 overflow-hidden">
@@ -166,6 +281,7 @@ function App() {
             drawerOpen={drawerOpen}
             onToggleDrawer={toggleDrawer}
             settings={settings}
+            onBatchRename={handleBatchRename}
           />
         )}
 
@@ -214,6 +330,26 @@ function App() {
         onClose={() => setShowCustomPresetModal(false)}
         onSave={handleCustomPresetSave}
         advancedSettings={advancedSettings}
+      />
+
+      {/* Defaults Drawer */}
+      <DefaultsDrawer
+        isOpen={showDefaultsDrawer}
+        onClose={() => setShowDefaultsDrawer(false)}
+        presets={presets}
+        selectedPresets={selectedPresets}
+        presetSettings={presetSettings}
+        advancedSettings={advancedSettings}
+        defaultPresets={defaultPresets}
+        setDefaultPresets={setDefaultPresets}
+        defaultPresetSettings={defaultPresetSettings}
+        setDefaultPresetSettings={setDefaultPresetSettings}
+        defaultAdvancedSettings={defaultAdvancedSettings}
+        setDefaultAdvancedSettings={setDefaultAdvancedSettings}
+        saveUserDefaults={saveUserDefaults}
+        resetToDefaults={resetToDefaults}
+        defaultOutputDirectory={defaultOutputDirectory}
+        onSetDefaultOutputDirectory={setDefaultOutputDirectory}
       />
     </div>
   );

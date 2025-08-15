@@ -60,15 +60,16 @@ const ProgressOverlay: React.FC<ProgressOverlayProps> = ({
               {Object.values(compressionProgress).filter(p => p === 100).length} of {Object.keys(compressionProgress).length} completed
             </div>
             {Object.entries(compressionProgress).map(([key, progress]) => {
-              const [fileName, presetKey] = key.split('-');
+              // Handle preset keys that contain hyphens (like 'social-instagram')
+              const [fileName, presetKey] = key.split('::');
               const preset = presetKey ? (presets as Record<string, any>)[presetKey] : undefined;
               
               return (
                 <div key={key} className="flex items-center gap-3 text-sm">
                   <span className="w-20 truncate font-light">{fileName}</span>
-                  <span className="w-16 text-muted-foreground/60">{preset?.name}</span>
+                  <span className="w-16 text-muted-foreground/60">{preset?.name || presetKey}</span>
                   <Progress value={progress} className="flex-1 h-1" />
-                  <span className="w-8 text-right font-light">{progress}%</span>
+                  <span className="w-8 text-right font-light">{Math.round(progress)}%</span>
                 </div>
               );
             })}

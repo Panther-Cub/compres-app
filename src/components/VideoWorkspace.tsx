@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Play, ArrowLeft, Settings } from 'lucide-react';
+import { Play, Settings, Edit3, ArrowLeft } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 import VideoList from './VideoList';
 import SettingsDrawer from './SettingsDrawer';
+import BatchRenameModal from './BatchRenameModal';
 import { formatFileSize, formatDuration } from '../utils/formatters';
 import type { VideoWorkspaceProps } from '../types';
 
@@ -17,9 +18,11 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
   selectedPresets,
   drawerOpen,
   onToggleDrawer,
-  settings
+  settings,
+  onBatchRename
 }) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [showBatchRename, setShowBatchRename] = useState(false);
 
   return (
     <div className="relative h-full w-full">
@@ -47,7 +50,17 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Settings button removed - use bottom bar button instead */}
+            {selectedFiles.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBatchRename(true)}
+                className="non-draggable text-sm"
+              >
+                <Edit3 className="w-3 h-3 mr-2" />
+                Rename Files
+              </Button>
+            )}
           </div>
         </div>
 
@@ -76,7 +89,9 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
               <Play className="w-3 h-3 mr-2" />
               {isCompressing ? 'Compressing...' : 
                !settings.outputDirectory ? 'Select Output Folder' :
-               `Compress ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''}`}
+               settings.outputDirectory.includes('Compressed Videos') ? 
+                 `Compress ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''} to Desktop` :
+                 `Compress ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''}`}
             </Button>
             <Button 
               variant="outline"
@@ -102,8 +117,8 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
           presets={settings.presets}
           selectedPresets={settings.selectedPresets}
           onPresetToggle={settings.onPresetToggle}
-          keepAudio={settings.keepAudio}
-          onKeepAudioChange={settings.onKeepAudioChange}
+          presetSettings={settings.presetSettings}
+          onPresetSettingsChange={settings.onPresetSettingsChange}
           outputDirectory={settings.outputDirectory}
           onSelectOutputDirectory={settings.onSelectOutputDirectory}
           advancedSettings={settings.advancedSettings}
@@ -113,8 +128,28 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
           onSaveCustomPreset={settings.onSaveCustomPreset}
           selectedFiles={settings.selectedFiles}
           fileInfos={settings.fileInfos}
+          defaultOutputDirectory={settings.defaultOutputDirectory}
+          onSetDefaultOutputDirectory={settings.onSetDefaultOutputDirectory}
+          // New default settings props
+          defaultPresets={settings.defaultPresets}
+          setDefaultPresets={settings.setDefaultPresets}
+          defaultPresetSettings={settings.defaultPresetSettings}
+          setDefaultPresetSettings={settings.setDefaultPresetSettings}
+          defaultAdvancedSettings={settings.defaultAdvancedSettings}
+          setDefaultAdvancedSettings={settings.setDefaultAdvancedSettings}
+          saveUserDefaults={settings.saveUserDefaults}
+          resetToDefaults={settings.resetToDefaults}
         />
       </div>
+
+      {/* Batch Rename Modal */}
+      {showBatchRename && (
+        <BatchRenameModal
+          selectedFiles={selectedFiles}
+          onRename={onBatchRename}
+          onClose={() => setShowBatchRename(false)}
+        />
+      )}
     </div>
   );
 };

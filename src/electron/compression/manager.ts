@@ -31,17 +31,16 @@ export class CompressionManager {
   // Basic compression for multiple files
   async compressVideos(
     files: string[],
-    presets: string[],
-    keepAudio: boolean,
+    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>,
     outputDirectory: string,
     advancedSettings?: AdvancedCompressionSettings
   ): Promise<CompressionResult[]> {
     const results: CompressionResult[] = [];
     const compressionPromises: Promise<CompressionResult>[] = [];
     
-    console.log(`Starting compression of ${files.length} files with ${presets.length} presets each`);
+    console.log(`Starting compression of ${files.length} files with ${presetConfigs.length} presets each`);
     console.log('Files:', files);
-    console.log('Presets:', presets);
+    console.log('Preset configs:', presetConfigs);
     console.log('Advanced settings:', advancedSettings);
     console.log('Output directory:', outputDirectory);
     
@@ -53,28 +52,35 @@ export class CompressionManager {
       throw error;
     }
     
+    // Track file indices to handle duplicate filenames
+    const fileIndices = new Map<string, number>();
+    
     // Create all compression tasks upfront
     for (const file of files) {
-      for (const presetKey of presets) {
-        const preset = videoPresets[presetKey];
+      for (const presetConfig of presetConfigs) {
+        const preset = videoPresets[presetConfig.presetId];
         if (!preset) {
-          console.warn(`Preset ${presetKey} not found, skipping`);
+          console.warn(`Preset ${presetConfig.presetId} not found, skipping`);
           continue;
         }
         
-        // Send initial progress for all files (0%)
+        // Get file index for duplicate filename handling
         const fileName = getFileName(file);
-        const taskKey = createTaskKey(fileName, presetKey);
-        const outputPath = buildOutputPath(file, presetKey, outputDirectory, preset.settings.videoCodec);
+        const currentIndex = fileIndices.get(fileName) || 0;
+        fileIndices.set(fileName, currentIndex + 1);
+        
+        // Send initial progress for all files (0%)
+        const taskKey = createTaskKey(fileName, presetConfig.presetId);
+        const outputPath = buildOutputPath(file, presetConfig.presetId, outputDirectory, preset.settings.videoCodec, presetConfig.keepAudio, currentIndex);
         sendCompressionEvent('compression-started', {
           file: fileName,
-          preset: presetKey,
+          preset: presetConfig.presetId,
           outputPath
         }, this.mainWindow);
         
         // Add to promises array for parallel processing
         compressionPromises.push(
-          compressFileWithPreset(file, presetKey, preset, keepAudio, outputDirectory, taskKey, this.mainWindow, advancedSettings)
+          compressFileWithPreset(file, presetConfig.presetId, preset, presetConfig.keepAudio, outputDirectory, taskKey, this.mainWindow, advancedSettings)
             .then(result => {
               getBasicActiveCompressions().delete(taskKey);
               results.push(result);
@@ -84,7 +90,7 @@ export class CompressionManager {
               getBasicActiveCompressions().delete(taskKey);
               const errorResult: CompressionResult = { 
                 file: getFileName(file), 
-                preset: presetKey, 
+                preset: presetConfig.presetId, 
                 error: error.error || error.message || 'Unknown error', 
                 success: false 
               };
@@ -105,17 +111,16 @@ export class CompressionManager {
   // Advanced compression for multiple files
   async compressVideosAdvanced(
     files: string[],
-    presets: string[],
-    keepAudio: boolean,
+    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>,
     outputDirectory: string,
     advancedSettings: AdvancedCompressionSettings
   ): Promise<CompressionResult[]> {
     const results: CompressionResult[] = [];
     const compressionPromises: Promise<CompressionResult>[] = [];
     
-    console.log(`Starting advanced compression of ${files.length} files with ${presets.length} presets each`);
+    console.log(`Starting advanced compression of ${files.length} files with ${presetConfigs.length} presets each`);
     console.log('Files:', files);
-    console.log('Presets:', presets);
+    console.log('Presets:', presetConfigs);
     console.log('Advanced settings:', advancedSettings);
     console.log('Output directory:', outputDirectory);
     
@@ -127,28 +132,35 @@ export class CompressionManager {
       throw error;
     }
     
+    // Track file indices to handle duplicate filenames
+    const fileIndices = new Map<string, number>();
+    
     // Create all compression tasks upfront
     for (const file of files) {
-      for (const presetKey of presets) {
-        const preset = videoPresets[presetKey];
+      for (const presetConfig of presetConfigs) {
+        const preset = videoPresets[presetConfig.presetId];
         if (!preset) {
-          console.warn(`Preset ${presetKey} not found, skipping`);
+          console.warn(`Preset ${presetConfig.presetId} not found, skipping`);
           continue;
         }
         
-        // Send initial progress for all files (0%)
+        // Get file index for duplicate filename handling
         const fileName = getFileName(file);
-        const taskKey = createTaskKey(fileName, presetKey);
-        const outputPath = buildOutputPath(file, presetKey, outputDirectory, preset.settings.videoCodec);
+        const currentIndex = fileIndices.get(fileName) || 0;
+        fileIndices.set(fileName, currentIndex + 1);
+        
+        // Send initial progress for all files (0%)
+        const taskKey = createTaskKey(fileName, presetConfig.presetId);
+        const outputPath = buildOutputPath(file, presetConfig.presetId, outputDirectory, preset.settings.videoCodec, presetConfig.keepAudio, currentIndex);
         sendCompressionEvent('compression-started', {
           file: fileName,
-          preset: presetKey,
+          preset: presetConfig.presetId,
           outputPath
         }, this.mainWindow);
         
         // Add to promises array for parallel processing
         compressionPromises.push(
-          this.compressFileWithAdvancedSettings(file, presetKey, preset, keepAudio, outputDirectory, advancedSettings, taskKey)
+          this.compressFileWithAdvancedSettings(file, presetConfig.presetId, preset, presetConfig.keepAudio, outputDirectory, advancedSettings, taskKey, currentIndex)
             .then(result => {
               this.cleanupTask(taskKey);
               results.push(result);
@@ -158,7 +170,7 @@ export class CompressionManager {
               this.cleanupTask(taskKey);
               const errorResult: CompressionResult = { 
                 file: getFileName(file), 
-                preset: presetKey, 
+                preset: presetConfig.presetId, 
                 error: error.error || error.message || 'Unknown error', 
                 success: false 
               };
@@ -184,10 +196,11 @@ export class CompressionManager {
     keepAudio: boolean,
     outputDirectory: string,
     advancedSettings: AdvancedCompressionSettings,
-    taskKey: string
+    taskKey: string,
+    fileIndex: number
   ): Promise<CompressionResult> {
     const fileName = getFileName(file);
-    const outputPath = buildOutputPath(file, presetKey, outputDirectory, preset.settings.videoCodec);
+    const outputPath = buildOutputPath(file, presetKey, outputDirectory, preset.settings.videoCodec, keepAudio, fileIndex);
     
     // Use advanced settings if provided, otherwise use preset defaults
     const settings = advancedSettings || preset.settings;

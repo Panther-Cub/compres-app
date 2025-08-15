@@ -1,6 +1,5 @@
 import ffmpeg from 'fluent-ffmpeg';
 import path from 'path';
-import fs from 'fs';
 import { BrowserWindow } from 'electron';
 import { 
   CompressionResult, 
@@ -13,6 +12,8 @@ import {
   sendCompressionEvent,
   buildScaleFilterFromSettings
 } from '../utils';
+import { ProgressHandler } from '../progressHandler';
+import { ValidationUtils } from '../validation';
 
 // Track active compression processes for cancellation
 const activeCompressions = new Map<string, FFmpegCommand>();
@@ -66,10 +67,15 @@ async function executeFirstPass(
 ): Promise<void> {
   return new Promise<void>((passResolve, passReject) => {
     let command = ffmpeg(file);
-    let lastProgressTime = Date.now();
-    let lastProgressPercent = 0;
+    const progressHandler = new ProgressHandler();
     
     try {
+      // Validate input file, output directory, preset, and advanced settings
+      ValidationUtils.validateInputFile(file);
+      ValidationUtils.validateOutputDirectory(outputPath);
+      ValidationUtils.validatePreset(preset, presetKey);
+      ValidationUtils.validateAdvancedSettings(settings);
+      
       // Configure video codec and basic settings
       command = command
         .videoCodec(preset.settings.videoCodec)
@@ -108,33 +114,20 @@ async function executeFirstPass(
           }, mainWindow);
         })
         .on('progress', (progress: FFmpegProgress) => {
-          const currentTime = Date.now();
           const rawPercent = progress.percent || 0;
           
           // First pass is typically 50% of total work
-          let adjustedPercent = Math.max(0, Math.min(50, rawPercent * 0.5));
-          
-          // Handle the 49% stuck issue in first pass
-          if (adjustedPercent >= 49 && lastProgressPercent >= 49) {
-            const timeStuck = currentTime - lastProgressTime;
-            if (timeStuck > 3000) {
-              const additionalProgress = Math.min(0.5, (timeStuck - 3000) / 5000);
-              adjustedPercent = 49 + additionalProgress;
-            }
-          } else if (adjustedPercent < 49) {
-            lastProgressTime = currentTime;
-          }
+          const adjustedPercent = Math.round(Math.max(0, Math.min(50, rawPercent * 0.5)));
           
           // Only send progress updates if there's a meaningful change
-          if (Math.abs(adjustedPercent - lastProgressPercent) >= 0.5) {
-            console.log(`First pass progress for ${fileName}-${presetKey}: ${adjustedPercent.toFixed(1)}%`);
+          if (progressHandler.hasMeaningfulChange(adjustedPercent)) {
+            console.log(`First pass progress for ${fileName}-${presetKey}: ${adjustedPercent}%`);
             sendCompressionEvent('compression-progress', {
               file: fileName,
               preset: presetKey,
               percent: adjustedPercent,
               timemark: progress.timemark
             }, mainWindow);
-            lastProgressPercent = adjustedPercent;
           }
         })
         .on('end', () => {
@@ -168,10 +161,15 @@ async function executeSecondPass(
 ): Promise<void> {
   return new Promise<void>((passResolve, passReject) => {
     let command = ffmpeg(file);
-    let lastProgressTime = Date.now();
-    let lastProgressPercent = 50; // Start from 50% since first pass is complete
+    const progressHandler = new ProgressHandler();
     
     try {
+      // Validate input file, output directory, preset, and advanced settings
+      ValidationUtils.validateInputFile(file);
+      ValidationUtils.validateOutputDirectory(outputPath);
+      ValidationUtils.validatePreset(preset, presetKey);
+      ValidationUtils.validateAdvancedSettings(settings);
+      
       // Configure video codec and basic settings
       command = command
         .videoCodec(preset.settings.videoCodec)
@@ -219,33 +217,20 @@ async function executeSecondPass(
       command
         .output(outputPath)
         .on('progress', (progress: FFmpegProgress) => {
-          const currentTime = Date.now();
           const rawPercent = progress.percent || 0;
           
           // Second pass is the remaining 50% of total work (50-100%)
-          let adjustedPercent = Math.max(50, Math.min(100, 50 + rawPercent * 0.5));
-          
-          // Handle the 99% stuck issue in second pass
-          if (adjustedPercent >= 99 && lastProgressPercent >= 99) {
-            const timeStuck = currentTime - lastProgressTime;
-            if (timeStuck > 5000) {
-              const additionalProgress = Math.min(0.5, (timeStuck - 5000) / 10000);
-              adjustedPercent = 99 + additionalProgress;
-            }
-          } else if (adjustedPercent < 99) {
-            lastProgressTime = currentTime;
-          }
+          const adjustedPercent = progressHandler.setTwoPassProgress(rawPercent);
           
           // Only send progress updates if there's a meaningful change
-          if (Math.abs(adjustedPercent - lastProgressPercent) >= 0.5) {
-            console.log(`Second pass progress for ${fileName}-${presetKey}: ${adjustedPercent.toFixed(1)}%`);
+          if (progressHandler.hasMeaningfulChange(adjustedPercent)) {
+            console.log(`Second pass progress for ${fileName}-${presetKey}: ${adjustedPercent}%`);
             sendCompressionEvent('compression-progress', {
               file: fileName,
               preset: presetKey,
               percent: adjustedPercent,
               timemark: progress.timemark
             }, mainWindow);
-            lastProgressPercent = adjustedPercent;
           }
         })
         .on('end', () => {
@@ -262,7 +247,7 @@ async function executeSecondPass(
           
           // Clean up pass log file
           try {
-            fs.unlinkSync(passLogFile);
+            require('fs').unlinkSync(passLogFile);
           } catch (err) {
             console.warn('Could not delete pass log file:', err);
           }

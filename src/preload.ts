@@ -5,6 +5,13 @@ interface ElectronAPI {
   // File selection
   selectFiles: () => Promise<string[]>;
   selectOutputDirectory: () => Promise<string>;
+  getDefaultOutputDirectory: () => Promise<string>;
+  batchRenameFiles: (data: { files: string[]; newNames: Record<string, string> }) => Promise<Array<{
+    success: boolean;
+    oldPath: string;
+    newPath?: string;
+    error?: string;
+  }>>;
   
   // Video compression
   compressVideos: (data: {
@@ -49,6 +56,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // File selection
   selectFiles: () => ipcRenderer.invoke('select-files'),
   selectOutputDirectory: () => ipcRenderer.invoke('select-output-directory'),
+  getDefaultOutputDirectory: () => ipcRenderer.invoke('get-default-output-directory'),
+  batchRenameFiles: (data) => ipcRenderer.invoke('batch-rename-files', data),
   
   // Video compression
   compressVideos: (data) => ipcRenderer.invoke('compress-videos', data),

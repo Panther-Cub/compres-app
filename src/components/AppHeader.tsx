@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap, Coffee, Info } from 'lucide-react';
+import { Zap, Coffee, Info, Star } from 'lucide-react';
 import { Button } from './ui/button';
 import ThemeToggle from './ThemeToggle';
 import type { AppHeaderProps } from '../types';
@@ -9,7 +9,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   onBuyCoffee, 
   theme, 
   onToggleTheme, 
-  onShowAbout 
+  onShowAbout,
+  onShowDefaults
 }) => {
   return (
     <header className="draggable-region fixed top-0 left-0 right-0 z-50 h-10 glass border-b border-border/20 flex items-center justify-between px-4 select-none">
@@ -23,6 +24,14 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         <span className="text-xs text-muted-foreground/60">
           {selectedFilesCount > 0 ? `${selectedFilesCount} file${selectedFilesCount > 1 ? 's' : ''}` : 'Drop videos'}
         </span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onShowDefaults}
+          className="non-draggable text-xs"
+        >
+          <Star className="w-3 h-3" />
+        </Button>
         <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         <Button
           variant="ghost"

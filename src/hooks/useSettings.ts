@@ -1,15 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { UseSettingsReturn, Preset, AdvancedSettings } from '../types';
+import type { UseSettingsReturn, Preset, AdvancedSettings, UserDefaults, PresetSettings } from '../types';
+import { getDefaultPresets, PRESET_REGISTRY } from '../shared/presetRegistry';
 
-export const useSettings = (): UseSettingsReturn => {
-  const [selectedPresets, setSelectedPresets] = useState<string[]>(['web-hero', 'web-standard']);
-  const [keepAudio, setKeepAudio] = useState<boolean>(false);
-  const [outputDirectory, setOutputDirectory] = useState<string>('');
-  const [presets, setPresets] = useState<Record<string, Preset>>({});
-  const [drawerOpen, setDrawerOpen] = useState<boolean>(true);
-  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
-  const [showCustomPresetModal, setShowCustomPresetModal] = useState<boolean>(false);
-  const [advancedSettings, setAdvancedSettings] = useState<AdvancedSettings>({
+// Default settings that will be used if no user preferences are saved
+const DEFAULT_USER_SETTINGS: UserDefaults = {
+  defaultPresets: getDefaultPresets(),
+  defaultOutputDirectory: '',
+  defaultPresetSettings: {},
+  defaultAdvancedSettings: {
     crf: 25,
     videoBitrate: '1500k',
     audioBitrate: '96k',
@@ -19,11 +17,127 @@ export const useSettings = (): UseSettingsReturn => {
     twoPass: false,
     fastStart: true,
     optimizeForWeb: true
-  });
+  },
+  drawerOpen: true
+};
 
-  // Load presets on mount
+// Storage keys for localStorage
+const STORAGE_KEYS = {
+  USER_DEFAULTS: 'compress-user-defaults',
+  CURRENT_SETTINGS: 'compress-current-settings'
+};
+
+export const useSettings = (): UseSettingsReturn => {
+  // Current session settings
+  const [selectedPresets, setSelectedPresets] = useState<string[]>([]);
+  const [presetSettings, setPresetSettings] = useState<Record<string, PresetSettings>>({});
+  const [outputDirectory, setOutputDirectory] = useState<string>('');
+  const [defaultOutputDirectory, setDefaultOutputDirectory] = useState<string>('');
+  const [presets, setPresets] = useState<Record<string, Preset>>({});
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(true);
+  const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
+  const [showCustomPresetModal, setShowCustomPresetModal] = useState<boolean>(false);
+  const [advancedSettings, setAdvancedSettings] = useState<AdvancedSettings>(DEFAULT_USER_SETTINGS.defaultAdvancedSettings);
+
+  // User default settings (persistent)
+  const [defaultPresets, setDefaultPresets] = useState<string[]>(DEFAULT_USER_SETTINGS.defaultPresets);
+  const [defaultPresetSettings, setDefaultPresetSettings] = useState<Record<string, PresetSettings>>(DEFAULT_USER_SETTINGS.defaultPresetSettings);
+  const [defaultAdvancedSettings, setDefaultAdvancedSettings] = useState<AdvancedSettings>(DEFAULT_USER_SETTINGS.defaultAdvancedSettings);
+
+  // Load user defaults from localStorage
+  const loadUserDefaults = useCallback((): UserDefaults => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.USER_DEFAULTS);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        console.log('Loaded user defaults:', parsed);
+        // Merge with defaults to ensure all properties exist
+        return { ...DEFAULT_USER_SETTINGS, ...parsed };
+      }
+    } catch (error) {
+      console.error('Error loading user defaults:', error);
+    }
+    console.log('Using default user settings:', DEFAULT_USER_SETTINGS);
+    return DEFAULT_USER_SETTINGS;
+  }, []);
+
+  // Save user defaults to localStorage
+  const saveUserDefaults = useCallback((): void => {
+    try {
+      // Only save if user has actually set defaults (not just system defaults)
+      const hasUserSetDefaults = defaultPresets.length > 0 || defaultOutputDirectory !== '';
+      
+      if (!hasUserSetDefaults) {
+        console.log('No user defaults to save - skipping save operation');
+        return;
+      }
+      
+      const userDefaults: UserDefaults = {
+        defaultPresets,
+        defaultOutputDirectory,
+        defaultPresetSettings,
+        defaultAdvancedSettings,
+        drawerOpen
+      };
+      console.log('Saving user defaults:', userDefaults);
+      localStorage.setItem(STORAGE_KEYS.USER_DEFAULTS, JSON.stringify(userDefaults));
+    } catch (error) {
+      console.error('Error saving user defaults:', error);
+    }
+  }, [defaultPresets, defaultOutputDirectory, defaultPresetSettings, defaultAdvancedSettings, drawerOpen]);
+
+  // Reset to default settings
+  const resetToDefaults = useCallback((): void => {
+    // Check if user has actually set defaults
+    const hasUserSetDefaults = defaultPresets.length > 0 || defaultOutputDirectory !== '';
+    
+    if (hasUserSetDefaults) {
+      // Reset to user's saved defaults
+      setSelectedPresets(defaultPresets);
+      setPresetSettings(defaultPresetSettings);
+      setAdvancedSettings(defaultAdvancedSettings);
+    } else {
+      // Reset to empty selection (no user defaults set)
+      setSelectedPresets([]);
+      setPresetSettings({});
+      setAdvancedSettings(DEFAULT_USER_SETTINGS.defaultAdvancedSettings);
+    }
+    setDrawerOpen(DEFAULT_USER_SETTINGS.drawerOpen);
+  }, [defaultPresets, defaultPresetSettings, defaultAdvancedSettings, defaultOutputDirectory]);
+
+  // Initialize settings on mount
   useEffect(() => {
-    const loadPresets = async (): Promise<void> => {
+    const initializeSettings = async (): Promise<void> => {
+      // Load user defaults
+      const userDefaults = loadUserDefaults();
+      console.log('Applying user defaults to current session:', {
+        defaultPresets: userDefaults.defaultPresets,
+        defaultPresetSettings: userDefaults.defaultPresetSettings,
+        defaultOutputDirectory: userDefaults.defaultOutputDirectory
+      });
+      setDefaultPresets(userDefaults.defaultPresets);
+      setDefaultPresetSettings(userDefaults.defaultPresetSettings);
+      setDefaultAdvancedSettings(userDefaults.defaultAdvancedSettings);
+      setDrawerOpen(userDefaults.drawerOpen);
+
+      // Only apply user defaults to current session if user has actually set them
+      // Check if user has made any custom selections (not just system defaults)
+      const hasUserSetDefaults = userDefaults.defaultPresets.length > 0 || userDefaults.defaultOutputDirectory !== '';
+      
+      if (hasUserSetDefaults) {
+        console.log('User has set defaults - applying to current session');
+        setSelectedPresets(userDefaults.defaultPresets);
+        setPresetSettings(userDefaults.defaultPresetSettings);
+        setAdvancedSettings(userDefaults.defaultAdvancedSettings);
+      } else {
+        console.log('Fresh install or no user defaults set - starting with empty selection');
+        // Start with empty selection for fresh installs
+        setSelectedPresets([]);
+        setPresetSettings({});
+        setAdvancedSettings(DEFAULT_USER_SETTINGS.defaultAdvancedSettings);
+      }
+
+      // Load presets
       if (window.electronAPI) {
         try {
           const presetsData = await window.electronAPI.getPresets();
@@ -31,114 +145,52 @@ export const useSettings = (): UseSettingsReturn => {
         } catch (err) {
           console.error('Error loading presets:', err);
         }
+        
+        // Set default output directory - use saved default if available, otherwise get from API
+        if (userDefaults.defaultOutputDirectory) {
+          setDefaultOutputDirectory(userDefaults.defaultOutputDirectory);
+          setOutputDirectory(userDefaults.defaultOutputDirectory);
+        } else {
+          try {
+            const defaultDir = await window.electronAPI.getDefaultOutputDirectory();
+            setDefaultOutputDirectory(defaultDir);
+            setOutputDirectory(defaultDir);
+          } catch (err) {
+            console.error('Error getting default output directory:', err);
+          }
+        }
       } else {
         console.warn('Electron API not available - using default presets');
-        // Set some default presets for browser mode
-        setPresets({
-          'web-hero': { 
-            id: 'web-hero',
-            name: 'Web Hero', 
-            description: 'High quality for hero sections and main content',
-            crf: 20,
-            videoBitrate: '2000k',
-            audioBitrate: '128k',
-            fps: 30,
-            resolution: '1920x1080',
-            keepAudio: true
-          },
-          'web-standard': { 
-            id: 'web-standard',
-            name: 'Web Standard', 
-            description: 'Balanced quality and file size for web pages',
-            crf: 25,
-            videoBitrate: '1500k',
-            audioBitrate: '96k',
-            fps: 30,
-            resolution: '1280x720',
-            keepAudio: true
-          },
-          'web-mobile': { 
-            id: 'web-mobile',
-            name: 'Web Mobile', 
-            description: 'Optimized for mobile devices and slower connections',
-            crf: 28,
-            videoBitrate: '800k',
-            audioBitrate: '64k',
-            fps: 24,
-            resolution: '854x480',
-            keepAudio: true
-          },
-          'social-instagram': { 
-            id: 'social-instagram',
-            name: 'Instagram', 
-            description: 'Optimized for Instagram feed and stories',
-            crf: 23,
-            videoBitrate: '1200k',
-            audioBitrate: '96k',
-            fps: 30,
-            resolution: '1080x1080',
-            keepAudio: true
-          },
-          'social-tiktok': { 
-            id: 'social-tiktok',
-            name: 'TikTok', 
-            description: 'Optimized for TikTok and vertical video platforms',
-            crf: 25,
-            videoBitrate: '1000k',
-            audioBitrate: '96k',
-            fps: 30,
-            resolution: '1080x1920',
-            keepAudio: true
-          },
-          'webm-modern': { 
-            id: 'webm-modern',
-            name: 'WebM Modern', 
-            description: 'Modern WebM format with VP9 for better compression',
-            crf: 30,
-            videoBitrate: '1000k',
-            audioBitrate: '96k',
-            fps: 30,
-            resolution: '1280x720',
-            keepAudio: true
-          },
-          'hevc-efficient': { 
-            id: 'hevc-efficient',
-            name: 'HEVC Efficient', 
-            description: 'H.265/HEVC for maximum compression efficiency',
-            crf: 28,
-            videoBitrate: '800k',
-            audioBitrate: '64k',
-            fps: 30,
-            resolution: '1280x720',
-            keepAudio: true
-          },
-          'thumbnail-preview': { 
-            id: 'thumbnail-preview',
-            name: 'Thumbnail', 
-            description: 'Small file size for thumbnails and previews',
-            crf: 35,
-            videoBitrate: '400k',
-            audioBitrate: '32k',
-            fps: 15,
-            resolution: '640x360',
-            keepAudio: false
-          },
-          'ultra-compressed': { 
-            id: 'ultra-compressed',
-            name: 'Ultra Compressed', 
-            description: 'Maximum compression for minimal file size',
-            crf: 35,
-            videoBitrate: '500k',
-            audioBitrate: '48k',
-            fps: 24,
-            resolution: '854x480',
-            keepAudio: false
-          }
+        // Set some default presets for browser mode using the registry
+        const browserPresets: Record<string, Preset> = {};
+        Object.entries(PRESET_REGISTRY).forEach(([key, metadata]) => {
+          browserPresets[key] = {
+            id: key,
+            name: metadata.name,
+            description: metadata.description,
+            crf: 25, // Default CRF value
+            videoBitrate: '1500k', // Default bitrate
+            audioBitrate: '96k', // Default audio bitrate
+            fps: 30, // Default FPS
+            resolution: '1280x720', // Default resolution
+            keepAudio: metadata.defaultKeepAudio
+          };
         });
+        setPresets(browserPresets);
       }
     };
-    loadPresets();
-  }, []);
+    initializeSettings();
+  }, [loadUserDefaults]);
+
+  // Auto-save user defaults when they change
+  useEffect(() => {
+    // Only save if user has actually set defaults (not just system defaults)
+    const hasUserSetDefaults = defaultPresets.length > 0 || defaultOutputDirectory !== '';
+    
+    if (hasUserSetDefaults) {
+      saveUserDefaults();
+    }
+  }, [defaultPresets, defaultPresetSettings, defaultAdvancedSettings, defaultOutputDirectory, saveUserDefaults]);
 
   const handlePresetToggle = useCallback((presetKey: string): void => {
     setSelectedPresets(prev => 
@@ -146,6 +198,13 @@ export const useSettings = (): UseSettingsReturn => {
         ? prev.filter(p => p !== presetKey)
         : [...prev, presetKey]
     );
+  }, []);
+
+  const handlePresetSettingsChange = useCallback((presetId: string, settings: PresetSettings): void => {
+    setPresetSettings(prev => ({
+      ...prev,
+      [presetId]: settings
+    }));
   }, []);
 
   const handleSelectOutputDirectory = useCallback(async (): Promise<void> => {
@@ -164,6 +223,11 @@ export const useSettings = (): UseSettingsReturn => {
       console.error('Error selecting output directory:', err);
       throw err;
     }
+  }, []);
+
+  const handleSetDefaultOutputDirectory = useCallback((directory: string): void => {
+    setDefaultOutputDirectory(directory);
+    setOutputDirectory(directory);
   }, []);
 
   const toggleDrawer = useCallback((): void => {
@@ -189,9 +253,10 @@ export const useSettings = (): UseSettingsReturn => {
 
   return {
     selectedPresets,
-    keepAudio,
-    setKeepAudio,
+    presetSettings,
+    setPresetSettings: handlePresetSettingsChange,
     outputDirectory,
+    defaultOutputDirectory,
     presets,
     drawerOpen,
     showAdvanced,
@@ -199,11 +264,21 @@ export const useSettings = (): UseSettingsReturn => {
     advancedSettings,
     handlePresetToggle,
     handleSelectOutputDirectory,
+    setDefaultOutputDirectory: handleSetDefaultOutputDirectory,
     toggleDrawer,
     toggleAdvanced,
     handleAdvancedSettingsChange,
     handleSaveCustomPreset,
     handleCustomPresetSave,
-    setShowCustomPresetModal
+    setShowCustomPresetModal,
+    // New persistent settings methods
+    defaultPresets,
+    setDefaultPresets,
+    defaultPresetSettings,
+    setDefaultPresetSettings,
+    defaultAdvancedSettings,
+    setDefaultAdvancedSettings,
+    saveUserDefaults,
+    resetToDefaults
   };
 };

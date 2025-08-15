@@ -11,6 +11,8 @@ import {
   sendCompressionEvent,
   buildScaleFilterFromSettings
 } from '../utils';
+import { ProgressHandler } from '../progressHandler';
+import { ValidationUtils } from '../validation';
 
 // Track active compression processes for cancellation
 const activeCompressions = new Map<string, FFmpegCommand>();
@@ -29,10 +31,15 @@ export async function compressWithSinglePass(
 ): Promise<CompressionResult> {
   return new Promise((resolve, reject) => {
     let command = ffmpeg(file);
-    let lastProgressTime = Date.now();
-    let lastProgressPercent = 0;
+    const progressHandler = new ProgressHandler();
     
     try {
+      // Validate input file, output directory, preset, and advanced settings
+      ValidationUtils.validateInputFile(file);
+      ValidationUtils.validateOutputDirectory(outputPath);
+      ValidationUtils.validatePreset(preset, presetKey);
+      ValidationUtils.validateAdvancedSettings(settings);
+      
       // Start with basic configuration
       command = command
         .videoCodec(preset.settings.videoCodec)
@@ -88,40 +95,35 @@ export async function compressWithSinglePass(
           }, mainWindow);
         })
         .on('progress', (progress: FFmpegProgress) => {
-          const currentTime = Date.now();
           const rawPercent = progress.percent || 0;
-          
-          // Handle the 99% stuck issue by smoothing progress
-          let adjustedPercent = Math.max(0, Math.min(100, rawPercent));
-          
-          // If we're stuck at 99% for more than 5 seconds, gradually increase to 99.5%
-          if (adjustedPercent >= 99 && lastProgressPercent >= 99) {
-            const timeStuck = currentTime - lastProgressTime;
-            if (timeStuck > 5000) {
-              // Gradually increase to 99.5% to show activity
-              const additionalProgress = Math.min(0.5, (timeStuck - 5000) / 10000);
-              adjustedPercent = 99 + additionalProgress;
-            }
-          } else if (adjustedPercent < 99) {
-            // Reset stuck timer if we're not at 99%
-            lastProgressTime = currentTime;
-          }
+          const adjustedPercent = progressHandler.calculateAdjustedProgress(rawPercent);
           
           // Only send progress updates if there's a meaningful change
-          if (Math.abs(adjustedPercent - lastProgressPercent) >= 0.5) {
-            console.log(`Progress for ${fileName}-${presetKey}: ${adjustedPercent.toFixed(1)}%`);
+          if (progressHandler.hasMeaningfulChange(adjustedPercent)) {
+            console.log(`Progress for ${fileName}-${presetKey}: ${adjustedPercent}%`);
             sendCompressionEvent('compression-progress', {
               file: fileName,
               preset: presetKey,
               percent: adjustedPercent,
               timemark: progress.timemark
             }, mainWindow);
-            lastProgressPercent = adjustedPercent;
           }
         })
         .on('end', () => {
           console.log(`Completed advanced single-pass compression: ${fileName} with preset ${presetKey}`);
           console.log(`File saved to: ${outputPath}`);
+          
+          // Verify output file was created and has size > 0
+          try {
+            ValidationUtils.validateOutputFile(outputPath);
+            const stats = require('fs').statSync(outputPath);
+            console.log(`Output file verified: ${outputPath} (${stats.size} bytes)`);
+          } catch (verifyError) {
+            console.error(`Output file verification failed:`, verifyError);
+            activeCompressions.delete(taskKey);
+            reject({ file: fileName, preset: presetKey, error: `Output verification failed: ${verifyError}`, success: false });
+            return;
+          }
           
           // Send final 100% progress before completion
           sendCompressionEvent('compression-progress', {
@@ -141,6 +143,10 @@ export async function compressWithSinglePass(
         })
         .on('error', (err: FFmpegError) => {
           console.error(`Error in advanced single-pass compression ${fileName} with preset ${presetKey}:`, err.message);
+          console.error(`Full error details:`, err);
+          console.error(`Input file: ${file}`);
+          console.error(`Output path: ${outputPath}`);
+          console.error(`FFmpeg command: ${command._getArguments().join(' ')}`);
           activeCompressions.delete(taskKey);
           reject({ file: fileName, preset: presetKey, error: err.message, success: false });
         })

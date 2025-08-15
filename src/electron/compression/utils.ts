@@ -1,11 +1,13 @@
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import { BrowserWindow } from 'electron';
 import { 
   CompressionEvent, 
   CompressionProgress
 } from './types';
 import { getFileName } from '../../utils/formatters';
+import { getPresetFolderName, getPresetSuffix } from '../../shared/presetRegistry';
 
 // Helper function to send compression events
 export function sendCompressionEvent(
@@ -16,6 +18,26 @@ export function sendCompressionEvent(
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send(eventType, data);
   }
+}
+
+// Helper function to get default output directory for Mac
+export function getDefaultOutputDirectory(): string {
+  const homeDir = os.homedir();
+  const desktopDir = path.join(homeDir, 'Desktop');
+  const compressedVideosDir = path.join(desktopDir, 'Compressed Videos');
+  
+  // Create the directory if it doesn't exist
+  if (!fs.existsSync(compressedVideosDir)) {
+    try {
+      fs.mkdirSync(compressedVideosDir, { recursive: true });
+      console.log(`Created default output directory: ${compressedVideosDir}`);
+    } catch (error) {
+      console.warn('Could not create default directory, using Desktop:', error);
+      return desktopDir;
+    }
+  }
+  
+  return compressedVideosDir;
 }
 
 // Helper function to validate and create output directory
@@ -43,9 +65,12 @@ export function ensureOutputDirectory(outputDirectory: string): void {
   }
 }
 
-// Helper function to create preset-specific folder
+// Helper function to create preset-specific folder with better naming
 export function createPresetFolder(outputDirectory: string, presetKey: string): string {
-  const presetFolder = path.join(outputDirectory, presetKey);
+  // Convert preset key to user-friendly folder name
+  const folderName = getPresetFolderName(presetKey);
+  const presetFolder = path.join(outputDirectory, folderName);
+  
   if (!fs.existsSync(presetFolder)) {
     try {
       fs.mkdirSync(presetFolder, { recursive: true });
@@ -58,6 +83,44 @@ export function createPresetFolder(outputDirectory: string, presetKey: string): 
   return presetFolder;
 }
 
+
+
+// Helper function to create user-friendly filename
+export function createUserFriendlyFilename(
+  originalFile: string, 
+  presetKey: string, 
+  videoCodec: string,
+  keepAudio: boolean,
+  index?: number
+): string {
+  const baseName = path.basename(originalFile, path.extname(originalFile));
+  const outputExt = getOutputExtension(videoCodec);
+  
+  // Clean up the base name (remove special characters, limit length)
+  let cleanName = baseName
+    .replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
+    .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+    .trim();
+  
+  // Limit length to 50 characters
+  if (cleanName.length > 50) {
+    cleanName = cleanName.substring(0, 47) + '...';
+  }
+  
+  // Add preset suffix for clarity
+  const presetSuffix = getPresetSuffix(presetKey);
+  
+  // Add audio setting suffix
+  const audioSuffix = keepAudio ? ' - audio' : ' - muted';
+  
+  // Add index if provided (for multiple files with same name)
+  const indexSuffix = index !== undefined ? ` (${index + 1})` : '';
+  
+  return `${cleanName}${presetSuffix}${audioSuffix}${indexSuffix}.${outputExt}`;
+}
+
+
+
 // Helper function to determine output extension based on codec
 export function getOutputExtension(videoCodec: string): string {
   return videoCodec === 'libvpx-vp9' ? 'webm' : 'mp4';
@@ -68,16 +131,16 @@ export function buildOutputPath(
   file: string, 
   presetKey: string, 
   outputDirectory: string, 
-  videoCodec: string
+  videoCodec: string,
+  keepAudio: boolean,
+  index?: number
 ): string {
-  const fileName = path.basename(file, path.extname(file));
-  const outputExt = getOutputExtension(videoCodec);
-  
   // Create preset-specific folder for better organization
   const presetFolder = createPresetFolder(outputDirectory, presetKey);
   
-  // Use a cleaner naming convention
-  const outputFileName = `${fileName}.${outputExt}`;
+  // Create user-friendly filename
+  const outputFileName = createUserFriendlyFilename(file, presetKey, videoCodec, keepAudio, index);
+  
   return path.join(presetFolder, outputFileName);
 }
 
@@ -112,7 +175,7 @@ export function buildScaleFilterFromSettings(
 
 // Helper function to create task key
 export function createTaskKey(fileName: string, presetKey: string): string {
-  return `${fileName}-${presetKey}`;
+  return `${fileName}::${presetKey}`;
 }
 
 // Re-export getFileName from formatters for convenience

@@ -18,3 +18,8 @@ export const getFileName = (filePath: string): string => {
   const lastDotIndex = fileName.lastIndexOf('.');
   return lastDotIndex > 0 ? fileName.substring(0, lastDotIndex) : fileName;
 };
+
+export const getPresetFileName = (originalFileName: string, presetId: string, keepAudio: boolean): string => {
+  const audioSuffix = keepAudio ? 'audio' : 'muted';
+  return `${originalFileName}_${presetId}-${audioSuffix}`;
+};

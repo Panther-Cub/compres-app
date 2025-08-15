@@ -37,14 +37,22 @@ export interface Preset {
   keepAudio: boolean;
 }
 
+// New interface for preset-specific settings
+export interface PresetSettings {
+  keepAudio: boolean;
+}
+
 export interface Settings {
   presets: Record<string, Preset>;
   selectedPresets: string[];
   onPresetToggle: (presetId: string) => void;
-  keepAudio: boolean;
-  onKeepAudioChange: (keepAudio: boolean) => void;
+  // Remove global keepAudio, add per-preset settings
+  presetSettings: Record<string, PresetSettings>;
+  onPresetSettingsChange: (presetId: string, settings: PresetSettings) => void;
   outputDirectory: string;
   onSelectOutputDirectory: () => void;
+  defaultOutputDirectory: string;
+  onSetDefaultOutputDirectory: (directory: string) => void;
   advancedSettings: AdvancedSettings;
   onAdvancedSettingsChange: (settings: AdvancedSettings) => void;
   showAdvanced: boolean;
@@ -52,6 +60,15 @@ export interface Settings {
   onSaveCustomPreset: () => void;
   selectedFiles: string[];
   fileInfos: Record<string, FileInfo>;
+  // New default settings properties
+  defaultPresets: string[];
+  setDefaultPresets: (presets: string[]) => void;
+  defaultPresetSettings: Record<string, PresetSettings>;
+  setDefaultPresetSettings: (settings: Record<string, PresetSettings>) => void;
+  defaultAdvancedSettings: AdvancedSettings;
+  setDefaultAdvancedSettings: (settings: AdvancedSettings) => void;
+  saveUserDefaults: () => void;
+  resetToDefaults: () => void;
 }
 
 // Theme types
@@ -77,6 +94,7 @@ export interface VideoWorkspaceProps {
   drawerOpen: boolean;
   onToggleDrawer: () => void;
   settings: Settings;
+  onBatchRename: (newNames: Record<string, string>) => void;
 }
 
 export interface VideoListProps {
@@ -95,6 +113,7 @@ export interface AppHeaderProps {
   theme: Theme;
   onToggleTheme: () => void;
   onShowAbout: () => void;
+  onShowDefaults: () => void;
 }
 
 export interface ProgressOverlayProps {
@@ -133,10 +152,12 @@ export interface SettingsDrawerProps {
   presets: Record<string, Preset>;
   selectedPresets: string[];
   onPresetToggle: (presetId: string) => void;
-  keepAudio: boolean;
-  onKeepAudioChange: (keepAudio: boolean) => void;
+  presetSettings: Record<string, PresetSettings>;
+  onPresetSettingsChange: (presetId: string, settings: PresetSettings) => void;
   outputDirectory: string;
   onSelectOutputDirectory: () => void;
+  defaultOutputDirectory: string;
+  onSetDefaultOutputDirectory: (directory: string) => void;
   drawerOpen: boolean;
   onToggleDrawer: () => void;
   advancedSettings: AdvancedSettings;
@@ -146,6 +167,15 @@ export interface SettingsDrawerProps {
   onSaveCustomPreset: () => void;
   selectedFiles: string[];
   fileInfos: Record<string, FileInfo>;
+  // New default settings props
+  defaultPresets: string[];
+  setDefaultPresets: (presets: string[]) => void;
+  defaultPresetSettings: Record<string, PresetSettings>;
+  setDefaultPresetSettings: (settings: Record<string, PresetSettings>) => void;
+  defaultAdvancedSettings: AdvancedSettings;
+  setDefaultAdvancedSettings: (settings: AdvancedSettings) => void;
+  saveUserDefaults: () => void;
+  resetToDefaults: () => void;
 }
 
 export interface AdvancedSettingsProps {
@@ -181,9 +211,8 @@ export interface UseVideoCompressionReturn {
   handleFileSelect: (files: string[]) => Promise<void>;
   removeFile: (filePath: string) => void;
   compressVideos: (
-    selectedPresets: string[],
-    keepAudio: boolean,
-    outputDirectory: string,
+    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>, 
+    outputDirectory: string, 
     advancedSettings?: AdvancedSettings
   ) => Promise<void>;
   reset: () => void;
@@ -194,9 +223,10 @@ export interface UseVideoCompressionReturn {
 
 export interface UseSettingsReturn {
   selectedPresets: string[];
-  keepAudio: boolean;
-  setKeepAudio: (keepAudio: boolean) => void;
+  presetSettings: Record<string, PresetSettings>;
+  setPresetSettings: (presetId: string, settings: PresetSettings) => void;
   outputDirectory: string;
+  defaultOutputDirectory: string;
   presets: Record<string, Preset>;
   drawerOpen: boolean;
   showAdvanced: boolean;
@@ -204,12 +234,31 @@ export interface UseSettingsReturn {
   advancedSettings: AdvancedSettings;
   handlePresetToggle: (presetId: string) => void;
   handleSelectOutputDirectory: () => void;
+  setDefaultOutputDirectory: (directory: string) => void;
   toggleDrawer: () => void;
   toggleAdvanced: () => void;
   handleAdvancedSettingsChange: (settings: AdvancedSettings) => void;
   handleSaveCustomPreset: () => void;
   handleCustomPresetSave: () => void;
   setShowCustomPresetModal: (show: boolean) => void;
+  // New persistent settings methods
+  defaultPresets: string[];
+  setDefaultPresets: (presets: string[]) => void;
+  defaultPresetSettings: Record<string, PresetSettings>;
+  setDefaultPresetSettings: (settings: Record<string, PresetSettings>) => void;
+  defaultAdvancedSettings: AdvancedSettings;
+  setDefaultAdvancedSettings: (settings: AdvancedSettings) => void;
+  saveUserDefaults: () => void;
+  resetToDefaults: () => void;
+}
+
+// New interface for persistent user settings
+export interface UserDefaults {
+  defaultPresets: string[];
+  defaultOutputDirectory: string;
+  defaultPresetSettings: Record<string, PresetSettings>;
+  defaultAdvancedSettings: AdvancedSettings;
+  drawerOpen: boolean;
 }
 
 export interface UseFileHandlingReturn {
