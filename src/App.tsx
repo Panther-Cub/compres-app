@@ -15,6 +15,7 @@ import CustomPresetModal from './components/CustomPresetModal';
 function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [showProgressOverlay, setShowProgressOverlay] = useState(true);
+  const [totalProgress, setTotalProgress] = useState(0);
   
   const {
     selectedFiles,
@@ -62,6 +63,18 @@ function App() {
   } = useFileHandling(handleFileSelect);
 
   const { theme, toggleTheme } = useTheme();
+
+  // Update total progress when compression progress changes
+  useEffect(() => {
+    if (isCompressing) {
+      const progress = getTotalProgress();
+      setTotalProgress(progress);
+    } else if (compressionComplete) {
+      setTotalProgress(100);
+    } else {
+      setTotalProgress(0);
+    }
+  }, [compressionProgress, isCompressing, compressionComplete, getTotalProgress]);
 
   // Handle menu events
   useEffect(() => {
@@ -177,7 +190,7 @@ function App() {
           isCompressing={isCompressing}
           compressionComplete={compressionComplete}
           error={error}
-          totalProgress={getTotalProgress()}
+          totalProgress={totalProgress}
           onShowProgress={() => setShowProgressOverlay(true)}
         />
 

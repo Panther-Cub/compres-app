@@ -31,6 +31,7 @@ declare global {
         presets: string[];
         keepAudio: boolean;
         outputDirectory: string;
+        advancedSettings?: any;
       }) => Promise<any[]>;
       compressVideosAdvanced: (data: {
         files: string[];

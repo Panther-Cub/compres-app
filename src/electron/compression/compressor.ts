@@ -18,10 +18,11 @@ export async function compressVideos(
   presets: string[],
   keepAudio: boolean,
   outputDirectory: string,
-  mainWindow: BrowserWindow
+  mainWindow: BrowserWindow,
+  advancedSettings?: any
 ) {
   const manager = getCompressionManager(mainWindow);
-  return await manager.compressVideos(files, presets, keepAudio, outputDirectory);
+  return await manager.compressVideos(files, presets, keepAudio, outputDirectory, advancedSettings);
 }
 
 export async function compressVideosAdvanced(

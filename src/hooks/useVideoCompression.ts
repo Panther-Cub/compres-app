@@ -5,11 +5,7 @@ import type {
   AdvancedSettings, 
   CompressionData 
 } from '../types';
-// Helper function to get filename without extension
-const getFileName = (filePath: string): string => {
-  const lastDotIndex = filePath.lastIndexOf('.');
-  return lastDotIndex > 0 ? filePath.substring(0, lastDotIndex) : filePath;
-};
+import { getFileName } from '../utils/formatters';
 
 interface CompressionTask {
   file: string;
@@ -33,9 +29,14 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
   const compressionTasksRef = useRef<Map<string, CompressionTask>>(new Map());
   const totalTasksRef = useRef<number>(0);
   const completedTasksRef = useRef<number>(0);
+  const lastProgressLogRef = useRef<number>(0);
 
-  // Helper function to get task key
-  const getTaskKey = (file: string, preset: string): string => `${file}-${preset}`;
+  // Helper function to get task key - use consistent file naming
+  const getTaskKey = (file: string, preset: string): string => {
+    // Use the same file naming logic as the manager
+    const fileName = getFileName(file);
+    return `${fileName}-${preset}`;
+  };
 
   // Helper function to check if all tasks are complete
   const checkAllTasksComplete = useCallback((): boolean => {
@@ -101,7 +102,8 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
 
       window.electronAPI.onCompressionProgress((data: CompressionData) => {
         const taskKey = getTaskKey(data.file, data.preset);
-        const progress = Math.round(data.percent || 0);
+        const progress = Math.max(0, Math.min(100, Math.round(data.percent || 0)));
+        
         updateProgress(taskKey, progress);
         
         const task = compressionTasksRef.current.get(taskKey);
@@ -214,12 +216,16 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     compressionTasksRef.current.clear();
     totalTasksRef.current = 0;
     completedTasksRef.current = 0;
+    lastProgressLogRef.current = 0;
     
-    // Create compression tasks
+    // Create compression tasks and initialize progress state
     const tasks: CompressionTask[] = [];
+    const initialProgress: Record<string, number> = {};
+    
     for (const file of selectedFiles) {
       for (const preset of selectedPresets) {
-        const fileName = getFileName(file.split('/').pop() || file);
+        // Use consistent file naming with the manager
+        const fileName = getFileName(file);
         const taskKey = getTaskKey(fileName, preset);
         const task: CompressionTask = {
           file: fileName,
@@ -229,9 +235,13 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
         };
         tasks.push(task);
         compressionTasksRef.current.set(taskKey, task);
+        initialProgress[taskKey] = 0;
         totalTasksRef.current++;
       }
     }
+    
+    // Set initial progress state for all tasks
+    setCompressionProgress(initialProgress);
     
     try {
       if (window.electronAPI) {
@@ -248,7 +258,8 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
             files: selectedFiles,
             presets: selectedPresets,
             keepAudio,
-            outputDirectory
+            outputDirectory,
+            advancedSettings: undefined
           });
         }
       } else {
@@ -282,17 +293,33 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     compressionTasksRef.current.clear();
     totalTasksRef.current = 0;
     completedTasksRef.current = 0;
+    lastProgressLogRef.current = 0;
   }, []);
 
   const getTotalProgress = useCallback((): number => {
     if (totalTasksRef.current === 0) return 0;
     
-    const progressValues = Array.from(compressionTasksRef.current.values())
-      .map(task => task.progress);
+    // Calculate total progress based on actual compression progress state
+    const progressEntries = Object.entries(compressionProgress);
+    if (progressEntries.length === 0) return 0;
     
-    if (progressValues.length === 0) return 0;
-    return Math.round(progressValues.reduce((sum, val) => sum + val, 0) / progressValues.length);
-  }, []);
+    // Calculate total progress as sum of all progress values
+    const totalProgress = progressEntries.reduce((sum, [_, progress]) => sum + progress, 0);
+    
+    // Calculate percentage based on total possible progress (100% per task)
+    const totalPossibleProgress = totalTasksRef.current * 100;
+    const percentage = (totalProgress / totalPossibleProgress) * 100;
+    
+    const finalProgress = Math.max(0, Math.min(100, Math.round(percentage)));
+    
+    // Only log progress changes to reduce console spam
+    if (Math.abs(finalProgress - lastProgressLogRef.current) >= 5) {
+      console.log(`Total Progress: ${finalProgress}% (${completedTasksRef.current}/${totalTasksRef.current} tasks complete)`);
+      lastProgressLogRef.current = finalProgress;
+    }
+    
+    return finalProgress;
+  }, [compressionProgress]);
 
   const closeProgress = useCallback((): void => {
     if (compressionComplete) {

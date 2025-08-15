@@ -11,3 +11,10 @@ export const formatDuration = (seconds: number): string => {
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
+
+export const getFileName = (filePath: string): string => {
+  // Extract just the filename without path
+  const fileName = filePath.split('/').pop() || filePath;
+  const lastDotIndex = fileName.lastIndexOf('.');
+  return lastDotIndex > 0 ? fileName.substring(0, lastDotIndex) : fileName;
+};

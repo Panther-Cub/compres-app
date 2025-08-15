@@ -28,13 +28,27 @@ function createWindow(): void {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.js'),
+      webSecurity: true,
+      allowRunningInsecureContent: false
     },
     titleBarStyle: 'hiddenInset',
     vibrancy: 'under-window',
     visualEffectState: 'active',
     transparent: false,
     show: false
+  });
+
+  // Set Content Security Policy
+  mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+        ]
+      }
+    });
   });
 
   const isDev = process.env.NODE_ENV === 'development';
@@ -227,17 +241,18 @@ ipcMain.handle('get-file-info', async (event, filePath: string) => {
   });
 });
 
-ipcMain.handle('compress-videos', async (event, { files, presets, keepAudio, outputDirectory }: {
+ipcMain.handle('compress-videos', async (event, { files, presets, keepAudio, outputDirectory, advancedSettings }: {
   files: string[];
   presets: string[];
   keepAudio: boolean;
   outputDirectory: string;
+  advancedSettings?: any;
 }) => {
-  console.log('Received compress-videos request:', { files, presets, keepAudio, outputDirectory });
+  console.log('Received compress-videos request:', { files, presets, keepAudio, outputDirectory, advancedSettings });
   if (!mainWindow) {
     throw new Error('Main window not available');
   }
-  return await compressVideos(files, presets, keepAudio, outputDirectory, mainWindow);
+  return await compressVideos(files, presets, keepAudio, outputDirectory, mainWindow, advancedSettings);
 });
 
 ipcMain.handle('compress-videos-advanced', async (event, { files, presets, keepAudio, outputDirectory, advancedSettings }: {

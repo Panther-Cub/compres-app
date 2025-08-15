@@ -1,15 +1,15 @@
-import path from 'path';
 import { BrowserWindow } from 'electron';
 import { 
   CompressionResult, 
-  AdvancedCompressionSettings,
-  FFmpegCommand
+  AdvancedCompressionSettings
 } from './types';
 import { videoPresets } from './presets';
 import {
   sendCompressionEvent,
   createTaskKey,
-  getFileName
+  getFileName,
+  ensureOutputDirectory,
+  buildOutputPath
 } from './utils';
 import {
   compressFileWithPreset,
@@ -33,7 +33,8 @@ export class CompressionManager {
     files: string[],
     presets: string[],
     keepAudio: boolean,
-    outputDirectory: string
+    outputDirectory: string,
+    advancedSettings?: AdvancedCompressionSettings
   ): Promise<CompressionResult[]> {
     const results: CompressionResult[] = [];
     const compressionPromises: Promise<CompressionResult>[] = [];
@@ -41,7 +42,16 @@ export class CompressionManager {
     console.log(`Starting compression of ${files.length} files with ${presets.length} presets each`);
     console.log('Files:', files);
     console.log('Presets:', presets);
+    console.log('Advanced settings:', advancedSettings);
     console.log('Output directory:', outputDirectory);
+    
+    // Validate and ensure output directory exists
+    try {
+      ensureOutputDirectory(outputDirectory);
+    } catch (error) {
+      console.error('Output directory validation failed:', error);
+      throw error;
+    }
     
     // Create all compression tasks upfront
     for (const file of files) {
@@ -55,15 +65,16 @@ export class CompressionManager {
         // Send initial progress for all files (0%)
         const fileName = getFileName(file);
         const taskKey = createTaskKey(fileName, presetKey);
+        const outputPath = buildOutputPath(file, presetKey, outputDirectory, preset.settings.videoCodec);
         sendCompressionEvent('compression-started', {
           file: fileName,
           preset: presetKey,
-          outputPath: path.join(outputDirectory, `${fileName}_${presetKey}.mp4`)
+          outputPath
         }, this.mainWindow);
         
         // Add to promises array for parallel processing
         compressionPromises.push(
-          compressFileWithPreset(file, presetKey, preset, keepAudio, outputDirectory, taskKey, this.mainWindow)
+          compressFileWithPreset(file, presetKey, preset, keepAudio, outputDirectory, taskKey, this.mainWindow, advancedSettings)
             .then(result => {
               getBasicActiveCompressions().delete(taskKey);
               results.push(result);
@@ -74,7 +85,7 @@ export class CompressionManager {
               const errorResult: CompressionResult = { 
                 file: getFileName(file), 
                 preset: presetKey, 
-                error: error.message, 
+                error: error.error || error.message || 'Unknown error', 
                 success: false 
               };
               results.push(errorResult);
@@ -108,6 +119,14 @@ export class CompressionManager {
     console.log('Advanced settings:', advancedSettings);
     console.log('Output directory:', outputDirectory);
     
+    // Validate and ensure output directory exists
+    try {
+      ensureOutputDirectory(outputDirectory);
+    } catch (error) {
+      console.error('Output directory validation failed:', error);
+      throw error;
+    }
+    
     // Create all compression tasks upfront
     for (const file of files) {
       for (const presetKey of presets) {
@@ -120,10 +139,11 @@ export class CompressionManager {
         // Send initial progress for all files (0%)
         const fileName = getFileName(file);
         const taskKey = createTaskKey(fileName, presetKey);
+        const outputPath = buildOutputPath(file, presetKey, outputDirectory, preset.settings.videoCodec);
         sendCompressionEvent('compression-started', {
           file: fileName,
           preset: presetKey,
-          outputPath: path.join(outputDirectory, `${fileName}_${presetKey}.mp4`)
+          outputPath
         }, this.mainWindow);
         
         // Add to promises array for parallel processing
@@ -139,7 +159,7 @@ export class CompressionManager {
               const errorResult: CompressionResult = { 
                 file: getFileName(file), 
                 preset: presetKey, 
-                error: error.message, 
+                error: error.error || error.message || 'Unknown error', 
                 success: false 
               };
               results.push(errorResult);
@@ -167,7 +187,7 @@ export class CompressionManager {
     taskKey: string
   ): Promise<CompressionResult> {
     const fileName = getFileName(file);
-    const outputPath = path.join(outputDirectory, `${fileName}_${presetKey}.mp4`);
+    const outputPath = buildOutputPath(file, presetKey, outputDirectory, preset.settings.videoCodec);
     
     // Use advanced settings if provided, otherwise use preset defaults
     const settings = advancedSettings || preset.settings;
