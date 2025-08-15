@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { Play, Settings, Edit3, ArrowLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
+import { macAnimations, drawerVariants } from '../lib/animations';
 import VideoList from './VideoList';
 import SettingsDrawer from './SettingsDrawer';
 import BatchRenameModal from './BatchRenameModal';
@@ -25,24 +27,37 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
   const [showBatchRename, setShowBatchRename] = useState(false);
 
   return (
-    <div className="relative h-full w-full">
+    <motion.div 
+      className="relative h-full w-full"
+      variants={macAnimations.fadeIn}
+      initial="initial"
+      animate="animate"
+    >
       {/* Main Content Area */}
-      <div className={cn(
-        "h-full flex flex-col transition-all duration-150 ease-out",
-        drawerOpen ? "pr-80" : "pr-0"
-      )}>
+      <motion.div 
+        className={cn(
+          "h-full flex flex-col transition-all duration-150 ease-out",
+          drawerOpen ? "pr-80" : "pr-0"
+        )}
+        variants={macAnimations.slideUp}
+      >
         {/* Top Bar */}
-        <div className="flex items-center justify-between p-4 border-b border-border/20 flex-shrink-0">
+        <motion.div 
+          className="flex items-center justify-between p-4 border-b border-border/20 flex-shrink-0"
+          variants={macAnimations.slideUp}
+        >
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={onReset}
-              className="non-draggable text-sm"
-            >
-              <ArrowLeft className="w-3 h-3 mr-2" />
-              Back
-            </Button>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={onReset}
+                className="non-draggable text-sm"
+              >
+                <ArrowLeft className="w-3 h-3 mr-2" />
+                Back
+              </Button>
+            </motion.div>
             <div className="h-4 w-px bg-border/30"></div>
             <span className="text-sm text-muted-foreground/70">
               {selectedFiles.length} video{selectedFiles.length > 1 ? 's' : ''} selected
@@ -51,18 +66,20 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
           
           <div className="flex items-center gap-2">
             {selectedFiles.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowBatchRename(true)}
-                className="non-draggable text-sm"
-              >
-                <Edit3 className="w-3 h-3 mr-2" />
-                Rename Files
-              </Button>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowBatchRename(true)}
+                  className="non-draggable text-sm"
+                >
+                  <Edit3 className="w-3 h-3 mr-2" />
+                  Rename Files
+                </Button>
+              </motion.div>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Video List */}
         <div className="flex-1 overflow-hidden">
@@ -78,79 +95,99 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
         </div>
 
         {/* Bottom Actions */}
-        <div className="p-4 border-t border-border/20 flex-shrink-0">
+        <motion.div 
+          className="p-4 border-t border-border/20 flex-shrink-0"
+          variants={macAnimations.slideUp}
+        >
           <div className="flex gap-3">
-            <Button 
-              onClick={onCompress}
-              disabled={isCompressing || selectedFiles.length === 0 || selectedPresets.length === 0 || !settings.outputDirectory}
-              className="mac-button flex-1 non-draggable text-sm"
-              size="sm"
+            <motion.div 
+              className="flex-1"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <Play className="w-3 h-3 mr-2" />
-              {isCompressing ? 'Compressing...' : 
-               !settings.outputDirectory ? 'Select Output Folder' :
-               settings.outputDirectory.includes('Compressed Videos') ? 
-                 `Compress ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''} to Desktop` :
-                 `Compress ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''}`}
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={onToggleDrawer}
-              className="mac-button non-draggable text-sm"
-              size="sm"
-            >
-              <Settings className="w-3 h-3 mr-2" />
-              {drawerOpen ? 'Hide' : 'Show'} Settings
-            </Button>
+              <Button 
+                onClick={onCompress}
+                disabled={isCompressing || selectedFiles.length === 0 || selectedPresets.length === 0 || !settings.outputDirectory}
+                className="mac-button w-full non-draggable text-sm"
+                size="sm"
+              >
+                <Play className="w-3 h-3 mr-2" />
+                {isCompressing ? 'Compressing...' : 
+                 !settings.outputDirectory ? 'Select Output Folder' :
+                 settings.outputDirectory.includes('Compressed Videos') ? 
+                   `Compress ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''} to Desktop` :
+                   `Compress ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''}`}
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+              <Button 
+                variant="outline"
+                onClick={onToggleDrawer}
+                className="mac-button non-draggable text-sm"
+                size="sm"
+              >
+                <Settings className="w-3 h-3 mr-2" />
+                {drawerOpen ? 'Hide' : 'Show'} Settings
+              </Button>
+            </motion.div>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Settings Drawer - Fixed Position */}
-      <div className={cn(
-        "absolute top-0 right-0 h-full w-80 drawer border-l border-border/20 transition-transform duration-150 ease-out z-10",
-        drawerOpen ? "translate-x-0" : "translate-x-full"
-      )}>
-        <SettingsDrawer
-          drawerOpen={drawerOpen}
-          onToggleDrawer={onToggleDrawer}
-          presets={settings.presets}
-          selectedPresets={settings.selectedPresets}
-          onPresetToggle={settings.onPresetToggle}
-          presetSettings={settings.presetSettings}
-          onPresetSettingsChange={settings.onPresetSettingsChange}
-          outputDirectory={settings.outputDirectory}
-          onSelectOutputDirectory={settings.onSelectOutputDirectory}
-          advancedSettings={settings.advancedSettings}
-          onAdvancedSettingsChange={settings.onAdvancedSettingsChange}
-          showAdvanced={settings.showAdvanced}
-          onToggleAdvanced={settings.onToggleAdvanced}
-          onSaveCustomPreset={settings.onSaveCustomPreset}
-          selectedFiles={settings.selectedFiles}
-          fileInfos={settings.fileInfos}
-          defaultOutputDirectory={settings.defaultOutputDirectory}
-          onSetDefaultOutputDirectory={settings.onSetDefaultOutputDirectory}
-          // New default settings props
-          defaultPresets={settings.defaultPresets}
-          setDefaultPresets={settings.setDefaultPresets}
-          defaultPresetSettings={settings.defaultPresetSettings}
-          setDefaultPresetSettings={settings.setDefaultPresetSettings}
-          defaultAdvancedSettings={settings.defaultAdvancedSettings}
-          setDefaultAdvancedSettings={settings.setDefaultAdvancedSettings}
-          saveUserDefaults={settings.saveUserDefaults}
-          resetToDefaults={settings.resetToDefaults}
-        />
-      </div>
+      <AnimatePresence>
+        {drawerOpen && (
+          <motion.div 
+            className="absolute top-0 right-0 h-full w-80 drawer border-l border-border/20 z-10"
+            variants={drawerVariants}
+            initial="closed"
+            animate="open"
+            exit="closed"
+          >
+            <SettingsDrawer
+              drawerOpen={drawerOpen}
+              onToggleDrawer={onToggleDrawer}
+              presets={settings.presets}
+              selectedPresets={settings.selectedPresets}
+              onPresetToggle={settings.onPresetToggle}
+              presetSettings={settings.presetSettings}
+              onPresetSettingsChange={settings.onPresetSettingsChange}
+              outputDirectory={settings.outputDirectory}
+              onSelectOutputDirectory={settings.onSelectOutputDirectory}
+              advancedSettings={settings.advancedSettings}
+              onAdvancedSettingsChange={settings.onAdvancedSettingsChange}
+              showAdvanced={settings.showAdvanced}
+              onToggleAdvanced={settings.onToggleAdvanced}
+              onSaveCustomPreset={settings.onSaveCustomPreset}
+              selectedFiles={settings.selectedFiles}
+              fileInfos={settings.fileInfos}
+              defaultOutputDirectory={settings.defaultOutputDirectory}
+              onSetDefaultOutputDirectory={settings.onSetDefaultOutputDirectory}
+              // New default settings props
+              defaultPresets={settings.defaultPresets}
+              setDefaultPresets={settings.setDefaultPresets}
+              defaultPresetSettings={settings.defaultPresetSettings}
+              setDefaultPresetSettings={settings.setDefaultPresetSettings}
+              defaultAdvancedSettings={settings.defaultAdvancedSettings}
+              setDefaultAdvancedSettings={settings.setDefaultAdvancedSettings}
+              saveUserDefaults={settings.saveUserDefaults}
+              resetToDefaults={settings.resetToDefaults}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Batch Rename Modal */}
-      {showBatchRename && (
-        <BatchRenameModal
-          selectedFiles={selectedFiles}
-          onRename={onBatchRename}
-          onClose={() => setShowBatchRename(false)}
-        />
-      )}
-    </div>
+      <AnimatePresence>
+        {showBatchRename && (
+          <BatchRenameModal
+            selectedFiles={selectedFiles}
+            onRename={onBatchRename}
+            onClose={() => setShowBatchRename(false)}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 };
 

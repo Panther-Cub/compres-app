@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useVideoCompression } from './hooks/useVideoCompression';
 import { useSettings } from './hooks/useSettings';
 import { useTheme } from './hooks/useTheme';
+import { macAnimations } from './lib/animations';
 import AppHeader from './components/AppHeader';
 import VideoDropZone from './components/VideoDropZone';
 import VideoWorkspace from './components/VideoWorkspace';
@@ -250,7 +252,12 @@ function App() {
   };
 
   return (
-    <div className="h-full w-full bg-background text-foreground overflow-hidden">
+    <motion.div 
+      className="h-full w-full bg-background text-foreground overflow-hidden"
+      variants={macAnimations.fadeIn}
+      initial="initial"
+      animate="animate"
+    >
       <AppHeader 
         selectedFilesCount={selectedFiles.length} 
         onBuyCoffee={handleBuyCoffee}
@@ -261,45 +268,51 @@ function App() {
       />
       
       <main className="h-full pt-10 overflow-hidden">
-        {selectedFiles.length === 0 ? (
-          <VideoDropZone
-            isDragOver={isDragOver}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            onSelectFiles={handleSelectFiles}
-          />
-        ) : (
-          <VideoWorkspace
-            selectedFiles={selectedFiles}
-            fileInfos={fileInfos}
-            onRemoveFile={removeFile}
-            onReset={reset}
-            onCompress={handleCompress}
-            isCompressing={isCompressing}
-            selectedPresets={selectedPresets}
-            drawerOpen={drawerOpen}
-            onToggleDrawer={toggleDrawer}
-            settings={settings}
-            onBatchRename={handleBatchRename}
-          />
-        )}
+        <AnimatePresence mode="wait">
+          {selectedFiles.length === 0 ? (
+            <VideoDropZone
+              key="dropzone"
+              isDragOver={isDragOver}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              onSelectFiles={handleSelectFiles}
+            />
+          ) : (
+            <VideoWorkspace
+              key="workspace"
+              selectedFiles={selectedFiles}
+              fileInfos={fileInfos}
+              onRemoveFile={removeFile}
+              onReset={reset}
+              onCompress={handleCompress}
+              isCompressing={isCompressing}
+              selectedPresets={selectedPresets}
+              drawerOpen={drawerOpen}
+              onToggleDrawer={toggleDrawer}
+              settings={settings}
+              onBatchRename={handleBatchRename}
+            />
+          )}
+        </AnimatePresence>
 
-        {showProgressOverlay && (
-          <ProgressOverlay
-            isCompressing={isCompressing}
-            compressionComplete={compressionComplete}
-            compressionProgress={compressionProgress}
-            outputPaths={outputPaths}
-            presets={presets}
-            getTotalProgress={getTotalProgress}
-            onClose={() => {
-              closeProgress();
-              setShowProgressOverlay(false);
-            }}
-            onCancel={cancelCompression}
-          />
-        )}
+        <AnimatePresence>
+          {showProgressOverlay && (
+            <ProgressOverlay
+              isCompressing={isCompressing}
+              compressionComplete={compressionComplete}
+              compressionProgress={compressionProgress}
+              outputPaths={outputPaths}
+              presets={presets}
+              getTotalProgress={getTotalProgress}
+              onClose={() => {
+                closeProgress();
+                setShowProgressOverlay(false);
+              }}
+              onCancel={cancelCompression}
+            />
+          )}
+        </AnimatePresence>
 
         <CompressionNotification
           isVisible={(isCompressing || compressionComplete) && !showProgressOverlay}
@@ -312,46 +325,66 @@ function App() {
 
         {/* Bottom Right Controls - Removed, moved to header */}
 
-        {error && (
-          <div className="fixed bottom-4 left-4 w-80 p-4 bg-destructive/10 border border-destructive/20 rounded-lg z-50">
-            <div className="flex items-center gap-2 text-destructive">
-              <AlertCircle className="w-4 h-4" />
-              <p className="text-sm">{error}</p>
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div 
+              className="fixed bottom-4 left-4 w-80 p-4 bg-destructive/10 border border-destructive/20 rounded-lg z-50"
+              variants={macAnimations.slideUp}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              <div className="flex items-center gap-2 text-destructive">
+                <AlertCircle className="w-4 h-4" />
+                <p className="text-sm">{error}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
-      <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)} />
+      <AnimatePresence>
+        {showAbout && (
+          <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)} />
+        )}
+      </AnimatePresence>
 
       {/* Custom Preset Modal */}
-      <CustomPresetModal
-        isOpen={showCustomPresetModal}
-        onClose={() => setShowCustomPresetModal(false)}
-        onSave={handleCustomPresetSave}
-        advancedSettings={advancedSettings}
-      />
+      <AnimatePresence>
+        {showCustomPresetModal && (
+          <CustomPresetModal
+            isOpen={showCustomPresetModal}
+            onClose={() => setShowCustomPresetModal(false)}
+            onSave={handleCustomPresetSave}
+            advancedSettings={advancedSettings}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Defaults Drawer */}
-      <DefaultsDrawer
-        isOpen={showDefaultsDrawer}
-        onClose={() => setShowDefaultsDrawer(false)}
-        presets={presets}
-        selectedPresets={selectedPresets}
-        presetSettings={presetSettings}
-        advancedSettings={advancedSettings}
-        defaultPresets={defaultPresets}
-        setDefaultPresets={setDefaultPresets}
-        defaultPresetSettings={defaultPresetSettings}
-        setDefaultPresetSettings={setDefaultPresetSettings}
-        defaultAdvancedSettings={defaultAdvancedSettings}
-        setDefaultAdvancedSettings={setDefaultAdvancedSettings}
-        saveUserDefaults={saveUserDefaults}
-        resetToDefaults={resetToDefaults}
-        defaultOutputDirectory={defaultOutputDirectory}
-        onSetDefaultOutputDirectory={setDefaultOutputDirectory}
-      />
-    </div>
+      <AnimatePresence>
+        {showDefaultsDrawer && (
+          <DefaultsDrawer
+            isOpen={showDefaultsDrawer}
+            onClose={() => setShowDefaultsDrawer(false)}
+            presets={presets}
+            selectedPresets={selectedPresets}
+            presetSettings={presetSettings}
+            advancedSettings={advancedSettings}
+            defaultPresets={defaultPresets}
+            setDefaultPresets={setDefaultPresets}
+            defaultPresetSettings={defaultPresetSettings}
+            setDefaultPresetSettings={setDefaultPresetSettings}
+            defaultAdvancedSettings={defaultAdvancedSettings}
+            setDefaultAdvancedSettings={setDefaultAdvancedSettings}
+            saveUserDefaults={saveUserDefaults}
+            resetToDefaults={resetToDefaults}
+            defaultOutputDirectory={defaultOutputDirectory}
+            onSetDefaultOutputDirectory={setDefaultOutputDirectory}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 

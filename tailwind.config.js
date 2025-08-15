@@ -17,6 +17,19 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+        mono: ['SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+      },
+      fontSize: {
+        'xs': ['0.6875rem', { lineHeight: '0.875rem', fontWeight: '400' }], // 11px
+        'sm': ['0.75rem', { lineHeight: '1rem', fontWeight: '400' }], // 12px
+        'base': ['0.8125rem', { lineHeight: '1.125rem', fontWeight: '400' }], // 13px
+        'lg': ['0.9375rem', { lineHeight: '1.25rem', fontWeight: '400' }], // 15px
+        'xl': ['1rem', { lineHeight: '1.375rem', fontWeight: '400' }], // 16px
+        '2xl': ['1.125rem', { lineHeight: '1.5rem', fontWeight: '500' }], // 18px
+        '3xl': ['1.25rem', { lineHeight: '1.625rem', fontWeight: '500' }], // 20px
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
