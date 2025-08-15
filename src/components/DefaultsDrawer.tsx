@@ -62,15 +62,13 @@ const DefaultsDrawer: React.FC<DefaultsDrawerProps> = ({
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div 
-          className="absolute top-10 right-0 h-[calc(100vh-40px)] w-80 drawer bg-background border-l border-border/20 z-10"
-          variants={drawerVariants}
-          initial="closed"
-          animate="open"
-          exit="closed"
-        >
+    <motion.div 
+      className="absolute top-10 right-0 h-[calc(100vh-40px)] w-80 drawer glass border-l border-border/20 z-10"
+      variants={drawerVariants}
+      initial="closed"
+      animate="open"
+      exit="closed"
+    >
           <div className="h-full flex flex-col">
             {/* Header */}
             <motion.div 
@@ -87,20 +85,14 @@ const DefaultsDrawer: React.FC<DefaultsDrawerProps> = ({
                   </motion.div>
                   <h2 className="text-base font-medium">Default Settings</h2>
                 </div>
-                <motion.div 
-                  whileHover={{ scale: 1.05, rotate: 90 }} 
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClose}
+                  className="h-8 w-8 p-0"
                 >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClose}
-                    className="h-8 w-8 p-0"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </motion.div>
+                  <X className="w-4 h-4" />
+                </Button>
               </div>
             </motion.div>
 
@@ -276,8 +268,6 @@ const DefaultsDrawer: React.FC<DefaultsDrawerProps> = ({
             </div>
           </div>
         </motion.div>
-      )}
-    </AnimatePresence>
   );
 };
 

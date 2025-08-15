@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, FileVideo } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { getFileName } from '../utils/formatters';
+import { macAnimations, overlayVariants } from '../lib/animations';
 
 interface BatchRenameModalProps {
   selectedFiles: string[];
@@ -113,12 +115,32 @@ const BatchRenameModal: React.FC<BatchRenameModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-background rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-hidden">
+    <motion.div 
+      className="fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"
+      variants={overlayVariants}
+      initial="hidden"
+      animate="visible"
+      exit="hidden"
+    >
+      <motion.div 
+        className="glass-modal rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden"
+        variants={macAnimations.modal}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border/20">
+        <motion.div 
+          className="flex items-center justify-between p-6 border-b border-border/20"
+          variants={macAnimations.slideUp}
+        >
           <div className="flex items-center gap-3">
-            <FileVideo className="w-5 h-5 text-blue-500" />
+            <motion.div
+              whileHover={{ scale: 1.1, rotate: 15 }}
+              transition={{ duration: 0.2 }}
+            >
+              <FileVideo className="w-5 h-5 text-blue-500" />
+            </motion.div>
             <div>
               <h2 className="text-lg font-semibold">Batch Rename Files</h2>
               <p className="text-sm text-muted-foreground">
@@ -126,15 +148,17 @@ const BatchRenameModal: React.FC<BatchRenameModalProps> = ({
               </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-8 w-8 p-0"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClose}
+              className="h-8 w-8 p-0"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </motion.div>
+        </motion.div>
 
         {/* Content */}
         <div className="p-6 space-y-6 overflow-y-auto max-h-[60vh]">
@@ -236,16 +260,23 @@ const BatchRenameModal: React.FC<BatchRenameModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-border/20">
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleRename}>
-            Rename Files
-          </Button>
-        </div>
-      </div>
-    </div>
+        <motion.div 
+          className="flex items-center justify-end gap-3 p-6 border-t border-border/20"
+          variants={macAnimations.slideUp}
+        >
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button onClick={handleRename}>
+              Rename Files
+            </Button>
+          </motion.div>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 };
 

@@ -138,7 +138,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
       <AnimatePresence>
         {drawerOpen && (
           <motion.div 
-            className="absolute top-0 right-0 h-full w-80 drawer border-l border-border/20 z-10"
+            className="absolute top-0 right-0 h-full w-80 drawer glass border-l border-border/20 z-10"
             variants={drawerVariants}
             initial="closed"
             animate="open"

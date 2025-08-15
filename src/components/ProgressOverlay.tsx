@@ -20,7 +20,7 @@ const ProgressOverlay: React.FC<ProgressOverlayProps> = ({
 
   return (
     <motion.div 
-      className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center"
+      className="fixed inset-0 glass-overlay z-50 flex items-center justify-center"
       variants={overlayVariants}
       initial="hidden"
       animate="visible"
@@ -29,7 +29,7 @@ const ProgressOverlay: React.FC<ProgressOverlayProps> = ({
       {/* Allow clicking outside to minimize */}
       <div className="absolute inset-0" onClick={() => !isCompressing && onClose?.()} />
       <motion.div 
-        className="w-full max-w-md p-6 space-y-6 relative bg-background border border-border/20 rounded-lg" 
+        className="w-full max-w-md p-6 space-y-6 relative glass-modal rounded-lg" 
         onClick={(e) => e.stopPropagation()}
         variants={macAnimations.modal}
         initial="initial"
