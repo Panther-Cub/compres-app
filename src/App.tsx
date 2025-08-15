@@ -83,7 +83,17 @@ function App() {
     setIsDragOver(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const ensureOverlayHidden = useCallback(async () => {
+    try {
+      if (window.electronAPI) {
+        await window.electronAPI.hideOverlay();
+      }
+    } catch (error) {
+      console.error('Error hiding overlay:', error);
+    }
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragOver(false);
     
@@ -92,8 +102,10 @@ function App() {
     
     if (filePaths.length > 0) {
       handleFileSelect(filePaths);
+      // Ensure overlay is hidden when files are dropped on main window
+      await ensureOverlayHidden();
     }
-  }, [handleFileSelect]);
+  }, [handleFileSelect, ensureOverlayHidden]);
 
   const handleSelectFiles = useCallback(async () => {
     try {
@@ -101,6 +113,8 @@ function App() {
         const filePaths = await window.electronAPI.selectFiles();
         if (filePaths && filePaths.length > 0) {
           handleFileSelect(filePaths);
+          // Hide overlay when files are selected from main window
+          await window.electronAPI.hideOverlay();
         }
       }
     } catch (error) {
@@ -120,7 +134,7 @@ function App() {
     }
   }, [compressionProgress, isCompressing, compressionComplete, getTotalProgress]);
 
-  // Handle menu events
+  // Handle menu events and overlay communication
   useEffect(() => {
     // Only set up menu events if we're in Electron
     if (window.electronAPI) {
@@ -139,16 +153,29 @@ function App() {
         handleSelectOutputDirectory();
       });
 
+      // Overlay file drops
+      window.electronAPI.onOverlayFilesDropped((filePaths: string[]) => {
+        handleFileSelect(filePaths);
+      });
+
       // Cleanup listeners
       return () => {
         if (window.electronAPI) {
           window.electronAPI.removeAllListeners('show-about-modal');
           window.electronAPI.removeAllListeners('trigger-file-select');
           window.electronAPI.removeAllListeners('trigger-output-select');
+          window.electronAPI.removeAllListeners('overlay-files-dropped');
         }
       };
     }
-  }, [handleSelectFiles, handleSelectOutputDirectory]);
+  }, [handleSelectFiles, handleSelectOutputDirectory, handleFileSelect]);
+
+  // Ensure overlay is hidden when main window has files
+  useEffect(() => {
+    if (selectedFiles.length > 0) {
+      ensureOverlayHidden();
+    }
+  }, [selectedFiles.length, ensureOverlayHidden]);
 
   const handleCompress = (): void => {
     setShowProgressOverlay(true);
@@ -257,6 +284,29 @@ function App() {
     window.open('https://buymeacoffee.com/pantherandcub', '_blank');
   };
 
+  // Removed handleToggleOverlay since we now use handleShowOverlay
+
+  const handleShowOverlay = useCallback(async () => {
+    try {
+      if (window.electronAPI) {
+        await window.electronAPI.showOverlay();
+        // Hide the main window when showing overlay
+        if (window.electronAPI.hideMainWindow) {
+          await window.electronAPI.hideMainWindow();
+        }
+      }
+    } catch (error) {
+      console.error('Error showing overlay:', error);
+    }
+  }, []);
+
+  const handleReset = useCallback(async () => {
+    // First reset the compression state
+    reset();
+    // Then show the overlay and hide the main window
+    await handleShowOverlay();
+  }, [reset, handleShowOverlay]);
+
   const settings = {
     presets,
     selectedPresets,
@@ -301,6 +351,7 @@ function App() {
         onToggleTheme={toggleTheme}
         onShowAbout={() => setShowAbout(true)}
         onShowDefaults={() => setShowDefaultsDrawer(true)}
+        onToggleOverlay={handleShowOverlay}
       />
       
       <main className="h-full pt-10 overflow-hidden">
@@ -320,7 +371,7 @@ function App() {
               selectedFiles={selectedFiles}
               fileInfos={fileInfos}
               onRemoveFile={removeFile}
-              onReset={reset}
+              onReset={handleReset}
               onCompress={handleCompress}
               isCompressing={isCompressing}
               selectedPresets={selectedPresets}

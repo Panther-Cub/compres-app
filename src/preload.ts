@@ -43,10 +43,18 @@ interface ElectronAPI {
   showInFinder: (filePath: string) => Promise<{ success: boolean }>;
   openFile: (filePath: string) => Promise<{ success: boolean }>;
   
+  // Overlay window functionality
+  overlayFileDrop: (filePaths: string[]) => Promise<{ success: boolean; validFiles: string[] }>;
+  toggleOverlay: (show: boolean) => Promise<{ success: boolean }>;
+  showOverlay: () => Promise<{ success: boolean }>;
+  hideOverlay: () => Promise<{ success: boolean }>;
+  hideMainWindow: () => Promise<{ success: boolean }>;
+  
   // Event listeners
   onCompressionStarted: (callback: (data: any) => void) => void;
   onCompressionProgress: (callback: (data: any) => void) => void;
   onCompressionComplete: (callback: (data: any) => void) => void;
+  onOverlayFilesDropped: (callback: (filePaths: string[]) => void) => void;
   
   // Menu events
   onShowAboutModal: (callback: () => void) => void;
@@ -76,6 +84,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showInFinder: (filePath: string) => ipcRenderer.invoke('show-in-finder', filePath),
   openFile: (filePath: string) => ipcRenderer.invoke('open-file', filePath),
   
+  // Overlay window functionality
+  overlayFileDrop: (filePaths: string[]) => ipcRenderer.invoke('overlay-file-drop', filePaths),
+  toggleOverlay: (show: boolean) => ipcRenderer.invoke('toggle-overlay', show),
+  showOverlay: () => ipcRenderer.invoke('show-overlay'),
+  hideOverlay: () => ipcRenderer.invoke('hide-overlay'),
+  hideMainWindow: () => ipcRenderer.invoke('hide-main-window'),
+  showMainWindow: () => ipcRenderer.invoke('show-main-window'),
+  
   // Event listeners
   onCompressionStarted: (callback: (data: any) => void) => {
     ipcRenderer.on('compression-started', (event, data) => callback(data));
@@ -87,6 +103,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   onCompressionComplete: (callback: (data: any) => void) => {
     ipcRenderer.on('compression-complete', (event, data) => callback(data));
+  },
+  
+  onOverlayFilesDropped: (callback: (filePaths: string[]) => void) => {
+    ipcRenderer.on('overlay-files-dropped', (event, filePaths) => callback(filePaths));
   },
   
   // Menu events

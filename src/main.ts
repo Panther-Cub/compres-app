@@ -21,6 +21,76 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 ffmpeg.setFfprobePath(ffprobePath);
 
 let mainWindow: BrowserWindow | null = null;
+let overlayWindow: BrowserWindow | null = null;
+
+function createOverlayWindow(): void {
+  // Get screen dimensions
+  const { screen } = require('electron');
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const { width, height } = primaryDisplay.workAreaSize;
+  
+  // Create overlay window
+  overlayWindow = new BrowserWindow({
+    width: 400,
+    height: 300,
+    x: width - 420, // Position in bottom right
+    y: height - 320,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    resizable: false,
+    minimizable: false,
+    maximizable: false,
+    closable: false,
+    focusable: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.js'),
+      webSecurity: true,
+      allowRunningInsecureContent: false
+    },
+    show: false
+  });
+
+  // Set Content Security Policy for overlay
+  overlayWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': [
+          "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+        ]
+      }
+    });
+  });
+
+  const isDev = process.env.NODE_ENV === 'development';
+
+  if (isDev) {
+    overlayWindow.loadURL('http://localhost:3000/overlay');
+  } else {
+    overlayWindow.loadFile(path.join(__dirname, 'index.html'), { hash: 'overlay' });
+  }
+
+  // Handle overlay window close
+  overlayWindow.on('closed', () => {
+    overlayWindow = null;
+  });
+
+  // Prevent overlay from being closed
+  overlayWindow.on('close', (event) => {
+    event.preventDefault();
+  });
+
+  // Ensure main window is hidden whenever overlay is shown
+  overlayWindow.on('show', () => {
+    if (mainWindow) {
+      mainWindow.hide();
+    }
+  });
+}
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -65,9 +135,31 @@ function createWindow(): void {
   }
 
   mainWindow.once('ready-to-show', () => {
-    if (mainWindow) {
-      mainWindow.show();
+    // Don't show main window initially - keep it hidden
+    // mainWindow.show();
+  });
+
+  // Ensure overlay is hidden whenever main window is shown
+  mainWindow.on('show', () => {
+    if (overlayWindow) {
+      overlayWindow.hide();
     }
+  });
+
+  // Create overlay window after main window is ready
+  mainWindow.once('ready-to-show', () => {
+    createOverlayWindow();
+    if (overlayWindow) {
+      overlayWindow.show();
+    }
+  });
+
+  // Handle main window close - show overlay again
+  mainWindow.on('closed', () => {
+    if (overlayWindow) {
+      overlayWindow.show();
+    }
+    mainWindow = null;
   });
 
   // Create native menu
@@ -77,7 +169,20 @@ function createWindow(): void {
       submenu: [
         {
           label: 'About Compress',
-          click: () => {
+          click: async () => {
+            // If overlay is visible, switch to main window first
+            if (overlayWindow && overlayWindow.isVisible()) {
+              if (mainWindow) {
+                if (mainWindow.isMinimized()) {
+                  mainWindow.restore();
+                }
+                mainWindow.show();
+                mainWindow.focus();
+              }
+              overlayWindow.hide();
+            }
+            
+            // Show about modal on main window
             if (mainWindow) {
               mainWindow.webContents.send('show-about-modal');
             }
@@ -99,7 +204,20 @@ function createWindow(): void {
         {
           label: 'Select Videos',
           accelerator: 'Cmd+O',
-          click: () => {
+          click: async () => {
+            // If overlay is visible, switch to main window first
+            if (overlayWindow && overlayWindow.isVisible()) {
+              if (mainWindow) {
+                if (mainWindow.isMinimized()) {
+                  mainWindow.restore();
+                }
+                mainWindow.show();
+                mainWindow.focus();
+              }
+              overlayWindow.hide();
+            }
+            
+            // Trigger file select on main window
             if (mainWindow) {
               mainWindow.webContents.send('trigger-file-select');
             }
@@ -109,7 +227,20 @@ function createWindow(): void {
         {
           label: 'Select Output Directory',
           accelerator: 'Cmd+Shift+O',
-          click: () => {
+          click: async () => {
+            // If overlay is visible, switch to main window first
+            if (overlayWindow && overlayWindow.isVisible()) {
+              if (mainWindow) {
+                if (mainWindow.isMinimized()) {
+                  mainWindow.restore();
+                }
+                mainWindow.show();
+                mainWindow.focus();
+              }
+              overlayWindow.hide();
+            }
+            
+            // Trigger output select on main window
             if (mainWindow) {
               mainWindow.webContents.send('trigger-output-select');
             }
@@ -179,6 +310,107 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+// IPC handlers for overlay window communication
+ipcMain.handle('overlay-file-drop', async (event, filePaths: string[]) => {
+  console.log('Overlay received file drop:', filePaths);
+  
+  // Validate and filter files
+  const validFiles = [];
+  for (const filePath of filePaths) {
+    try {
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        console.warn(`File does not exist: ${filePath}`);
+        continue;
+      }
+      
+      // Check if file is readable
+      fs.accessSync(filePath, fs.constants.R_OK);
+      
+      // Check if file has valid extension
+      const ext = path.extname(filePath).toLowerCase();
+      const validExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.wmv', '.flv', '.webm', '.m4v'];
+      if (!validExtensions.includes(ext)) {
+        console.warn(`Invalid file extension: ${filePath}`);
+        continue;
+      }
+      
+      // Check file size (skip files larger than 10GB)
+      const stats = fs.statSync(filePath);
+      if (stats.size > 10 * 1024 * 1024 * 1024) {
+        console.warn(`File too large (${stats.size} bytes): ${filePath}`);
+        continue;
+      }
+      
+      validFiles.push(filePath);
+    } catch (error) {
+      console.error(`Error validating file ${filePath}:`, error);
+    }
+  }
+  
+  // Send files to main window if any are valid
+  if (validFiles.length > 0 && mainWindow) {
+    mainWindow.webContents.send('overlay-files-dropped', validFiles);
+    
+    // Show main window and bring to front
+    if (mainWindow.isMinimized()) {
+      mainWindow.restore();
+    }
+    mainWindow.show();
+    mainWindow.focus();
+    
+    // Hide the overlay window
+    if (overlayWindow) {
+      overlayWindow.hide();
+    }
+  }
+  
+  return { success: true, validFiles };
+});
+
+ipcMain.handle('toggle-overlay', async (event, show: boolean) => {
+  if (overlayWindow) {
+    if (show) {
+      overlayWindow.show();
+    } else {
+      overlayWindow.hide();
+    }
+  }
+  return { success: true };
+});
+
+ipcMain.handle('show-overlay', async () => {
+  if (overlayWindow) {
+    overlayWindow.show();
+  }
+  return { success: true };
+});
+
+ipcMain.handle('hide-overlay', async () => {
+  if (overlayWindow) {
+    overlayWindow.hide();
+  }
+  return { success: true };
+});
+
+ipcMain.handle('hide-main-window', async () => {
+  if (mainWindow) {
+    mainWindow.hide();
+  }
+  return { success: true };
+});
+
+ipcMain.handle('show-main-window', async () => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) {
+      mainWindow.restore();
+    }
+    mainWindow.show();
+    mainWindow.focus();
+  }
+  return { success: true };
 });
 
 // IPC handlers

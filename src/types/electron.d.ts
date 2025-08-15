@@ -13,6 +13,9 @@ declare global {
       onCompressionProgress: (callback: (data: any) => void) => void;
       onCompressionComplete: (callback: (data: any) => void) => void;
       
+      // Overlay events
+      onOverlayFilesDropped: (callback: (filePaths: string[]) => void) => void;
+      
       // File operations
       getFileInfo: (filePath: string) => Promise<{
         duration: number;
@@ -36,6 +39,14 @@ declare global {
       generateThumbnail: (filePath: string) => Promise<string>;
       showInFinder: (filePath: string) => Promise<{ success: boolean }>;
       openFile: (filePath: string) => Promise<{ success: boolean }>;
+      
+      // Overlay operations
+      overlayFileDrop: (filePaths: string[]) => Promise<{ success: boolean; validFiles: string[] }>;
+      toggleOverlay: (show: boolean) => Promise<{ success: boolean }>;
+      showOverlay: () => Promise<{ success: boolean }>;
+      hideOverlay: () => Promise<{ success: boolean }>;
+      hideMainWindow: () => Promise<{ success: boolean }>;
+      showMainWindow: () => Promise<{ success: boolean }>;
       
       // Compression operations
       compressVideos: (data: {

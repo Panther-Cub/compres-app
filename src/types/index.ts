@@ -122,6 +122,7 @@ export interface AppHeaderProps {
   onToggleTheme: () => void;
   onShowAbout: () => void;
   onShowDefaults: () => void;
+  onToggleOverlay?: () => void;
 }
 
 export interface ProgressOverlayProps {

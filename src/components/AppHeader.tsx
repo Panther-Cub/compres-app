@@ -1,5 +1,5 @@
 import React from 'react';
-import { Zap, Coffee, Info, Star } from 'lucide-react';
+import { Zap, Coffee, Info, Star, Monitor } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from './ui/button';
 import ThemeToggle from './ThemeToggle';
@@ -12,7 +12,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   theme, 
   onToggleTheme, 
   onShowAbout,
-  onShowDefaults
+  onShowDefaults,
+  onToggleOverlay
 }) => {
   return (
     <motion.header 
@@ -56,6 +57,19 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             <Star className="w-3 h-3" />
           </Button>
         </motion.div>
+        {onToggleOverlay && (
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggleOverlay}
+              className="non-draggable text-[0.625rem]"
+              title="Show overlay"
+            >
+              <Monitor className="w-3 h-3" />
+            </Button>
+          </motion.div>
+        )}
         <ThemeToggle theme={theme} onToggle={onToggleTheme} />
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button
