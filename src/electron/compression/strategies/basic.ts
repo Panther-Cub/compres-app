@@ -12,7 +12,8 @@ export async function compressFileWithPreset(
   outputDirectory: string,
   taskKey: string,
   mainWindow: BrowserWindow,
-  advancedSettings?: any
+  advancedSettings?: any,
+  batchProgressManager?: any
 ): Promise<CompressionResult> {
   const fileName = getFileName(file);
   const outputPath = buildOutputPath(file, presetKey, outputDirectory, preset.settings.videoCodec, keepAudio);
@@ -27,7 +28,8 @@ export async function compressFileWithPreset(
     fileName,
     outputPath,
     mainWindow,
-    settings: advancedSettings
+    settings: advancedSettings,
+    batchProgressManager
   };
 
   const strategy = new BasicCompressionStrategy(context);

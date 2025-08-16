@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Settings, FolderOpen, Sliders, Zap } from 'lucide-react';
 import { Button } from './ui';
 import AdvancedSettings from './AdvancedSettings';
-import PresetRecommendations from './PresetRecommendations';
+import { PresetRecommendations } from './PresetRecommendations';
 import type { SettingsDrawerProps } from '../types';
 
 type TabType = 'presets' | 'output' | 'advanced';
@@ -86,15 +86,10 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             {activeTab === 'presets' && (
               <div className="space-y-4">
                 {/* Preset Recommendations */}
-                {selectedFiles.length > 0 && (
-                  <PresetRecommendations
-                    selectedFiles={selectedFiles}
-                    fileInfos={fileInfos}
-                    presets={presets}
-                    selectedPresets={selectedPresets}
-                    onPresetToggle={onPresetToggle}
-                  />
-                )}
+                <PresetRecommendations
+                  selectedPresets={selectedPresets}
+                  onPresetSelect={onPresetToggle}
+                />
 
                 {/* Current Session Presets */}
                 <div className="space-y-2">

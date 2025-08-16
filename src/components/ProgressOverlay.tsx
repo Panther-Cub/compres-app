@@ -90,7 +90,7 @@ const ProgressOverlay: React.FC<ProgressOverlayProps> = ({
             </h3>
           </div>
           <p className="text-sm text-muted-foreground/60">
-            {isCompressing ? `${getTotalProgress()}% complete` : 'All videos have been compressed'}
+            {isCompressing ? `${getTotalProgress().toFixed(1)}% complete` : 'All videos have been compressed'}
           </p>
           {isCompressing && (
             <p className="text-xs text-muted-foreground/40">
@@ -136,7 +136,7 @@ const ProgressOverlay: React.FC<ProgressOverlayProps> = ({
                     <span className="w-20 truncate font-light">{fileName}</span>
                     <span className="w-16 text-muted-foreground/60">{preset?.name || presetKey}</span>
                     <Progress value={progress} className="flex-1 h-1" />
-                    <span className="w-8 text-right font-light">{Math.round(progress)}%</span>
+                    <span className="w-8 text-right font-light">{progress.toFixed(1)}%</span>
                   </motion.div>
                 );
               })}

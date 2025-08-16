@@ -1,63 +1,44 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Lightbulb, Sparkles } from 'lucide-react';
 import { Button } from './ui';
-import type { PresetRecommendationsProps } from '../types';
+import { videoPresets } from '../electron/compression/presets';
 
-const PresetRecommendations: React.FC<PresetRecommendationsProps> = ({ 
-  selectedFiles, 
-  fileInfos, 
-  presets, 
-  selectedPresets, 
-  onPresetToggle 
+interface PresetRecommendationsProps {
+  onPresetSelect: (presetId: string) => void;
+  selectedPresets: string[];
+}
+
+export const PresetRecommendations: React.FC<PresetRecommendationsProps> = ({
+  onPresetSelect,
+  selectedPresets
 }) => {
+  const [isMac, setIsMac] = useState(false);
+  const [hasHardwareAcceleration, setHasHardwareAcceleration] = useState(false);
+
+  useEffect(() => {
+    // Detect if we're on Mac
+    const platform = navigator.platform.toLowerCase();
+    setIsMac(platform.includes('mac'));
+    setHasHardwareAcceleration(isMac);
+  }, [isMac]);
+
   const getRecommendations = (): string[] => {
-    if (selectedFiles.length === 0) return [];
-
     const recommendations: string[] = [];
-    const fileInfo = fileInfos[selectedFiles[0]]; // Use first file for analysis
 
-    // Check if fileInfo exists and has the required properties
-    if (!fileInfo || !fileInfo.width || !fileInfo.height) {
-      // Return basic recommendations if we don't have file info
-      return ['web-optimized', 'mac-hardware', 'thumbnail-preview'];
+    // Start with hardware-optimized presets for Mac
+    if (isMac && hasHardwareAcceleration) {
+      recommendations.push('mac-hardware', 'mac-hevc');
+    } else {
+      recommendations.push('web-optimized');
     }
 
-    // Analyze video characteristics
-    const { width, height, duration, size } = fileInfo;
-    const aspectRatio = width && height ? width / height : 1;
-    const isVertical = aspectRatio < 0.8;
-    const isSquare = aspectRatio > 0.8 && aspectRatio < 1.2;
-    // const isWide = aspectRatio > 1.5; // Future use for wide video optimization
-    const isHighRes = width > 1920 || height > 1080;
-    const isLongVideo = duration > 300; // 5 minutes
-    const isLargeFile = size > 100 * 1024 * 1024; // 100MB
+    // Add quality-focused options
+    recommendations.push('hevc-efficient', 'webm-modern');
 
-    // Base recommendations
-    recommendations.push('web-optimized');
+    // Add utility presets
+    recommendations.push('thumbnail-preview');
 
-    // Resolution-based recommendations
-    if (isHighRes) {
-      recommendations.push('mac-hevc');
-    }
-
-    // Aspect ratio recommendations - using available presets
-    if (isVertical) {
-      recommendations.push('web-optimized'); // Use web-optimized for vertical videos
-    } else if (isSquare) {
-      recommendations.push('web-optimized'); // Use web-optimized for square videos
-    }
-
-    // File size recommendations
-    if (isLargeFile || isLongVideo) {
-      recommendations.push('mac-hardware');
-      recommendations.push('hevc-efficient');
-    }
-
-    // Modern format recommendations
-    recommendations.push('webm-modern');
-
-    // Remove duplicates and limit to 4 recommendations
-    return Array.from(new Set(recommendations)).slice(0, 4);
+    return recommendations;
   };
 
   const recommendations = getRecommendations();
@@ -72,12 +53,14 @@ const PresetRecommendations: React.FC<PresetRecommendationsProps> = ({
         <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100">
           Recommended Presets
         </h3>
-        <Sparkles className="w-3 h-3 text-purple-500" />
+        {isMac && hasHardwareAcceleration && (
+          <Sparkles className="w-3 h-3 text-purple-500" />
+        )}
       </div>
       
       <div className="flex flex-wrap gap-2">
         {unselectedRecommendations.map((presetKey) => {
-          const preset = presets[presetKey];
+          const preset = videoPresets[presetKey];
           if (!preset) return null;
           
           return (
@@ -85,7 +68,7 @@ const PresetRecommendations: React.FC<PresetRecommendationsProps> = ({
               key={presetKey}
               variant="outline"
               size="sm"
-              onClick={() => onPresetToggle(presetKey)}
+              onClick={() => onPresetSelect(presetKey)}
               className="text-xs bg-white/50 dark:bg-black/20 border-blue-200/50 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/40"
             >
               {preset.name}
@@ -95,10 +78,11 @@ const PresetRecommendations: React.FC<PresetRecommendationsProps> = ({
       </div>
       
       <p className="text-xs text-blue-700/70 dark:text-blue-300/70 mt-2">
-        Based on your video characteristics, these presets will give you the best results for web optimization.
+        {isMac && hasHardwareAcceleration 
+          ? "Hardware-accelerated presets for optimal Mac performance."
+          : "Optimized presets for web and general use."
+        }
       </p>
     </div>
   );
 };
-
-export default PresetRecommendations;

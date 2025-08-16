@@ -44,6 +44,34 @@ export const videoPresets: Record<string, VideoPreset> = {
       preset: 'medium'
     }
   },
+  'mac-ultra-fast': {
+    name: 'Mac Ultra Fast',
+    description: 'Maximum speed with hardware acceleration for quick previews',
+    settings: {
+      videoCodec: 'h264_videotoolbox',
+      videoBitrate: '500k',
+      audioCodec: 'aac',
+      audioBitrate: '48k',
+      resolution: '1280x720',
+      fps: 30,
+      crf: 30,
+      preset: 'ultrafast'
+    }
+  },
+  'mac-high-quality': {
+    name: 'Mac High Quality',
+    description: 'High quality with hardware acceleration for professional use',
+    settings: {
+      videoCodec: 'hevc_videotoolbox',
+      videoBitrate: '2000k',
+      audioCodec: 'aac',
+      audioBitrate: '128k',
+      resolution: '1920x1080',
+      fps: 30,
+      crf: 23,
+      preset: 'slow'
+    }
+  },
   'webm-modern': {
     name: 'WebM Modern',
     description: 'Modern WebM format with VP9 for better compression',
@@ -98,6 +126,34 @@ export const videoPresets: Record<string, VideoPreset> = {
       fps: 24,
       crf: 35,
       preset: 'ultrafast'
+    }
+  },
+  'mac-4k-ready': {
+    name: 'Mac 4K Ready',
+    description: '4K optimized with hardware acceleration for high-resolution content',
+    settings: {
+      videoCodec: 'hevc_videotoolbox',
+      videoBitrate: '4000k',
+      audioCodec: 'aac',
+      audioBitrate: '128k',
+      resolution: '3840x2160',
+      fps: 30,
+      crf: 25,
+      preset: 'medium'
+    }
+  },
+  'mac-mobile-optimized': {
+    name: 'Mac Mobile Optimized',
+    description: 'Optimized for mobile devices with hardware acceleration',
+    settings: {
+      videoCodec: 'h264_videotoolbox',
+      videoBitrate: '800k',
+      audioCodec: 'aac',
+      audioBitrate: '64k',
+      resolution: '1280x720',
+      fps: 30,
+      crf: 28,
+      preset: 'fast'
     }
   }
 };

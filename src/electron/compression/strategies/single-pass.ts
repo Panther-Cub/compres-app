@@ -1,7 +1,6 @@
 import ffmpeg from 'fluent-ffmpeg';
 import { BrowserWindow } from 'electron';
 import { CompressionResult, AdvancedCompressionSettings } from '../types';
-import { buildOutputPath, getFileName } from '../utils';
 import { BaseCompressionStrategy, CompressionContext } from './base';
 
 export async function compressWithSinglePass(
@@ -14,7 +13,8 @@ export async function compressWithSinglePass(
   taskKey: string,
   fileName: string,
   outputPath: string,
-  mainWindow: BrowserWindow
+  mainWindow: BrowserWindow,
+  batchProgressManager?: any
 ): Promise<CompressionResult> {
   const context: CompressionContext = {
     file,
@@ -26,7 +26,8 @@ export async function compressWithSinglePass(
     fileName,
     outputPath,
     mainWindow,
-    settings
+    settings,
+    batchProgressManager
   };
 
   const strategy = new SinglePassCompressionStrategy(context);

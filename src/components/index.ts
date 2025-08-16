@@ -14,7 +14,7 @@ export { default as CompressionNotification } from './CompressionNotification';
 export { default as CustomPresetModal } from './CustomPresetModal';
 export { default as DefaultsDrawer } from './DefaultsDrawer';
 export { default as OverlayDropZone } from './OverlayDropZone';
-export { default as PresetRecommendations } from './PresetRecommendations';
+export { PresetRecommendations } from './PresetRecommendations';
 export { default as ProgressOverlay } from './ProgressOverlay';
 export { default as SettingsDrawer } from './SettingsDrawer';
 export { default as SettingsWindow } from './SettingsWindow';

@@ -96,7 +96,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
       console.log(`Setting progress for ${taskKey}: ${percent}%`);
       setCompressionProgress(prev => ({
         ...prev,
-        [taskKey]: Math.round(Math.max(0, Math.min(100, percent)))
+        [taskKey]: Math.max(0, Math.min(100, percent)) // Removed Math.round for fluid progress
       }));
     };
 
@@ -346,7 +346,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     // Calculate percentage based on total tasks
     const percentage = (totalProgressWithCompleted / totalTasksRef.current) / 100 * 100;
     
-    return Math.max(0, Math.min(100, Math.round(percentage)));
+    return Math.max(0, Math.min(100, percentage)); // Removed Math.round for fluid progress
   }, [compressionProgress]);
 
   const closeProgress = useCallback((): void => {

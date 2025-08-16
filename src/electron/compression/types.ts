@@ -50,6 +50,35 @@ export interface CompressionEvent {
   outputPath?: string;
 }
 
+// Extended event types for new features
+export interface HardwareDetectionEvent {
+  hasVideoToolbox: boolean;
+  recommendedCodec: string;
+  chipType: string;
+}
+
+export interface BatchProgressEvent {
+  totalTasks: number;
+  completedTasks: number;
+  failedTasks: number;
+  cancelledTasks: number;
+  overallProgress: number;
+  estimatedTimeRemaining: number;
+}
+
+export interface CompressionCancelledEvent {
+  message: string;
+  killedProcesses: number;
+}
+
+// Union type for all compression events
+export type CompressionEventData = 
+  | CompressionEvent 
+  | CompressionProgress 
+  | HardwareDetectionEvent 
+  | BatchProgressEvent 
+  | CompressionCancelledEvent;
+
 export interface AdvancedCompressionSettings {
   crf?: number;
   videoBitrate?: string;

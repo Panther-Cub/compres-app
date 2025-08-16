@@ -4,7 +4,8 @@ import os from 'os';
 import { BrowserWindow } from 'electron';
 import { 
   CompressionEvent, 
-  CompressionProgress
+  CompressionProgress,
+  CompressionEventData
 } from './types';
 import { getFileName } from '../../utils/formatters';
 import { getPresetFolderName, getPresetSuffix } from '../../shared/presetRegistry';
@@ -12,7 +13,7 @@ import { getPresetFolderName, getPresetSuffix } from '../../shared/presetRegistr
 // Helper function to send compression events
 export function sendCompressionEvent(
   eventType: string, 
-  data: CompressionEvent | CompressionProgress, 
+  data: CompressionEventData, 
   mainWindow: BrowserWindow
 ): void {
   if (mainWindow && !mainWindow.isDestroyed()) {

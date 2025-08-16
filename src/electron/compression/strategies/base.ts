@@ -1,4 +1,3 @@
-import ffmpeg from 'fluent-ffmpeg';
 import { BrowserWindow } from 'electron';
 import { 
   CompressionResult, 
@@ -13,6 +12,7 @@ import {
 } from '../utils';
 import { ProgressHandler } from '../progressHandler';
 import { ValidationUtils } from '../validation';
+import { CompressionErrorHandler } from '../error-handler';
 
 // Track active compression processes for cancellation
 const activeCompressions = new Map<string, FFmpegCommand>();
@@ -28,6 +28,7 @@ export interface CompressionContext {
   outputPath: string;
   mainWindow: BrowserWindow;
   settings?: AdvancedCompressionSettings;
+  batchProgressManager?: any; // Optional batch progress manager
 }
 
 export abstract class BaseCompressionStrategy {
@@ -62,7 +63,7 @@ export abstract class BaseCompressionStrategy {
    * Configure FFmpeg command with consistent settings
    */
   protected configureFFmpegCommand(command: FFmpegCommand): FFmpegCommand {
-    const { preset, settings } = this.context;
+    const { preset } = this.context;
     
     // Start with basic configuration
     command = command
@@ -119,7 +120,7 @@ export abstract class BaseCompressionStrategy {
    * Setup FFmpeg event handlers consistently
    */
   protected setupEventHandlers(command: FFmpegCommand): void {
-    const { fileName, presetKey, outputPath, mainWindow, taskKey } = this.context;
+    const { outputPath, taskKey } = this.context;
 
     // Store the command for potential cancellation
     activeCompressions.set(taskKey, command);
@@ -136,11 +137,16 @@ export abstract class BaseCompressionStrategy {
    * Handle compression start event
    */
   protected handleStart(command: FFmpegCommand): void {
-    const { fileName, presetKey, outputPath, mainWindow } = this.context;
+    const { fileName, presetKey, outputPath, mainWindow, taskKey } = this.context;
     
     console.log(`Starting compression: ${fileName} with preset ${presetKey}`);
     console.log(`Output path: ${outputPath}`);
     console.log(`FFmpeg command: ${command._getArguments().join(' ')}`);
+    
+    // Update batch progress if available
+    if (this.context.batchProgressManager) {
+      this.context.batchProgressManager.markTaskStarted(taskKey);
+    }
     
     sendCompressionEvent('compression-started', {
       file: fileName,
@@ -153,20 +159,26 @@ export abstract class BaseCompressionStrategy {
    * Handle compression progress event
    */
   protected handleProgress(progress: FFmpegProgress): void {
-    const { fileName, presetKey, mainWindow } = this.context;
+    const { taskKey } = this.context;
     
     const rawPercent = progress.percent || 0;
     const adjustedPercent = this.progressHandler.calculateAdjustedProgress(rawPercent);
     
-    // Only send progress updates if there's a meaningful change
-    if (this.progressHandler.hasMeaningfulChange(adjustedPercent)) {
-      console.log(`Progress for ${fileName}-${presetKey}: ${adjustedPercent}%`);
+    // Use the new fluid update system
+    if (this.progressHandler.shouldUpdateUI(adjustedPercent)) {
+      console.log(`Progress for ${this.context.fileName}-${this.context.presetKey}: ${adjustedPercent.toFixed(1)}%`);
+      
+      // Update batch progress if available
+      if (this.context.batchProgressManager) {
+        this.context.batchProgressManager.updateTaskProgress(taskKey, adjustedPercent);
+      }
+      
       sendCompressionEvent('compression-progress', {
-        file: fileName,
-        preset: presetKey,
+        file: this.context.fileName,
+        preset: this.context.presetKey,
         percent: adjustedPercent,
         timemark: progress.timemark
-      }, mainWindow);
+      }, this.context.mainWindow);
     }
   }
 
@@ -204,6 +216,11 @@ export abstract class BaseCompressionStrategy {
       outputPath
     }, mainWindow);
     
+    // Update batch progress if available
+    if (this.context.batchProgressManager) {
+      this.context.batchProgressManager.markTaskCompleted(taskKey, outputPath);
+    }
+    
     activeCompressions.delete(taskKey);
   }
 
@@ -218,8 +235,20 @@ export abstract class BaseCompressionStrategy {
     console.error(`Input file: ${file}`);
     console.error(`Output path: ${outputPath}`);
     
+    // Handle error with proper error classification
+    const compressionError = CompressionErrorHandler.handleFFmpegError(err, {
+      fileName,
+      presetKey,
+      codec: this.context.preset.settings.videoCodec
+    });
+    
+    // Update batch progress if available
+    if (this.context.batchProgressManager) {
+      this.context.batchProgressManager.markTaskFailed(taskKey, compressionError.message);
+    }
+    
     activeCompressions.delete(taskKey);
-    throw new Error(err.message);
+    throw new Error(compressionError.message);
   }
 
   /**
