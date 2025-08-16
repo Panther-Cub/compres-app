@@ -12,8 +12,8 @@ export const APP_CONSTANTS = {
   
   // Window dimensions
   MAIN_WINDOW: {
-    WIDTH: 1200,
-    HEIGHT: 800,
+    WIDTH: 900,
+    HEIGHT: 700,
     MIN_WIDTH: 800,
     MIN_HEIGHT: 600
   },
