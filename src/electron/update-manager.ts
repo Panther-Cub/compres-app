@@ -457,7 +457,7 @@ export class UpdateManager {
   }
 
   /**
-   * Install update (for unsigned apps, this opens the download location)
+   * Install update (for unsigned apps, this quits the app and opens the installer)
    */
   async installUpdate(): Promise<{ success: boolean; error?: string; message?: string }> {
     try {
@@ -473,28 +473,47 @@ export class UpdateManager {
         return { success: false, error: 'Download path not found' };
       }
       
-      // Show installation instructions dialog
+      // Show installation instructions dialog with quit option
       const result = await dialog.showMessageBox(this.mainWindow!, {
         type: 'info',
         title: 'Install Update',
-        message: 'Update Downloaded Successfully',
-        detail: `The update has been downloaded to your Downloads folder.\n\nTo install:\n1. Open the Downloads folder\n2. Double-click the downloaded .pkg file\n3. Follow the installation wizard\n4. The installer will automatically handle the app replacement\n5. The installer will also remove quarantine attributes automatically\n\nNote: The .pkg installer is designed for unsigned apps and will handle all the necessary setup automatically.\n\nWould you like to open the Downloads folder now?`,
-        buttons: ['Open Downloads Folder', 'Cancel'],
+        message: 'Update Ready to Install',
+        detail: `The update has been downloaded to your Downloads folder.\n\nTo install the update:\n1. The app will quit automatically\n2. The installer will open from your Downloads folder\n3. Follow the installation wizard\n4. The installer will replace the current app with the new version\n5. The installer will also remove quarantine attributes automatically\n\nNote: The .pkg installer is designed for unsigned apps and will handle all the necessary setup automatically.\n\nClick "Quit and Install" to proceed with the installation.`,
+        buttons: ['Quit and Install', 'Open Downloads Folder', 'Cancel'],
         defaultId: 0
       });
       
       if (result.response === 0) {
-        // Open Downloads folder
+        // Quit and install - open the pkg file and quit the app
+        console.log('User chose to quit and install update');
+        
+        // Open the pkg file first
+        shell.openPath(downloadPath);
+        
+        // Give a moment for the installer to start, then quit the app
+        setTimeout(() => {
+          console.log('Quitting app for update installation');
+          app.quit();
+        }, 1000);
+        
+        return { 
+          success: true, 
+          message: 'App will quit and installer will open. Please follow the installation wizard.' 
+        };
+      } else if (result.response === 1) {
+        // Just open Downloads folder
         shell.openPath(path.dirname(downloadPath));
         
-        // Also open the pkg file
-        shell.openPath(downloadPath);
+        return { 
+          success: true, 
+          message: 'Downloads folder opened. Please quit the app manually before running the installer.' 
+        };
       }
       
-              return { 
-          success: true, 
-          message: 'Update downloaded successfully. Please install by running the .pkg installer from your Downloads folder.' 
-        };
+      return { 
+        success: true, 
+        message: 'Installation cancelled.' 
+      };
       
     } catch (error: any) {
       console.error('Error during update installation:', error);

@@ -170,7 +170,7 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = ({
                   className="flex-1"
                 >
                   <FolderOpen className="w-3 h-3 mr-1" />
-                  Install Update
+                  Quit & Install
                 </Button>
                 <Button 
                   onClick={handleDismiss}

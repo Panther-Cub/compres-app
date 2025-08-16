@@ -112,7 +112,7 @@ const UpdateSettings: React.FC = () => {
         const result = await window.electronAPI.installUpdate();
         
         if (result.success) {
-          // The dialog will handle the installation instructions
+          // The dialog will handle the installation instructions and app quit
           console.log('Installation dialog shown successfully');
         } else {
           alert(`Installation failed: ${result.error || 'Unknown error'}`);
@@ -208,7 +208,7 @@ const UpdateSettings: React.FC = () => {
                     Update Downloaded Successfully
                   </p>
                   <p className="text-xs text-green-700 dark:text-green-300">
-                    The update has been downloaded to your Downloads folder. Click "Install Update" to get installation instructions.
+                    The update has been downloaded to your Downloads folder. Click "Quit & Install" to quit the app and start the installer.
                   </p>
                 </div>
               </div>
@@ -242,7 +242,7 @@ const UpdateSettings: React.FC = () => {
             {status?.status === 'downloaded' && (
               <Button onClick={handleInstallUpdate} size="sm">
                 <FolderOpen className="h-4 w-4 mr-2" />
-                Install Update
+                Quit & Install
               </Button>
             )}
           </div>
@@ -308,8 +308,8 @@ const UpdateSettings: React.FC = () => {
                   Manual Installation Required
                 </p>
                 <p className="text-xs text-blue-700 dark:text-blue-300">
-                  This app is not code-signed, so updates must be installed manually. When you click "Install Update", 
-                  you'll get step-by-step instructions to replace the app in your Applications folder.
+                                  This app is not code-signed, so updates must be installed manually. When you click "Quit & Install", 
+                the app will quit and the installer will open automatically to replace the app in your Applications folder.
                 </p>
               </div>
             </div>

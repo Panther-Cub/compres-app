@@ -24,14 +24,14 @@ This application is not code-signed, which means it cannot use automatic update 
 
 ## Installation Instructions
 
-When you click "Install Update", you'll see these instructions:
+When you click "Quit & Install", you'll see these instructions:
 
-1. **Open Downloads folder** - The folder containing your downloaded .pkg file will open
-2. **Run the installer** - Double-click the .pkg file to start the installation wizard
+1. **App will quit** - The app will automatically quit to allow installation
+2. **Installer opens** - The installer will open automatically from your Downloads folder
 3. **Follow the wizard** - The installer will guide you through the installation process
 4. **Automatic setup** - The installer automatically handles app replacement and quarantine removal
 
-**Note**: The .pkg installer is specifically designed for unsigned apps and handles all the necessary setup automatically, including removing quarantine attributes.
+**Note**: The .pkg installer is specifically designed for unsigned apps and handles all the necessary setup automatically, including removing quarantine attributes. The app must quit before installation to allow the installer to replace the running application.
 
 ## Why Manual Installation?
 

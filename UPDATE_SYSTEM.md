@@ -77,12 +77,11 @@ autoDownload: false // User chooses when to download
 
 When an update is downloaded, users receive these instructions:
 
-1. **Open Downloads folder** - The system opens the folder containing the downloaded .pkg file
-2. **Run the installer** - Double-click the .pkg file to start the installation wizard
-3. **Follow the wizard** - The installer will guide you through the installation process
-4. **Automatic setup** - The installer automatically handles app replacement and quarantine removal
+1. **Click "Quit & Install"** - The app will quit automatically and the installer will open
+2. **Follow the wizard** - The installer will guide you through the installation process
+3. **Automatic setup** - The installer automatically handles app replacement and quarantine removal
 
-**Note**: The .pkg installer is specifically designed for unsigned apps and handles all the necessary setup automatically, including removing quarantine attributes.
+**Note**: The .pkg installer is specifically designed for unsigned apps and handles all the necessary setup automatically, including removing quarantine attributes. The app must quit before installation to allow the installer to replace the running application.
 
 ## API Methods
 
