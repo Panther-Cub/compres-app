@@ -112,14 +112,19 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     };
 
     // Add event listeners
-    window.electronAPI.onCompressionProgress(handleCompressionProgress);
-    window.electronAPI.onCompressionComplete(handleCompressionComplete);
+    if (window.electronAPI) {
+      window.electronAPI.onCompressionProgress(handleCompressionProgress);
+      window.electronAPI.onCompressionComplete(handleCompressionComplete);
 
-    // Cleanup
-    return () => {
-      window.electronAPI.removeAllListeners('compression-progress');
-      window.electronAPI.removeAllListeners('compression-complete');
-    };
+      // Cleanup
+      return () => {
+        window.electronAPI.removeAllListeners('compression-progress');
+        window.electronAPI.removeAllListeners('compression-complete');
+      };
+    }
+    
+    // Return empty cleanup if electronAPI is not available
+    return () => {};
   }, [getTaskKey, markTaskComplete]);
 
   const handleFileSelect = useCallback(async (files: string[], addToExisting: boolean = false): Promise<void> => {
@@ -149,6 +154,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     }
     
     // In browser mode, we can't get file info, so we'll just use basic info
+    // Handle case where electronAPI is not available
     if (!window.electronAPI) {
       console.warn('Electron API not available - using basic file info');
       const newFileInfos: Record<string, FileInfo> = {};
@@ -167,6 +173,17 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     const newFileInfos: Record<string, FileInfo> = {};
     for (const file of files) {
       try {
+        if (!window.electronAPI) {
+          console.warn('Electron API not available - using basic file info');
+          newFileInfos[file] = {
+            size: 0,
+            duration: 0,
+            width: 0,
+            height: 0
+          };
+          continue;
+        }
+        
         const info = await window.electronAPI.getFileInfo(file);
         
         // Try to generate thumbnail for the file
@@ -262,14 +279,20 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     try {
       if (window.electronAPI) {
         if (advancedSettings) {
-          await window.electronAPI.compressVideosAdvanced({
+          if (!window.electronAPI) {
+        throw new Error('Electron API not available');
+      }
+      await window.electronAPI.compressVideosAdvanced({
             files: selectedFiles,
             presetConfigs,
             outputDirectory,
             advancedSettings
           });
         } else {
-          await window.electronAPI.compressVideos({
+          if (!window.electronAPI) {
+          throw new Error('Electron API not available');
+        }
+        await window.electronAPI.compressVideos({
             files: selectedFiles,
             presetConfigs,
             outputDirectory,
@@ -340,7 +363,11 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
 
     try {
       if (window.electronAPI) {
-        await window.electronAPI.cancelCompression();
+        if (!window.electronAPI) {
+        console.warn('Electron API not available');
+        return;
+      }
+      await window.electronAPI.cancelCompression();
       }
       console.log('Compression cancellation requested');
     } catch (error) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Save } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Button } from './ui/button';
+import { Button } from './ui';
 import { macAnimations, overlayVariants } from '../lib/animations';
 import type { CustomPresetModalProps } from '../types';
 

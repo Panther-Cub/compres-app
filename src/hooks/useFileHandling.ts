@@ -35,7 +35,11 @@ export const useFileHandling = () => {
           }
 
           // Get file info from main process
-          const fileInfo = await window.electronAPI.getFileInfo(file);
+          if (!window.electronAPI) {
+      console.warn('Electron API not available');
+      return null;
+    }
+    const fileInfo = await window.electronAPI.getFileInfo(file);
           
           // Validate file info
           if (!fileInfo) {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Settings, FolderOpen, Sliders, Zap } from 'lucide-react';
-import { Button } from './ui/button';
+import { Button } from './ui';
 import AdvancedSettings from './AdvancedSettings';
 import PresetRecommendations from './PresetRecommendations';
 import type { SettingsDrawerProps } from '../types';

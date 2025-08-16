@@ -1,7 +1,7 @@
 import React from 'react';
 import { Star, Save, RotateCcw, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from './ui/button';
+import { Button } from './ui';
 import { macAnimations, drawerVariants } from '../lib/animations';
 import type { SettingsDrawerProps } from '../types';
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Lightbulb, Sparkles } from 'lucide-react';
-import { Button } from './ui/button';
+import { Button } from './ui';
 import type { PresetRecommendationsProps } from '../types';
 
 const PresetRecommendations: React.FC<PresetRecommendationsProps> = ({ 

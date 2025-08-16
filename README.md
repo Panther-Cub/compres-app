@@ -54,6 +54,11 @@ The app analyzes your video characteristics and recommends the best presets base
    npm run dist
    ```
 
+4. **Build with unsigned updates** (for development/internal use):
+   ```bash
+   npm run dist:unsigned
+   ```
+
 ## Usage
 
 1. **Launch the app**
@@ -93,11 +98,17 @@ The app analyzes your video characteristics and recommends the best presets base
 - `npm run electron-dev` - Run Electron app in development mode
 - `npm run build` - Build React app for production
 - `npm run dist` - Build and package the app for distribution
+- `npm run dist:unsigned` - Build with unsigned updates (development/internal use)
+- `npm run publish:unsigned` - Build and publish with unsigned updates
 
 ## Output
 
 Compressed videos are saved with descriptive suffixes based on the preset used:
 - `filename_web-hero.mp4` - Web hero format
+
+## Updates
+
+The app supports automatic updates via GitHub releases. For development and internal distribution, unsigned updates are supported. See [UNSIGNED_UPDATES.md](UNSIGNED_UPDATES.md) for detailed configuration instructions.
 - `filename_web-standard.mp4` - Web standard format
 - `filename_web-mobile.mp4` - Web mobile format
 - `filename_social-instagram.mp4` - Instagram format

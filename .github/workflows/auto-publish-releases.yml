@@ -1,0 +1,25 @@
+name: Auto-Publish Releases
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  publish-release:
+    runs-on: ubuntu-latest
+    if: github.event.release.draft == true
+    
+    steps:
+    - name: Publish Draft Release
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { data: release } = await github.rest.repos.updateRelease({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            release_id: context.payload.release.id,
+            draft: false
+          });
+          
+          console.log(`Published release: ${release.name} (${release.tag_name})`);
+        github-token: ${{ secrets.GITHUB_TOKEN }}

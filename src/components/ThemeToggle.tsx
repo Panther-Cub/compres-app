@@ -1,7 +1,7 @@
 import React from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from './ui/button';
+import { Button } from './ui';
 import type { ThemeToggleProps } from '../types';
 
 const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, onToggle }) => {

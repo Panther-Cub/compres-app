@@ -140,7 +140,11 @@ export const useSettings = (): UseSettingsReturn => {
       // Load presets
       if (window.electronAPI) {
         try {
-          const presetsData = await window.electronAPI.getPresets();
+          if (!window.electronAPI) {
+      console.warn('Electron API not available');
+      return;
+    }
+    const presetsData = await window.electronAPI.getPresets();
           setPresets(presetsData);
         } catch (err) {
           console.error('Error loading presets:', err);
@@ -152,7 +156,11 @@ export const useSettings = (): UseSettingsReturn => {
           setOutputDirectory(userDefaults.defaultOutputDirectory);
         } else {
           try {
-            const defaultDir = await window.electronAPI.getDefaultOutputDirectory();
+            if (!window.electronAPI) {
+      console.warn('Electron API not available');
+      return;
+    }
+    const defaultDir = await window.electronAPI.getDefaultOutputDirectory();
             setDefaultOutputDirectory(defaultDir);
             setOutputDirectory(defaultDir);
           } catch (err) {
@@ -215,7 +223,11 @@ export const useSettings = (): UseSettingsReturn => {
         return;
       }
       
-      const directory = await window.electronAPI.selectOutputDirectory();
+      if (!window.electronAPI) {
+      console.warn('Electron API not available');
+      return;
+    }
+    const directory = await window.electronAPI.selectOutputDirectory();
       if (directory) {
         setOutputDirectory(directory);
       }

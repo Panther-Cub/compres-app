@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Grid, List, X, Play, FolderOpen, ZoomIn, ZoomOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from './ui/button';
+import { Button } from './ui';
 import VideoThumbnail from './VideoThumbnail';
 import { containerVariants, macAnimations } from '../lib/animations';
 import type { VideoListProps } from '../types';
@@ -15,6 +15,7 @@ const VideoList: React.FC<VideoListProps> = ({
   formatFileSize,
   formatDuration,
   onGenerateThumbnail,
+  onGetThumbnailDataUrl,
   onShowInFinder,
   onOpenFile
 }) => {
@@ -104,6 +105,7 @@ const VideoList: React.FC<VideoListProps> = ({
                             fileName={file.split('/').pop() || ''}
                             thumbnail={info.thumbnail}
                             onGenerateThumbnail={onGenerateThumbnail}
+                            onGetThumbnailDataUrl={onGetThumbnailDataUrl}
                             onPlay={onOpenFile}
                             size="responsive"
                           />
@@ -193,6 +195,7 @@ const VideoList: React.FC<VideoListProps> = ({
                               fileName={file.split('/').pop() || ''}
                               thumbnail={info.thumbnail}
                               onGenerateThumbnail={onGenerateThumbnail}
+                              onGetThumbnailDataUrl={onGetThumbnailDataUrl}
                               onPlay={onOpenFile}
                               size="small"
                             />

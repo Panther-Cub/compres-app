@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Settings, Save } from 'lucide-react';
-import { Button } from './ui/button';
-import { Checkbox } from './ui/checkbox';
-import { Select, SelectOption } from './ui/select';
+import { Button, Checkbox, Select, SelectOption } from './ui';
 
 interface AdvancedSettingsType {
   crf: number;

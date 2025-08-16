@@ -1,7 +1,7 @@
 import React from 'react';
 import { Zap, Coffee, Info, Star, Monitor } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Button } from './ui/button';
+import { Button } from './ui';
 import ThemeToggle from './ThemeToggle';
 import { macAnimations } from '../lib/animations';
 import type { AppHeaderProps } from '../types';

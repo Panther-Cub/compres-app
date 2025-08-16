@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Monitor } from 'lucide-react';
 import { macAnimations } from '../lib/animations';
-import { Button } from './ui/button';
+import { Button } from './ui';
 
 const OverlayDropZone: React.FC = () => {
   const [isDragOver, setIsDragOver] = useState(false);

@@ -1,10 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, FileVideo } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Button, Input, Label, RadioGroup, RadioGroupItem } from './ui';
 import { getFileName } from '../utils/formatters';
 import { macAnimations, overlayVariants } from '../lib/animations';
 

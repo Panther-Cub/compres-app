@@ -1,6 +1,6 @@
 {
   "name": "compress",
-  "version": "1.0.0-beta.1",
+  "version": "0.2.2",
   "description": "A minimalistic video compression app for web optimization",
   "main": "build/main.js",
   "homepage": "./",
@@ -44,11 +44,25 @@
     "build": "react-scripts build && tsc -p tsconfig.electron.json && cp -r src/electron build/",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "electron": "electron .",
+    "electron": "NODE_ENV=development electron .",
     "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron .\"",
     "electron-build": "npm run build && electron-builder",
     "dist": "npm run build && electron-builder --publish=never",
-    "publish": "npm run build && electron-builder --publish=always"
+    "dist:unsigned": "ALLOW_UNSIGNED_UPDATES=true npm run build && electron-builder --publish=never",
+    "dist:dev": "ALLOW_UNSIGNED_UPDATES=true npm run build && electron-builder --config electron-builder-dev.yml --publish=never",
+    "publish": "npm run build && electron-builder --publish=always",
+    "publish:unsigned": "ALLOW_UNSIGNED_UPDATES=true npm run build && electron-builder --publish=always",
+    "publish:dev": "ALLOW_UNSIGNED_UPDATES=true npm run build && electron-builder --config electron-builder-dev.yml --publish=always",
+    "bump": "node scripts/version-manager.js bump patch",
+    "bump:minor": "node scripts/version-manager.js bump minor",
+    "bump:major": "node scripts/version-manager.js bump major",
+    "bump:beta": "node scripts/version-manager.js bump patch beta",
+    "bump:alpha": "node scripts/version-manager.js bump patch alpha",
+    "bump:prerelease": "node scripts/version-manager.js bump prerelease",
+    "release": "node scripts/version-manager.js release",
+    "version:current": "node scripts/version-manager.js current",
+    "version:latest": "node scripts/version-manager.js latest",
+    "version:help": "node scripts/version-manager.js help"
   },
   "build": {
     "appId": "com.pantherandcub.compress",
@@ -58,7 +72,14 @@
     },
     "files": [
       "build/**/*",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "assets/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets"
+      }
     ],
     "asarUnpack": [
       "node_modules/ffmpeg-static/**/*",
@@ -69,9 +90,11 @@
       {
         "provider": "github",
         "owner": "Panther-Cub",
-        "repo": "compress-app"
+        "repo": "compress-app",
+        "private": false
       }
     ],
+    "electronUpdaterCompatibility": ">=5.0.0",
     "mac": {
       "category": "public.app-category.productivity",
       "icon": "assets/Vanilla.icns",
@@ -79,7 +102,14 @@
       "artifactName": "${productName}-${version}-mac.${ext}",
       "identity": null,
       "hardenedRuntime": false,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "notarize": false,
+      "type": "distribution",
+      "electronLanguages": [
+        "en"
+      ],
+      "entitlements": null,
+      "entitlementsInherit": null
     }
   },
   "eslintConfig": {

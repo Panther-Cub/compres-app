@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Play, Settings, Edit3, ArrowLeft, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from './ui/button';
+import { Button } from './ui';
 import { cn } from '../lib/utils';
 import { macAnimations, drawerVariants } from '../lib/animations';
 import VideoList from './VideoList';
@@ -23,6 +23,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
   settings,
   onBatchRename,
   onGenerateThumbnail,
+  onGetThumbnailDataUrl,
   onShowInFinder,
   onOpenFile,
   onAddMoreVideos
@@ -107,6 +108,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
             formatFileSize={formatFileSize}
             formatDuration={formatDuration}
             onGenerateThumbnail={onGenerateThumbnail}
+            onGetThumbnailDataUrl={onGetThumbnailDataUrl}
             onShowInFinder={onShowInFinder}
             onOpenFile={onOpenFile}
           />

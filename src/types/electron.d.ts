@@ -1,76 +1,10 @@
 
 
+import { ElectronAPI } from '../electron/preload/api-interface';
+
 declare global {
   interface Window {
-    electronAPI: {
-      // Menu events
-      onShowAboutModal: (callback: () => void) => void;
-      onTriggerFileSelect: (callback: () => void) => void;
-      onTriggerOutputSelect: (callback: () => void) => void;
-      
-      // Compression events
-      onCompressionStarted: (callback: (data: any) => void) => void;
-      onCompressionProgress: (callback: (data: any) => void) => void;
-      onCompressionComplete: (callback: (data: any) => void) => void;
-      
-      // Overlay events
-      onOverlayFilesDropped: (callback: (filePaths: string[]) => void) => void;
-      
-      // File operations
-      getFileInfo: (filePath: string) => Promise<{
-        duration: number;
-        size: number;
-        width: number;
-        height: number;
-        codec: string;
-      }>;
-      selectFiles: () => Promise<string[]>;
-      selectOutputDirectory: () => Promise<string>;
-      getDefaultOutputDirectory: () => Promise<string>;
-      batchRenameFiles: (data: { files: string[]; newNames: Record<string, string> }) => Promise<Array<{
-        success: boolean;
-        oldPath: string;
-        newPath?: string;
-        error?: string;
-      }>>;
-      getPresets: () => Promise<Record<string, any>>;
-      
-      // Thumbnails and file operations
-      generateThumbnail: (filePath: string) => Promise<string>;
-      showInFinder: (filePath: string) => Promise<{ success: boolean }>;
-      openFile: (filePath: string) => Promise<{ success: boolean }>;
-      
-      // Overlay operations
-      overlayFileDrop: (filePaths: string[]) => Promise<{ success: boolean; validFiles: string[] }>;
-      toggleOverlay: (show: boolean) => Promise<{ success: boolean }>;
-      showOverlay: () => Promise<{ success: boolean }>;
-      hideOverlay: () => Promise<{ success: boolean }>;
-      hideMainWindow: () => Promise<{ success: boolean }>;
-      showMainWindow: () => Promise<{ success: boolean }>;
-      
-      // Settings management
-      getStartupSettings: () => Promise<{ openAtLogin: boolean; defaultWindow: string }>;
-      saveStartupSettings: (settings: { openAtLogin: boolean; defaultWindow: string }) => Promise<{ success: boolean }>;
-      getDefaultWindow: () => Promise<string>;
-      
-      // Compression operations
-      compressVideos: (data: {
-        files: string[];
-        presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
-        outputDirectory: string;
-        advancedSettings?: any;
-      }) => Promise<any[]>;
-      compressVideosAdvanced: (data: {
-        files: string[];
-        presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
-        outputDirectory: string;
-        advancedSettings: any;
-      }) => Promise<any[]>;
-      cancelCompression: () => Promise<{ success: boolean }>;
-      
-      // Utility
-      removeAllListeners: (channel: string) => void;
-    };
+    electronAPI: ElectronAPI;
   }
 }
 

@@ -97,6 +97,7 @@ export interface VideoWorkspaceProps {
   settings: Settings;
   onBatchRename: (newNames: Record<string, string>) => void;
   onGenerateThumbnail: (filePath: string) => Promise<string>;
+  onGetThumbnailDataUrl?: (filePath: string) => Promise<string>;
   onShowInFinder: (filePath: string) => Promise<void>;
   onOpenFile: (filePath: string) => Promise<void>;
   onAddMoreVideos: () => void;
@@ -111,6 +112,7 @@ export interface VideoListProps {
   formatFileSize: (bytes: number) => string;
   formatDuration: (seconds: number) => string;
   onGenerateThumbnail: (filePath: string) => Promise<string>;
+  onGetThumbnailDataUrl?: (filePath: string) => Promise<string>;
   onShowInFinder: (filePath: string) => Promise<void>;
   onOpenFile: (filePath: string) => Promise<void>;
 }
@@ -283,90 +285,14 @@ export interface UseThemeReturn {
   toggleTheme: () => void;
 }
 
-// Auto-updater types
+// Update manager types
 export interface UpdateStatus {
-  status: 'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'error';
+  status: 'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error';
   progress?: number;
   version?: string;
   releaseNotes?: string;
   error?: string;
+  currentVersion?: string;
 }
 
-// Global window interface for Electron API
-declare global {
-  interface Window {
-    electronAPI: {
-      // File selection
-      selectFiles: () => Promise<string[]>;
-      selectOutputDirectory: () => Promise<string>;
-      getDefaultOutputDirectory: () => Promise<string>;
-      batchRenameFiles: (data: { files: string[]; newNames: Record<string, string> }) => Promise<Array<{
-        success: boolean;
-        oldPath: string;
-        newPath?: string;
-        error?: string;
-      }>>;
-      
-      // Video compression
-      compressVideos: (data: {
-        files: string[];
-        presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
-        outputDirectory: string;
-        advancedSettings?: any;
-      }) => Promise<any[]>;
-      compressVideosAdvanced: (data: {
-        files: string[];
-        presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
-        outputDirectory: string;
-        advancedSettings: any;
-      }) => Promise<any[]>;
-      getPresets: () => Promise<Record<string, any>>;
-      getFileInfo: (filePath: string) => Promise<{
-        duration: number;
-        size: number;
-        width: number;
-        height: number;
-        codec: string;
-      }>;
-      cancelCompression: () => Promise<{ success: boolean }>;
-      
-      // Thumbnails and file operations
-      generateThumbnail: (filePath: string) => Promise<string>;
-      showInFinder: (filePath: string) => Promise<{ success: boolean }>;
-      openFile: (filePath: string) => Promise<{ success: boolean }>;
-      
-      // Overlay window functionality
-      overlayFileDrop: (filePaths: string[]) => Promise<{ success: boolean; validFiles: string[] }>;
-      toggleOverlay: (show: boolean) => Promise<{ success: boolean }>;
-      showOverlay: () => Promise<{ success: boolean }>;
-      hideOverlay: () => Promise<{ success: boolean }>;
-      hideMainWindow: () => Promise<{ success: boolean }>;
-      showMainWindow: () => Promise<{ success: boolean }>;
-      
-      // Settings management
-      getStartupSettings: () => Promise<{ openAtLogin: boolean; defaultWindow: string }>;
-      saveStartupSettings: (settings: { openAtLogin: boolean; defaultWindow: string }) => Promise<{ success: boolean }>;
-      getDefaultWindow: () => Promise<string>;
-      
-      // Event listeners
-      onCompressionStarted: (callback: (data: any) => void) => void;
-      onCompressionProgress: (callback: (data: any) => void) => void;
-      onCompressionComplete: (callback: (data: any) => void) => void;
-      onOverlayFilesDropped: (callback: (filePaths: string[]) => void) => void;
-      
-      // Menu events
-      onShowAboutModal: (callback: () => void) => void;
-      onTriggerFileSelect: (callback: () => void) => void;
-      onTriggerOutputSelect: (callback: () => void) => void;
-      
-      // Remove listeners
-      removeAllListeners: (channel: string) => void;
-      
-      // Auto-updater
-      checkForUpdates: () => Promise<{ success: boolean; error?: string }>;
-      downloadUpdate: () => Promise<{ success: boolean; error?: string }>;
-      installUpdate: () => Promise<{ success: boolean; error?: string }>;
-      onUpdateStatus: (callback: (data: any) => void) => void;
-    };
-  }
-}
+// Electron API types are now defined in src/types/electron.d.ts

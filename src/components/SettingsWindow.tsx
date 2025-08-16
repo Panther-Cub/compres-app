@@ -1,11 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Settings, Monitor, Zap, Save } from 'lucide-react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Label } from './ui/label';
-import { Switch } from './ui/switch';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { 
+  Button, 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle,
+  Label,
+  Switch,
+  RadioGroup,
+  RadioGroupItem
+} from './ui';
+import UpdateSettings from './UpdateSettings';
 import { macAnimations } from '../lib/animations';
 
 interface SettingsWindowProps {
@@ -20,30 +28,10 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   
-  // Auto-updater state
-  const [updateStatus, setUpdateStatus] = useState<'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'error'>('idle');
-  const [updateProgress, setUpdateProgress] = useState(0);
-  const [updateInfo, setUpdateInfo] = useState<any>(null);
-  const [updateError, setUpdateError] = useState<string>('');
+
 
   useEffect(() => {
     loadSettings();
-    
-    // Set up auto-updater event listeners
-    if (window.electronAPI) {
-      window.electronAPI.onUpdateStatus((data: any) => {
-        console.log('Update status received:', data);
-        setUpdateStatus(data.status);
-        
-        if (data.status === 'downloading' && data.progress) {
-          setUpdateProgress(data.progress);
-        } else if (data.status === 'available') {
-          setUpdateInfo(data);
-        } else if (data.status === 'error') {
-          setUpdateError(data.error || 'Update check failed');
-        }
-      });
-    }
   }, []);
 
   const loadSettings = async () => {
@@ -90,44 +78,7 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
     handleSettingChange('defaultWindow', value as 'overlay' | 'main');
   };
 
-  // Auto-updater functions
-  const handleCheckForUpdates = async () => {
-    try {
-      setUpdateStatus('checking');
-      setUpdateError('');
-      if (window.electronAPI) {
-        await window.electronAPI.checkForUpdates();
-      }
-    } catch (error) {
-      console.error('Error checking for updates:', error);
-      setUpdateStatus('error');
-      setUpdateError('Failed to check for updates');
-    }
-  };
 
-  const handleDownloadUpdate = async () => {
-    try {
-      setUpdateStatus('downloading');
-      if (window.electronAPI) {
-        await window.electronAPI.downloadUpdate();
-      }
-    } catch (error) {
-      console.error('Error downloading update:', error);
-      setUpdateStatus('error');
-      setUpdateError('Failed to download update');
-    }
-  };
-
-  const handleInstallUpdate = async () => {
-    try {
-      if (window.electronAPI) {
-        await window.electronAPI.installUpdate();
-      }
-    } catch (error) {
-      console.error('Error installing update:', error);
-      setUpdateError('Failed to install update');
-    }
-  };
 
   return (
     <motion.div 
@@ -218,122 +169,8 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
             </CardContent>
           </Card>
 
-          {/* Auto-Updater */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                <Zap className="w-4 h-4" />
-                App Updates
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Keep your app up to date with the latest features and improvements
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                {updateStatus === 'idle' && (
-                  <Button 
-                    onClick={handleCheckForUpdates}
-                    className="w-full"
-                    variant="outline"
-                  >
-                    Check for Updates
-                  </Button>
-                )}
-                
-                {updateStatus === 'checking' && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                    Checking for updates...
-                  </div>
-                )}
-                
-                {updateStatus === 'available' && updateInfo && (
-                  <div className="space-y-3">
-                    <div className="p-3 bg-muted/50 rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">Update Available</span>
-                        <span className="text-xs text-muted-foreground">v{updateInfo.version}</span>
-                      </div>
-                      {updateInfo.releaseNotes && (
-                        <p className="text-xs text-muted-foreground mb-3">
-                          {updateInfo.releaseNotes}
-                        </p>
-                      )}
-                      <Button 
-                        onClick={handleDownloadUpdate}
-                        className="w-full"
-                        size="sm"
-                      >
-                        Download Update
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                
-                {updateStatus === 'downloading' && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Downloading update...</span>
-                      <span>{Math.round(updateProgress)}%</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${updateProgress}%` }}
-                      />
-                    </div>
-                  </div>
-                )}
-                
-                {updateStatus === 'downloaded' && (
-                  <div className="space-y-3">
-                    <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                          Update Downloaded
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-3">
-                        The update will be installed when you restart the app.
-                      </p>
-                      <Button 
-                        onClick={handleInstallUpdate}
-                        className="w-full"
-                        size="sm"
-                        variant="outline"
-                      >
-                        Restart & Install
-                      </Button>
-                    </div>
-                  </div>
-                )}
-                
-                {updateStatus === 'error' && (
-                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full" />
-                      <span className="text-sm font-medium text-red-700 dark:text-red-400">
-                        Update Error
-                      </span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      {updateError}
-                    </p>
-                    <Button 
-                      onClick={handleCheckForUpdates}
-                      className="w-full"
-                      size="sm"
-                      variant="outline"
-                    >
-                      Try Again
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Update Settings */}
+          <UpdateSettings />
 
           {/* Info Card */}
           <Card className="bg-muted/50">

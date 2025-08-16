@@ -4,17 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useVideoCompression } from './hooks/useVideoCompression';
 import { useSettings } from './hooks/useSettings';
 import { useTheme } from './hooks/useTheme';
-import { macAnimations } from './lib/animations';
-import { themeManager } from './lib/theme';
-import AppHeader from './components/AppHeader';
-import VideoDropZone from './components/VideoDropZone';
-import VideoWorkspace from './components/VideoWorkspace';
-import ProgressOverlay from './components/ProgressOverlay';
-import CompressionNotification from './components/CompressionNotification';
-import AboutModal from './components/AboutModal';
-import CustomPresetModal from './components/CustomPresetModal';
-import DefaultsDrawer from './components/DefaultsDrawer';
-import UpdateNotification from './components/UpdateNotification';
+import { macAnimations, themeManager } from './lib';
+import {
+  AppHeader,
+  VideoDropZone,
+  VideoWorkspace,
+  ProgressOverlay,
+  CompressionNotification,
+  AboutModal,
+  CustomPresetModal,
+  DefaultsDrawer,
+  UpdateNotification
+} from './components';
 
 function App() {
   const [showAbout, setShowAbout] = useState(false);
@@ -186,9 +187,23 @@ function App() {
       // Update status events
       window.electronAPI.onUpdateStatus((data: any) => {
         console.log('Update status received in App:', data);
+        
+        // Handle different update statuses
         if (data.status === 'available') {
           setUpdateInfo(data);
           setShowUpdateNotification(true);
+        } else if (data.status === 'downloaded') {
+          // Update is ready to install
+          setUpdateInfo(data);
+          setShowUpdateNotification(true);
+        } else if (data.status === 'error') {
+          // Log errors but don't show them to user unless they're unexpected
+          if (!data.error?.includes('Code signature') && 
+              !data.error?.includes('code has no resources but signature indicates they must be present')) {
+            console.error('Unexpected update error:', data.error);
+          } else {
+            console.log('Expected code signature error for unsigned app:', data.error);
+          }
         }
       });
 
@@ -286,6 +301,18 @@ function App() {
       return await window.electronAPI.generateThumbnail(filePath);
     } catch (error) {
       console.error('Error generating thumbnail:', error);
+      throw error;
+    }
+  };
+
+  const handleGetThumbnailDataUrl = async (filePath: string): Promise<string> => {
+    try {
+      if (!window.electronAPI) {
+        throw new Error('Electron API not available');
+      }
+      return await window.electronAPI.getThumbnailDataUrl(filePath);
+    } catch (error) {
+      console.error('Error getting thumbnail data URL:', error);
       throw error;
     }
   };
@@ -451,6 +478,7 @@ function App() {
               settings={settings}
               onBatchRename={handleBatchRename}
               onGenerateThumbnail={handleGenerateThumbnail}
+              onGetThumbnailDataUrl={handleGetThumbnailDataUrl}
               onShowInFinder={handleShowInFinder}
               onOpenFile={handleOpenFile}
               onAddMoreVideos={handleAddMoreVideos}

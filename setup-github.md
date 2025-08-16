@@ -3,7 +3,7 @@
 ## Step 1: Create GitHub Repository
 
 1. Go to https://github.com/new
-2. Repository name: `ffmpeg-mac-app`
+2. Repository name: `compress-app`
 3. Make it **Public** (required for auto-updates)
 4. Don't initialize with README (we'll push existing code)
 
@@ -14,13 +14,13 @@
 git init
 
 # Add your GitHub repository as remote
-git remote add origin https://github.com/YOUR_USERNAME/ffmpeg-mac-app.git
+git remote add origin https://github.com/Panther-Cub/compress-app.git
 
 # Add all files
 git add .
 
 # Commit
-git commit -m "Initial commit: FFmpeg Mac App v1.0.0-beta.1"
+git commit -m "Initial commit: Compress App v0.1.0-beta.3"
 
 # Push to GitHub
 git push -u origin main
@@ -28,14 +28,14 @@ git push -u origin main
 
 ## Step 3: Update package.json
 
-Replace `YOUR_USERNAME` with your actual GitHub username in `package.json`:
+The package.json is already configured correctly:
 
 ```json
 "publish": [
   {
     "provider": "github",
-    "owner": "YOUR_USERNAME",
-    "repo": "ffmpeg-mac-app"
+    "owner": "Panther-Cub",
+    "repo": "compress-app"
   }
 ]
 ```
@@ -50,6 +50,8 @@ export GH_TOKEN=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
 npm run publish
 ```
 
-## Your GitHub Username
+## Current Status
 
-Please tell me your GitHub username so I can update the package.json correctly.
+- **Repository**: `Panther-Cub/compress-app` ✅
+- **Current Version**: `0.1.0-beta.3` ✅
+- **Auto-updates**: Configured ✅

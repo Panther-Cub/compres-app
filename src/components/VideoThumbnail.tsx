@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, FileVideo, Play } from 'lucide-react';
-import { Button } from './ui/button';
+import { Button } from './ui';
 
 interface VideoThumbnailProps {
   filePath: string;
   fileName: string;
   thumbnail?: string;
   onGenerateThumbnail: (filePath: string) => Promise<string>;
+  onGetThumbnailDataUrl?: (filePath: string) => Promise<string>;
   onPlay?: (filePath: string) => Promise<void>;
   size?: 'small' | 'medium' | 'large' | 'responsive';
   className?: string;
@@ -18,11 +19,13 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
   fileName,
   thumbnail,
   onGenerateThumbnail,
+  onGetThumbnailDataUrl,
   onPlay,
   size = 'medium',
   className = ''
 }) => {
   const [currentThumbnail, setCurrentThumbnail] = useState<string | undefined>(thumbnail);
+  const [thumbnailDataUrl, setThumbnailDataUrl] = useState<string | undefined>();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -46,6 +49,23 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
       setCurrentThumbnail(thumbnail);
     }
   }, [thumbnail, currentThumbnail]);
+
+  // Convert thumbnail path to data URL when thumbnail changes
+  useEffect(() => {
+    const convertThumbnailToDataUrl = async () => {
+      if (currentThumbnail && onGetThumbnailDataUrl) {
+        try {
+          const dataUrl = await onGetThumbnailDataUrl(currentThumbnail);
+          setThumbnailDataUrl(dataUrl);
+        } catch (error) {
+          console.error('Failed to convert thumbnail to data URL:', error);
+          setThumbnailDataUrl(undefined);
+        }
+      }
+    };
+
+    convertThumbnailToDataUrl();
+  }, [currentThumbnail, onGetThumbnailDataUrl]);
 
   const handleGenerateThumbnail = async () => {
     if (isGenerating) return;
@@ -78,13 +98,13 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
       onMouseLeave={() => setIsHovered(false)}
       whileTap={{ scale: 0.98 }}
     >
-      {currentThumbnail ? (
+      {thumbnailDataUrl ? (
         <div className="relative w-full h-full rounded-lg overflow-hidden bg-muted/20 cursor-pointer" onClick={handlePlay}>
           <img
-            src={`file://${currentThumbnail}`}
+            src={thumbnailDataUrl}
             alt={fileName}
             className="w-full h-full object-cover"
-            onError={() => setCurrentThumbnail(undefined)}
+            onError={() => setThumbnailDataUrl(undefined)}
           />
           {/* Play button overlay */}
           <motion.div 

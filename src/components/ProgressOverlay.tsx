@@ -1,8 +1,7 @@
 import React from 'react';
 import { X, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Progress } from './ui/progress';
-import { Button } from './ui/button';
+import { Progress, Button } from './ui';
 import { macAnimations, overlayVariants } from '../lib/animations';
 import type { ProgressOverlayProps } from '../types';
 

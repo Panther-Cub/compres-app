@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Zap, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Button } from './ui/button';
+import { Button } from './ui';
 import { macAnimations, overlayVariants } from '../lib/animations';
 
 interface AboutModalProps {
@@ -10,6 +10,24 @@ interface AboutModalProps {
 }
 
 const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
+  const [appVersion, setAppVersion] = useState<string>('0.0.0');
+
+  useEffect(() => {
+    const getVersion = async () => {
+      try {
+        const version = await window.electronAPI.getAppVersion();
+        setAppVersion(version);
+      } catch (error) {
+        console.error('Failed to get app version:', error);
+        setAppVersion('0.0.0');
+      }
+    };
+
+    if (isOpen) {
+      getVersion();
+    }
+  }, [isOpen]);
+
   return (
     <motion.div 
       className="fixed inset-0 glass-overlay z-50 flex items-center justify-center"
@@ -52,7 +70,7 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             >
               <div>
                 <h3 className="text-sm font-medium mb-2">Version</h3>
-                <p className="text-xs text-muted-foreground">1.0.0-beta.1</p>
+                <p className="text-xs text-muted-foreground">{appVersion}</p>
               </div>
 
               <div>
