@@ -127,6 +127,28 @@ export function setupIpcHandlers(): void {
     return app.getVersion();
   });
 
+  // Theme management
+  ipcMain.handle('get-current-theme', async () => {
+    // Get the current theme from the main window's webContents
+    const mainWindow = getMainWindow();
+    if (mainWindow) {
+      try {
+        // Execute script in main window to get current theme
+        const theme = await mainWindow.webContents.executeJavaScript(`
+          (() => {
+            const themeManager = window.themeManager;
+            return themeManager ? themeManager.getCurrentTheme() : 'system';
+          })()
+        `);
+        return theme;
+      } catch (error) {
+        console.error('Error getting current theme:', error);
+        return 'system';
+      }
+    }
+    return 'system';
+  });
+
   // Overlay window communication
   ipcMain.handle('overlay-file-drop', async (event, filePaths: string[]) => {
     console.log('Overlay received file drop:', filePaths);

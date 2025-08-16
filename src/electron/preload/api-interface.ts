@@ -62,6 +62,9 @@ export interface ElectronAPI {
   // App information
   getAppVersion: () => Promise<string>;
   
+  // Theme management
+  getCurrentTheme: () => Promise<string>;
+  
   // Event listeners - FIXED: Added missing compression event handlers
   onCompressionStarted: (callback: (data: CompressionEventData) => void) => void;
   onCompressionProgress: (callback: (data: CompressionProgressData) => void) => void;

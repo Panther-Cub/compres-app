@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Zap, FolderOpen, Sliders, X, Globe, Share2, Monitor, Palette, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Tooltip } from './ui';
@@ -6,6 +6,7 @@ import { PresetRecommendations } from './PresetRecommendations';
 import AdvancedSettings from './AdvancedSettings';
 import DefaultsDrawer from './DefaultsDrawer';
 import { useStartupSettings } from '../hooks/useStartupSettings';
+import { themeManager } from '../lib/theme';
 import type { SettingsDrawerProps } from '../types';
 
 type TabType = 'presets' | 'output' | 'advanced';
@@ -61,6 +62,35 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   // Get startup settings to check if recommended presets should be shown
   const { settings: startupSettings } = useStartupSettings();
 
+  // Force theme refresh when drawer opens to ensure proper theming
+  useEffect(() => {
+    if (drawerOpen) {
+      // Force theme application to ensure SettingsDrawer gets the correct theme
+      themeManager.forceApplyTheme();
+      
+      // Also force a re-render by updating a state
+      const timer = setTimeout(() => {
+        themeManager.forceApplyTheme();
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [drawerOpen]);
+
+  // Listen for theme changes and force refresh
+  useEffect(() => {
+    const unsubscribe = themeManager.subscribe(() => {
+      if (drawerOpen) {
+        // Force re-application of theme when it changes
+        setTimeout(() => {
+          themeManager.forceApplyTheme();
+        }, 50);
+      }
+    });
+    
+    return unsubscribe;
+  }, [drawerOpen]);
+
   const handlePresetAudioToggle = (presetId: string) => {
     const currentSettings = presetSettings[presetId] || { keepAudio: true };
     onPresetSettingsChange(presetId, {
@@ -102,7 +132,14 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
   return (
     <>
-      <div className={`absolute top-0 right-0 h-full w-80 drawer bg-background shadow-none transition-transform duration-150 ease-out z-10 ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div 
+        className={`absolute top-0 right-0 h-full w-80 drawer bg-background text-foreground shadow-none transition-transform duration-150 ease-out z-10 ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`} 
+        data-theme="auto"
+        style={{
+          backgroundColor: 'hsl(var(--background))',
+          color: 'hsl(var(--foreground))'
+        }}
+      >
         <div className="h-full flex flex-col">
           {/* Header */}
           <div className="p-4 border-b border-border/20 flex-shrink-0">

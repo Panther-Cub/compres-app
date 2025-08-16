@@ -24,6 +24,9 @@ function OverlayApp() {
     // Force apply theme immediately and multiple times to ensure it's correct
     themeManager.forceApplyTheme();
     
+    // Expose themeManager globally for IPC access
+    (window as any).themeManager = themeManager;
+    
     // Apply again after a short delay to ensure it sticks
     setTimeout(() => themeManager.forceApplyTheme(), 100);
     setTimeout(() => themeManager.forceApplyTheme(), 500);

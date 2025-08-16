@@ -15,6 +15,8 @@ import {
 } from './ui';
 import UpdateSettings from './UpdateSettings';
 import { macAnimations } from '../lib/animations';
+import { themeManager } from '../lib/theme';
+import type { Theme } from '../types';
 
 interface SettingsWindowProps {
   onClose: () => void;
@@ -36,6 +38,41 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
 
   useEffect(() => {
     loadSettings();
+  }, []);
+
+  // Force theme application when SettingsWindow loads
+  useEffect(() => {
+    // Force apply theme immediately to ensure it's correct
+    themeManager.forceApplyTheme();
+    
+    // Expose themeManager globally for IPC access
+    (window as any).themeManager = themeManager;
+    
+    // Also get the current theme from the main window if available
+    const getCurrentTheme = async () => {
+      try {
+        if (window.electronAPI && window.electronAPI.getCurrentTheme) {
+          const currentTheme = await window.electronAPI.getCurrentTheme();
+          if (currentTheme && ['light', 'dark', 'system'].includes(currentTheme)) {
+            themeManager.setTheme(currentTheme as Theme);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to get current theme:', error);
+      }
+    };
+    
+    getCurrentTheme();
+    
+    // Subscribe to theme changes
+    const unsubscribe = themeManager.subscribe(() => {
+      // Force re-application of theme when it changes
+      setTimeout(() => {
+        themeManager.forceApplyTheme();
+      }, 50);
+    });
+    
+    return unsubscribe;
   }, []);
 
   const loadSettings = async () => {

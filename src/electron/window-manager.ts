@@ -144,7 +144,7 @@ export function createSettingsWindow(): BrowserWindow {
     minimizable: true,
     maximizable: true,
     webPreferences: {
-      partition: 'persist:settings'
+      // Remove separate partition to share theme state with main window
     }
   });
 

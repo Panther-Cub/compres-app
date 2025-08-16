@@ -1,4 +1,5 @@
 import React from 'react';
+import appIcon from '../app-icon.png';
 
 interface AppIconProps {
   size?: number;
@@ -6,10 +7,9 @@ interface AppIconProps {
 }
 
 const AppIcon: React.FC<AppIconProps> = ({ size = 16, className = '' }) => {
-  // Use the actual app icon from the public folder
   return (
     <img 
-      src="/app-icon.png"
+      src={appIcon}
       alt="Compres App Icon"
       width={size}
       height={size}

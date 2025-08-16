@@ -32,7 +32,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.2 }}
         >
-          <AppIcon size={18} className="text-foreground/70" />
+          <AppIcon size={20} className="text-foreground/70" />
         </motion.div>
         <span className="text-[0.625rem] font-normal text-foreground/70">Compres</span>
       </motion.div>

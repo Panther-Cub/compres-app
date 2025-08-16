@@ -51,7 +51,7 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <AppIcon size={24} className="text-foreground/70" />
+                  <AppIcon size={26} className="text-foreground/70" />
                 </motion.div>
                 <h2 className="text-lg font-light">About Compres</h2>
               </div>

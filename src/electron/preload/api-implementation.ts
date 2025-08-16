@@ -44,6 +44,9 @@ export function createElectronAPI(): ElectronAPI {
     // App information
     getAppVersion: () => ipcRenderer.invoke('get-app-version'),
     
+    // Theme management
+    getCurrentTheme: () => ipcRenderer.invoke('get-current-theme'),
+    
     // Event listeners - FIXED: Added missing compression event handlers
     onCompressionStarted: (callback: (data: any) => void) => {
       ipcRenderer.on('compression-started', (event, data) => callback(data));

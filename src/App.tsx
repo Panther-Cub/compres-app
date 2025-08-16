@@ -83,6 +83,9 @@ function App() {
   useEffect(() => {
     // Force apply theme immediately to ensure it's correct
     themeManager.forceApplyTheme();
+    
+    // Expose themeManager globally for IPC access
+    (window as any).themeManager = themeManager;
   }, []);
 
   // Drag and drop handlers
