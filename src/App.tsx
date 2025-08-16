@@ -342,8 +342,8 @@ function App() {
   };
 
   const handleBuyCoffee = () => {
-    // Open Buy Me a Coffee link
-    window.open('https://buymeacoffee.com/pantherandcub', '_blank');
+    // Open Ko-fi link
+    window.open('https://ko-fi.com/pantherandcub', '_blank');
   };
 
   // Update notification handlers

@@ -87,7 +87,10 @@ export class Settings {
   static getDefaultSettings(): Record<string, any> {
     return {
       openAtLogin: APP_CONSTANTS.DEFAULT_OPEN_AT_LOGIN,
-      defaultWindow: APP_CONSTANTS.DEFAULT_WINDOW
+      defaultWindow: APP_CONSTANTS.DEFAULT_WINDOW,
+      autoUpdateEnabled: true,
+      lastUpdateVersion: null,
+      lastAppVersion: null
     };
   }
 
@@ -114,5 +117,51 @@ export class Settings {
    */
   static getDefaultWindow(): string {
     return this.getSetting('defaultWindow', APP_CONSTANTS.DEFAULT_WINDOW);
+  }
+
+  /**
+   * Get update settings
+   */
+  static getUpdateSettings(): { autoUpdateEnabled: boolean; lastUpdateVersion: string | null; lastAppVersion: string | null } {
+    return {
+      autoUpdateEnabled: this.getSetting('autoUpdateEnabled', true),
+      lastUpdateVersion: this.getSetting('lastUpdateVersion', null),
+      lastAppVersion: this.getSetting('lastAppVersion', null)
+    };
+  }
+
+  /**
+   * Save update settings
+   */
+  static saveUpdateSettings(settings: { autoUpdateEnabled: boolean; lastUpdateVersion?: string | null; lastAppVersion?: string | null }): void {
+    if (settings.autoUpdateEnabled !== undefined) {
+      this.setSetting('autoUpdateEnabled', settings.autoUpdateEnabled);
+    }
+    if (settings.lastUpdateVersion !== undefined) {
+      this.setSetting('lastUpdateVersion', settings.lastUpdateVersion);
+    }
+    if (settings.lastAppVersion !== undefined) {
+      this.setSetting('lastAppVersion', settings.lastAppVersion);
+    }
+  }
+
+  /**
+   * Check if an automatic update was applied
+   */
+  static checkForAutomaticUpdate(currentVersion: string): { wasUpdated: boolean; previousVersion: string | null } {
+    const lastAppVersion = this.getSetting('lastAppVersion', null);
+    const wasUpdated = lastAppVersion !== null && lastAppVersion !== currentVersion;
+    
+    return {
+      wasUpdated,
+      previousVersion: lastAppVersion
+    };
+  }
+
+  /**
+   * Update the last app version (called on app startup)
+   */
+  static updateLastAppVersion(version: string): void {
+    this.setSetting('lastAppVersion', version);
   }
 }

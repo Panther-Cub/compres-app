@@ -29,12 +29,13 @@
 import { app, BrowserWindow, Tray, shell, ipcMain } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import { APP_CONSTANTS } from './utils/constants';
+import { Settings } from './utils/settings';
 
 /**
  * Update status types
  */
 export interface UpdateStatus {
-  status: 'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error';
+  status: 'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'installing' | 'error';
   progress?: number;
   version?: string;
   releaseNotes?: string;
@@ -83,9 +84,12 @@ export class UpdateManager {
     this.isInitialized = true;
     console.log('UpdateManager initialized successfully');
     
-    // Check for updates on startup (with delay)
+    // Check for automatic update on startup
+    this.checkForAutomaticUpdateOnStartup();
+    
+    // Check for updates on startup (with delay) if auto-update is enabled
     setTimeout(() => {
-      this.checkForUpdates(true);
+      this.checkForUpdatesOnStartup();
     }, 5000);
   }
 
@@ -120,6 +124,12 @@ export class UpdateManager {
     // Override the isPackaged check for development
     if (!app.isPackaged) {
       // @ts-ignore - Override the internal check
+      autoUpdater.isUpdaterActive = () => true;
+    }
+
+    // Enable auto-updater in production
+    if (app.isPackaged) {
+      // @ts-ignore - Force enable updater
       autoUpdater.isUpdaterActive = () => true;
     }
 
@@ -221,6 +231,19 @@ export class UpdateManager {
           currentVersion: app.getVersion()
         });
       });
+
+      // Listen for when the app is about to quit for update
+      app.on('before-quit', (event) => {
+        console.log('App is quitting...');
+        if (this.currentStatus.status === 'downloaded') {
+          console.log('Quitting for update installation');
+          this.updateStatus({
+            status: 'installing',
+            version: this.currentStatus.version,
+            currentVersion: app.getVersion()
+          });
+        }
+      });
     } else {
       console.log('Development mode: Skipping electron-updater event handlers');
     }
@@ -234,6 +257,48 @@ export class UpdateManager {
     ipcMain.handle('update:download', this.handleDownloadUpdate.bind(this));
     ipcMain.handle('update:install', this.handleInstallUpdate.bind(this));
     ipcMain.handle('update:get-status', this.handleGetStatus.bind(this));
+    ipcMain.handle('update:get-settings', this.handleGetUpdateSettings.bind(this));
+    ipcMain.handle('update:save-settings', this.handleSaveUpdateSettings.bind(this));
+  }
+
+  /**
+   * Check for automatic update on startup
+   */
+  private checkForAutomaticUpdateOnStartup(): void {
+    const currentVersion = app.getVersion();
+    const { wasUpdated, previousVersion } = Settings.checkForAutomaticUpdate(currentVersion);
+    
+    if (wasUpdated && previousVersion) {
+      console.log(`Automatic update detected: ${previousVersion} → ${currentVersion}`);
+      
+      // Show notification about the automatic update
+      if (this.tray) {
+        this.tray.displayBalloon({
+          title: 'Update Applied',
+          content: `Your app has been automatically updated from version ${previousVersion} to ${currentVersion}.`
+        });
+      }
+      
+      // Update the last app version
+      Settings.updateLastAppVersion(currentVersion);
+    } else {
+      // Update the last app version even if no update was detected
+      Settings.updateLastAppVersion(currentVersion);
+    }
+  }
+
+  /**
+   * Check for updates on startup (respects auto-update setting)
+   */
+  private async checkForUpdatesOnStartup(): Promise<void> {
+    const { autoUpdateEnabled } = Settings.getUpdateSettings();
+    
+    if (autoUpdateEnabled) {
+      console.log('Auto-update enabled, checking for updates on startup...');
+      await this.checkForUpdates(true);
+    } else {
+      console.log('Auto-update disabled, skipping startup check');
+    }
   }
 
   /**
@@ -243,6 +308,7 @@ export class UpdateManager {
     try {
       console.log(`Checking for updates (${isAutoCheck ? 'auto' : 'manual'})...`);
       console.log(`App is packaged: ${app.isPackaged}`);
+      console.log(`Current version: ${app.getVersion()}`);
       
       // Always use manual GitHub API check in development mode
       if (!app.isPackaged) {
@@ -252,6 +318,8 @@ export class UpdateManager {
       
       // In production mode, use electron-updater
       console.log('Running in production mode - using electron-updater...');
+      console.log('Auto-updater feed URL:', autoUpdater.getFeedURL());
+      
       const result = await autoUpdater.checkForUpdates();
       console.log('Update check completed:', result);
       return { success: true, data: result };
@@ -335,6 +403,17 @@ export class UpdateManager {
   async downloadUpdate(): Promise<{ success: boolean; error?: string; data?: any }> {
     try {
       console.log('Downloading update...');
+      
+      // Check if we're in production mode
+      if (!app.isPackaged) {
+        return { success: false, error: 'Updates can only be downloaded in production builds' };
+      }
+      
+      // Check if update is available
+      if (this.currentStatus.status !== 'available') {
+        return { success: false, error: 'No update is available for download' };
+      }
+      
       const result = await autoUpdater.downloadUpdate();
       console.log('Download result:', result);
       return { success: true, data: result };
@@ -351,12 +430,61 @@ export class UpdateManager {
     try {
       console.log('Installing update...');
       
-      // Set a small delay to ensure the response is sent before the app quits
-      setTimeout(() => {
-        autoUpdater.quitAndInstall();
-      }, 100);
-
-      return { success: true, message: 'Installing update...' };
+      // Check if update is downloaded
+      if (this.currentStatus.status !== 'downloaded') {
+        return { success: false, error: 'No update is ready for installation' };
+      }
+      
+      // Check if we're in production mode
+      if (!app.isPackaged) {
+        return { success: false, error: 'Updates can only be installed in production builds' };
+      }
+      
+      console.log('Calling quitAndInstall...');
+      console.log('Auto-updater configuration:', {
+        isUpdaterActive: autoUpdater.isUpdaterActive(),
+        feedURL: autoUpdater.getFeedURL(),
+        currentVersion: app.getVersion()
+      });
+      
+      // Try to install the update
+      try {
+        // Call quitAndInstall with proper parameters
+        autoUpdater.quitAndInstall(false, true); // false = no silent install, true = force quit
+        
+        // If we reach here, the app should quit and restart
+        console.log('quitAndInstall called successfully');
+        
+        // Give the app a moment to quit
+        setTimeout(() => {
+          console.log('App should have quit by now');
+        }, 1000);
+        
+        return { success: true, message: 'Installing update...' };
+      } catch (installError: any) {
+        console.error('Error calling quitAndInstall:', installError);
+        
+        // Check if it's a "command disabled" error
+        if (installError.message?.includes('command is disabled') || installError.message?.includes('cannot be executed')) {
+          console.log('Command disabled error detected - opening manual download page');
+          
+          // Open GitHub releases page for manual download
+          const releasesUrl = `https://github.com/${APP_CONSTANTS.GITHUB_OWNER}/${APP_CONSTANTS.GITHUB_REPO}/releases`;
+          shell.openExternal(releasesUrl);
+          
+          return { 
+            success: false, 
+            error: 'Update installation blocked by macOS security. Please download and install manually from the GitHub releases page.' 
+          };
+        }
+        
+        // Fallback: try to restart the app manually
+        console.log('Trying manual restart...');
+        app.relaunch();
+        app.exit(0);
+        
+        return { success: true, message: 'Restarting app...' };
+      }
     } catch (error: any) {
       console.error('Error during update installation:', error);
       
@@ -364,7 +492,7 @@ export class UpdateManager {
       const releasesUrl = `https://github.com/${APP_CONSTANTS.GITHUB_OWNER}/${APP_CONSTANTS.GITHUB_REPO}/releases`;
       shell.openExternal(releasesUrl);
       
-      return { success: true, message: 'Opened GitHub releases page for manual download' };
+      return { success: false, error: error.message || 'Installation failed' };
     }
   }
 
@@ -400,7 +528,9 @@ export class UpdateManager {
       'unsigned',
       'not signed',
       'signature not found',
-      'signature validation failed'
+      'signature validation failed',
+      'command is disabled',
+      'cannot be executed'
     ];
     
     return expectedErrors.some(expected => err.message?.includes(expected));
@@ -421,6 +551,14 @@ export class UpdateManager {
 
   private handleGetStatus(): UpdateStatus {
     return this.getStatus();
+  }
+
+  private handleGetUpdateSettings(): { autoUpdateEnabled: boolean; lastUpdateVersion: string | null; lastAppVersion: string | null } {
+    return Settings.getUpdateSettings();
+  }
+
+  private handleSaveUpdateSettings(event: any, settings: { autoUpdateEnabled: boolean; lastUpdateVersion?: string | null; lastAppVersion?: string | null }): void {
+    Settings.saveUpdateSettings(settings);
   }
 
   /**

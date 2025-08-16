@@ -12,7 +12,10 @@ export function setupFFmpeg(): void {
   if (app.isPackaged) {
     // In production, binaries are unpacked from asar
     ffmpegPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'ffmpeg-static', 'ffmpeg');
-    ffprobePath = path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'ffprobe-static', 'bin', 'darwin', 'arm64', 'ffprobe');
+    
+    // Detect architecture dynamically
+    const arch = process.arch === 'arm64' ? 'arm64' : 'x64';
+    ffprobePath = path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules', 'ffprobe-static', 'bin', 'darwin', arch, 'ffprobe');
   } else {
     // In development, use the regular require paths
     ffmpegPath = require('ffmpeg-static');

@@ -1,6 +1,6 @@
 {
   "name": "compress",
-  "version": "0.2.2",
+  "version": "0.1.0",
   "description": "A minimalistic video compression app for web optimization",
   "main": "build/main.js",
   "homepage": "./",
@@ -48,10 +48,10 @@
     "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && electron .\"",
     "electron-build": "npm run build && electron-builder",
     "dist": "npm run build && electron-builder --publish=never",
-    "dist:unsigned": "ALLOW_UNSIGNED_UPDATES=true npm run build && electron-builder --publish=never",
+    "dist:unsigned": "CSC_IDENTITY_AUTO_DISCOVERY=false ALLOW_UNSIGNED_UPDATES=true npm run build && electron-builder --publish=never",
     "dist:dev": "ALLOW_UNSIGNED_UPDATES=true npm run build && electron-builder --config electron-builder-dev.yml --publish=never",
     "publish": "npm run build && electron-builder --publish=always",
-    "publish:unsigned": "ALLOW_UNSIGNED_UPDATES=true npm run build && electron-builder --publish=always",
+    "publish:unsigned": "CSC_IDENTITY_AUTO_DISCOVERY=false ALLOW_UNSIGNED_UPDATES=true npm run build && electron-builder --publish=always",
     "publish:dev": "ALLOW_UNSIGNED_UPDATES=true npm run build && electron-builder --config electron-builder-dev.yml --publish=always",
     "bump": "node scripts/version-manager.js bump patch",
     "bump:minor": "node scripts/version-manager.js bump minor",
@@ -108,8 +108,8 @@
       "electronLanguages": [
         "en"
       ],
-      "entitlements": null,
-      "entitlementsInherit": null
+      "entitlements": "assets/entitlements.mac.plist",
+      "entitlementsInherit": "assets/entitlements.mac.plist"
     }
   },
   "eslintConfig": {

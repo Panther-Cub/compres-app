@@ -32,5 +32,6 @@ mac:
   type: "distribution"
   electronLanguages:
     - "en"
-  entitlements: null
-  entitlementsInherit: null
+  identity: "-"
+  entitlements: "assets/entitlements.mac.plist"
+  entitlementsInherit: "assets/entitlements.mac.plist"

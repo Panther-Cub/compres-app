@@ -66,9 +66,29 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = ({
     onDismiss();
   };
 
-  const handleInstall = () => {
+  const handleInstall = async () => {
     if (window.electronAPI) {
-      window.electronAPI.installUpdate();
+      try {
+        // Show installing state
+        setIsDownloading(true);
+        setError(null);
+        
+        const result = await window.electronAPI.installUpdate();
+        
+        if (result.success) {
+          // Show restart confirmation
+          if (window.confirm('Update installed successfully! The app will restart to apply the changes. Click OK to restart now, or Cancel to restart later.')) {
+            // The app should restart automatically, but if it doesn't, we can force it
+            window.electronAPI.installUpdate();
+          }
+        } else {
+          setError(result.error || 'Installation failed');
+          setIsDownloading(false);
+        }
+      } catch (error: any) {
+        setError(error.message || 'Installation failed');
+        setIsDownloading(false);
+      }
     }
   };
 

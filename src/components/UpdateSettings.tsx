@@ -3,6 +3,8 @@ import { CheckCircle, AlertCircle, Download, RefreshCw, Info } from 'lucide-reac
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Progress } from './ui/progress';
+import { Switch } from './ui/switch';
+import { Label } from './ui/label';
 
 interface UpdateStatus {
   status: 'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error';
@@ -16,9 +18,11 @@ interface UpdateStatus {
 const UpdateSettings: React.FC = () => {
   const [status, setStatus] = useState<UpdateStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(true);
 
   useEffect(() => {
     loadUpdateStatus();
+    loadUpdateSettings();
     
     // Set up update status listener
     if (window.electronAPI) {
@@ -33,6 +37,28 @@ const UpdateSettings: React.FC = () => {
       };
     }
   }, []);
+
+  const loadUpdateSettings = async () => {
+    try {
+      if (window.electronAPI) {
+        const settings = await window.electronAPI.getUpdateSettings();
+        setAutoUpdateEnabled(settings.autoUpdateEnabled);
+      }
+    } catch (error) {
+      console.error('Error loading update settings:', error);
+    }
+  };
+
+  const handleAutoUpdateToggle = async (enabled: boolean) => {
+    try {
+      if (window.electronAPI) {
+        await window.electronAPI.saveUpdateSettings({ autoUpdateEnabled: enabled });
+        setAutoUpdateEnabled(enabled);
+      }
+    } catch (error) {
+      console.error('Error saving update settings:', error);
+    }
+  };
 
   const loadUpdateStatus = async () => {
     try {
@@ -76,10 +102,21 @@ const UpdateSettings: React.FC = () => {
   const handleInstallUpdate = async () => {
     try {
       if (window.electronAPI) {
-        await window.electronAPI.installUpdate();
+        const result = await window.electronAPI.installUpdate();
+        
+        if (result.success) {
+          // Show restart confirmation
+          if (window.confirm('Update installed successfully! The app will restart to apply the changes. Click OK to restart now, or Cancel to restart later.')) {
+            // The app should restart automatically
+            await window.electronAPI.installUpdate();
+          }
+        } else {
+          alert(`Installation failed: ${result.error || 'Unknown error'}`);
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error installing update:', error);
+      alert(`Installation failed: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -186,6 +223,39 @@ const UpdateSettings: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Auto-Update Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Auto-Update Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="auto-update" className="text-sm font-medium">
+                Automatic Updates
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Automatically check for updates when the app starts
+              </p>
+            </div>
+            <Switch
+              id="auto-update"
+              checked={autoUpdateEnabled}
+              onCheckedChange={handleAutoUpdateToggle}
+            />
+          </div>
+          
+          {!autoUpdateEnabled && (
+            <div className="text-xs text-muted-foreground bg-muted p-3 rounded-md">
+              <p>Automatic updates are disabled. You can still manually check for updates using the button above.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Update Info */}
       <Card>
         <CardHeader>
@@ -196,10 +266,11 @@ const UpdateSettings: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="text-sm text-muted-foreground space-y-2">
-            <p>• Updates are automatically checked when the app starts</p>
+            <p>• Updates are automatically checked when the app starts (if enabled)</p>
             <p>• You'll be notified when updates are available</p>
             <p>• You can manually check for updates anytime</p>
             <p>• Updates are downloaded from GitHub releases</p>
+            <p>• You'll be notified when automatic updates are applied on startup</p>
           </div>
         </CardContent>
       </Card>
