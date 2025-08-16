@@ -1,0 +1,44 @@
+# PKG build configuration for unsigned distribution
+appId: "com.pantherandcub.compress"
+productName: "Compress"
+directories:
+  output: "dist"
+files:
+  - "build/**/*"
+  - "node_modules/**/*"
+  - "assets/**/*"
+extraResources:
+  - from: "assets"
+    to: "assets"
+asarUnpack:
+  - "node_modules/ffmpeg-static/**/*"
+  - "node_modules/ffprobe-static/**/*"
+extends: null
+publish:
+  - provider: "github"
+    owner: "Panther-Cub"
+    repo: "compress-app"
+    private: false
+
+# PKG specific settings
+pkg:
+  scripts: "scripts"
+  isRelocatable: false
+  isVersionChecked: true
+  overwriteAction: "upgrade"
+  installLocation: "/Applications"
+
+mac:
+  category: "public.app-category.productivity"
+  icon: "assets/Vanilla.icns"
+  target: "pkg"
+  artifactName: "${productName}-${version}-mac.${ext}"
+  identity: null
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  notarize: false
+  type: "distribution"
+  electronLanguages:
+    - "en"
+  entitlements: "assets/entitlements.mac.plist"
+  entitlementsInherit: "assets/entitlements.mac.plist"

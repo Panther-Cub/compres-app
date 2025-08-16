@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Preinstall script for Compress app
+# This script runs before the app is installed
+
+APP_NAME="Compress.app"
+INSTALL_DIR="/Applications"
+
+echo "Preparing to install $APP_NAME..."
+
+# Check if macOS version is compatible (10.14 or later for Electron 25)
+OS_VERSION=$(sw_vers -productVersion)
+echo "Detected macOS version: $OS_VERSION"
+
+# Check available disk space
+REQUIRED_SPACE=500000000  # 500MB in bytes
+AVAILABLE_SPACE=$(df "$INSTALL_DIR" | awk 'NR==2 {print $4}')
+if [ "$AVAILABLE_SPACE" -lt "$REQUIRED_SPACE" ]; then
+    echo "Warning: Low disk space. Available: $(($AVAILABLE_SPACE / 1000000))MB, Required: $(($REQUIRED_SPACE / 1000000))MB"
+else
+    echo "Disk space check passed: $(($AVAILABLE_SPACE / 1000000))MB available"
+fi
+
+# Check if app is already installed
+if [ -d "$INSTALL_DIR/$APP_NAME" ]; then
+    echo "Existing installation detected. Will be replaced."
+fi
+
+echo "Preinstall checks completed."

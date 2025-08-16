@@ -295,33 +295,33 @@ export class UpdateManager {
       console.log('Release info:', this.latestReleaseInfo);
       console.log('Release assets:', this.latestReleaseInfo.assets);
       
-      // Find the macOS zip file in the release assets
-      const macZipAsset = this.latestReleaseInfo.assets?.find((asset: any) => 
-        asset.name.includes('mac') && asset.name.endsWith('.zip')
+      // Find the macOS pkg file in the release assets
+      const macPkgAsset = this.latestReleaseInfo.assets?.find((asset: any) => 
+        asset.name.includes('mac') && asset.name.endsWith('.pkg')
       );
       
-      if (!macZipAsset) {
+      if (!macPkgAsset) {
         console.error('Available assets:', this.latestReleaseInfo.assets?.map((a: any) => a.name));
-        return { success: false, error: 'No macOS zip file found in the release' };
+        return { success: false, error: 'No macOS pkg file found in the release' };
       }
       
-      console.log('Found asset:', macZipAsset);
-      console.log('Download URL:', macZipAsset.browser_download_url);
-      console.log('Asset size:', macZipAsset.size);
+      console.log('Found asset:', macPkgAsset);
+      console.log('Download URL:', macPkgAsset.browser_download_url);
+      console.log('Asset size:', macPkgAsset.size);
       
       // Get user's Downloads folder
       const downloadsPath = path.join(os.homedir(), 'Downloads');
-      const fileName = macZipAsset.name;
+      const fileName = macPkgAsset.name;
       const downloadPath = path.join(downloadsPath, fileName);
       
       console.log(`Downloading to: ${downloadPath}`);
-      console.log(`Expected file size: ${macZipAsset.size} bytes`);
+      console.log(`Expected file size: ${macPkgAsset.size} bytes`);
       
       // Update status to downloading
       this.updateStatus({ status: 'downloading', progress: 0 });
       
       // Download the file
-      const result = await this.downloadFile(macZipAsset.browser_download_url, downloadPath, macZipAsset.size);
+      const result = await this.downloadFile(macPkgAsset.browser_download_url, downloadPath, macPkgAsset.size);
       
       if (result.success) {
         // Verify the downloaded file size
@@ -345,7 +345,7 @@ export class UpdateManager {
         if (this.tray) {
           this.tray.displayBalloon({
             title: 'Update Downloaded',
-            content: `Version ${this.currentStatus.version} downloaded to Downloads folder. Please install manually.`
+            content: `Version ${this.currentStatus.version} downloaded to Downloads folder. Run the .pkg installer to install.`
           });
         }
         
@@ -478,7 +478,7 @@ export class UpdateManager {
         type: 'info',
         title: 'Install Update',
         message: 'Update Downloaded Successfully',
-        detail: `The update has been downloaded to your Downloads folder.\n\nTo install:\n1. Open the Downloads folder\n2. Right-click the downloaded zip file and select "Open With" → "Archive Utility"\n3. This will extract the .app file\n4. Drag the extracted .app file to your Applications folder\n5. Replace the existing app when prompted\n\nNote: If you get an "unsupported format" error, try using Archive Utility instead of double-clicking.\n\nIf macOS blocks the app (unidentified developer):\n- Right-click the app and select "Open"\n- Click "Open" in the security dialog\n- Or go to System Preferences → Security & Privacy → General → "Allow Anyway"\n\nWould you like to open the Downloads folder now?`,
+        detail: `The update has been downloaded to your Downloads folder.\n\nTo install:\n1. Open the Downloads folder\n2. Double-click the downloaded .pkg file\n3. Follow the installation wizard\n4. The installer will automatically handle the app replacement\n5. The installer will also remove quarantine attributes automatically\n\nNote: The .pkg installer is designed for unsigned apps and will handle all the necessary setup automatically.\n\nWould you like to open the Downloads folder now?`,
         buttons: ['Open Downloads Folder', 'Cancel'],
         defaultId: 0
       });
@@ -487,14 +487,14 @@ export class UpdateManager {
         // Open Downloads folder
         shell.openPath(path.dirname(downloadPath));
         
-        // Also open the zip file
+        // Also open the pkg file
         shell.openPath(downloadPath);
       }
       
-      return { 
-        success: true, 
-        message: 'Update downloaded successfully. Please install manually by replacing the app in your Applications folder.' 
-      };
+              return { 
+          success: true, 
+          message: 'Update downloaded successfully. Please install by running the .pkg installer from your Downloads folder.' 
+        };
       
     } catch (error: any) {
       console.error('Error during update installation:', error);

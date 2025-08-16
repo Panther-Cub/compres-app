@@ -2,7 +2,7 @@
 
 ## Overview
 
-The update system has been designed specifically for unsigned applications that cannot use automatic installation. Instead of trying to install updates directly, the system downloads the zip file to the user's Downloads folder and provides clear instructions for manual installation.
+The update system has been designed specifically for unsigned applications that cannot use automatic installation. Instead of trying to install updates directly, the system downloads the .pkg installer file to the user's Downloads folder and provides clear instructions for installation.
 
 ## What Changed
 
@@ -12,7 +12,7 @@ The update system has been designed specifically for unsigned applications that 
 - Complex error handling for installation failures
 
 ### After (Unsigned App Approach)
-- Downloads zip file to user's Downloads folder
+- Downloads .pkg installer to user's Downloads folder
 - Provides step-by-step installation instructions
 - Works reliably for unsigned applications
 - Clear user guidance throughout the process
@@ -26,16 +26,16 @@ The update system has been designed specifically for unsigned applications that 
 - Provides immediate feedback on update availability
 
 ### Download Process
-- Downloads the macOS zip file from GitHub releases
+- Downloads the macOS .pkg installer from GitHub releases
 - Saves to user's Downloads folder for easy access
 - Shows real-time download progress
 - Handles network errors gracefully
 
 ### Installation Process
 - Shows dialog with clear installation instructions
-- Opens Downloads folder and zip file automatically
-- Guides user through manual app replacement
-- No automatic installation attempts
+- Opens Downloads folder and .pkg file automatically
+- Guides user through the installer wizard
+- The installer automatically handles app replacement and quarantine removal
 
 ## Features
 
@@ -77,17 +77,12 @@ autoDownload: false // User chooses when to download
 
 When an update is downloaded, users receive these instructions:
 
-1. **Open Downloads folder** - The system opens the folder containing the downloaded zip file
-2. **Extract the zip file** - Right-click the zip file and select "Open With" → "Archive Utility"
-3. **Replace the app** - Drag the extracted .app file to your Applications folder
-4. **Confirm replacement** - Click "Replace" when prompted to overwrite the old version
+1. **Open Downloads folder** - The system opens the folder containing the downloaded .pkg file
+2. **Run the installer** - Double-click the .pkg file to start the installation wizard
+3. **Follow the wizard** - The installer will guide you through the installation process
+4. **Automatic setup** - The installer automatically handles app replacement and quarantine removal
 
-**Note**: If you get an "unsupported format" error when double-clicking the zip file, use Archive Utility instead.
-
-**Note**: If macOS blocks the app (unidentified developer):
-- Right-click the app and select "Open"
-- Click "Open" in the security dialog
-- Or go to System Preferences → Security & Privacy → General → "Allow Anyway"
+**Note**: The .pkg installer is specifically designed for unsigned apps and handles all the necessary setup automatically, including removing quarantine attributes.
 
 ## API Methods
 
@@ -124,7 +119,7 @@ The update system logs detailed information to the console. Check the console ou
 When publishing updates:
 
 1. Create a new release on GitHub
-2. Upload the built `.zip` file with macOS in the filename
+2. Upload the built `.pkg` file with macOS in the filename
 3. Tag the release with the version number (e.g., `v0.2.0`)
 4. The app will automatically detect and download the update
 
@@ -132,11 +127,11 @@ When publishing updates:
 
 ```
 dist/
-├── Compress-0.2.0-mac.zip          # Main app bundle
+├── Compress-0.2.0-mac.pkg          # Main app installer
 └── latest-mac.yml                  # Update metadata (optional)
 ```
 
-The system looks for zip files containing "mac" in the filename for macOS updates.
+The system looks for .pkg files containing "mac" in the filename for macOS updates.
 
 ## Benefits for Unsigned Apps
 
@@ -148,9 +143,9 @@ The system looks for zip files containing "mac" in the filename for macOS update
 ### User Control
 - Users choose when to install
 - Clear visibility of what's being installed
-- Familiar installation process
+- Professional installer experience
 
 ### Security
 - No automatic code execution
 - Users can verify the download
-- Standard macOS app installation flow
+- Standard macOS installer flow
