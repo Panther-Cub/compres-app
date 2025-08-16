@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, AlertCircle, Download, RefreshCw, Info } from 'lucide-react';
+import { CheckCircle, AlertCircle, Download, RefreshCw, Info, FolderOpen } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Progress } from './ui/progress';
@@ -13,6 +13,7 @@ interface UpdateStatus {
   releaseNotes?: string;
   error?: string;
   currentVersion?: string;
+  downloadPath?: string;
 }
 
 const UpdateSettings: React.FC = () => {
@@ -79,11 +80,17 @@ const UpdateSettings: React.FC = () => {
         const result = await window.electronAPI.checkForUpdates();
         console.log('Update check result:', result);
         
+        if (!result.success && result.error) {
+          // Show error message to user
+          alert(`Update check failed:\n\n${result.error}\n\nIf the GitHub releases page opened, you can manually check for updates there.`);
+        }
+        
         // Update the status immediately after checking
         await loadUpdateStatus();
       }
     } catch (error) {
       console.error('Error checking for updates:', error);
+      alert(`Error checking for updates: ${error}`);
     } finally {
       setIsLoading(false);
     }
@@ -105,11 +112,8 @@ const UpdateSettings: React.FC = () => {
         const result = await window.electronAPI.installUpdate();
         
         if (result.success) {
-          // Show restart confirmation
-          if (window.confirm('Update installed successfully! The app will restart to apply the changes. Click OK to restart now, or Cancel to restart later.')) {
-            // The app should restart automatically
-            await window.electronAPI.installUpdate();
-          }
+          // The dialog will handle the installation instructions
+          console.log('Installation dialog shown successfully');
         } else {
           alert(`Installation failed: ${result.error || 'Unknown error'}`);
         }
@@ -119,6 +123,10 @@ const UpdateSettings: React.FC = () => {
       alert(`Installation failed: ${error.message || 'Unknown error'}`);
     }
   };
+
+
+
+
 
   const getStatusIcon = () => {
     if (!status) return <Info className="h-4 w-4 text-muted-foreground" />;
@@ -191,6 +199,22 @@ const UpdateSettings: React.FC = () => {
             </div>
           )}
           
+          {status?.status === 'downloaded' && status.downloadPath && (
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-3">
+              <div className="flex items-start gap-2">
+                <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                    Update Downloaded Successfully
+                  </p>
+                  <p className="text-xs text-green-700 dark:text-green-300">
+                    The update has been downloaded to your Downloads folder. Click "Install Update" to get installation instructions.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="flex gap-2">
             <Button 
               onClick={handleCheckForUpdates} 
@@ -206,17 +230,19 @@ const UpdateSettings: React.FC = () => {
               Check for Updates
             </Button>
             
+
+            
             {status?.status === 'available' && (
               <Button onClick={handleDownloadUpdate} size="sm">
                 <Download className="h-4 w-4 mr-2" />
-                Download
+                Download Update
               </Button>
             )}
             
             {status?.status === 'downloaded' && (
               <Button onClick={handleInstallUpdate} size="sm">
-                <CheckCircle className="h-4 w-4 mr-2" />
-                Install & Restart
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Install Update
               </Button>
             )}
           </div>
@@ -269,8 +295,24 @@ const UpdateSettings: React.FC = () => {
             <p>• Updates are automatically checked when the app starts (if enabled)</p>
             <p>• You'll be notified when updates are available</p>
             <p>• You can manually check for updates anytime</p>
-            <p>• Updates are downloaded from GitHub releases</p>
-            <p>• You'll be notified when automatic updates are applied on startup</p>
+            <p>• Updates are downloaded from GitHub releases to your Downloads folder</p>
+            <p>• Since this is an unsigned app, you'll need to manually install updates</p>
+            <p>• Installation involves replacing the app in your Applications folder</p>
+          </div>
+          
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+            <div className="flex items-start gap-2">
+              <Info className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                  Manual Installation Required
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  This app is not code-signed, so updates must be installed manually. When you click "Install Update", 
+                  you'll get step-by-step instructions to replace the app in your Applications folder.
+                </p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

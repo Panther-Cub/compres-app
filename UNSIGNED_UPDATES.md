@@ -1,124 +1,158 @@
-# Unsigned Signature Updates
-
-This document explains how to configure and use unsigned signature updates for the Compress Electron app.
+# Unsigned Application Updates
 
 ## Overview
 
-By default, Electron apps require code signing for automatic updates. However, for development or internal distribution, you can configure the app to accept unsigned updates.
+This application is not code-signed, which means it cannot use automatic update installation on macOS. Instead, the update system downloads the new version to your Downloads folder and provides clear instructions for manual installation.
 
-## Configuration
+## How Updates Work
 
-### 1. Build Configuration
+### 1. Update Check
+- The app automatically checks for updates on startup
+- You can also manually check for updates in Settings
+- Updates are detected by comparing the current version with the latest GitHub release
 
-The app is configured with the following settings to allow unsigned updates:
+### 2. Download Process
+- When an update is available, you can download it
+- The zip file is downloaded to your Downloads folder
+- Real-time progress is shown during download
+- The file is saved with the original filename from GitHub
 
-```json
-{
-  "mac": {
-    "identity": null,
-    "hardenedRuntime": false,
-    "gatekeeperAssess": false,
-    "notarize": false,
-    "entitlements": null,
-    "entitlementsInherit": null
-  }
-}
-```
+### 3. Installation Process
+- After download, click "Install Update" to get instructions
+- The system will open your Downloads folder
+- Follow the step-by-step instructions to replace the app
 
-### 2. Update Manager Configuration
+## Installation Instructions
 
-The update manager is configured to:
-- Disable signature verification for development builds
-- Handle signature-related errors gracefully
-- Allow updates in development mode
+When you click "Install Update", you'll see these instructions:
 
-## Usage
+1. **Open Downloads folder** - The folder containing your downloaded zip file will open
+2. **Extract the zip file** - Right-click the zip file and select "Open With" → "Archive Utility"
+3. **Replace the app** - Drag the extracted .app file to your Applications folder
+4. **Confirm replacement** - Click "Replace" when prompted to overwrite the old version
 
-### Development Builds
+**Note**: If you get an "unsupported format" error when double-clicking the zip file, use Archive Utility instead.
 
-For development builds with unsigned updates:
+**Note**: If macOS blocks the app (unidentified developer):
+- Right-click the app and select "Open"
+- Click "Open" in the security dialog
+- Or go to System Preferences → Security & Privacy → General → "Allow Anyway"
 
-```bash
-# Build without publishing
-npm run dist:dev
+## Why Manual Installation?
 
-# Build and publish to GitHub
-npm run publish:dev
-```
+### macOS Security
+- Unsigned apps cannot automatically replace themselves
+- Gatekeeper prevents automatic installation
+- Manual installation gives you control over the process
 
-### Production Builds
+### User Control
+- You can verify the download before installing
+- You choose when to install the update
+- You can keep the old version if needed
 
-For production builds with unsigned updates:
-
-```bash
-# Build without publishing
-npm run dist:unsigned
-
-# Build and publish to GitHub
-npm run publish:unsigned
-```
-
-### Environment Variables
-
-You can also set the environment variable manually:
-
-```bash
-export ALLOW_UNSIGNED_UPDATES=true
-npm run dist
-```
-
-## Security Considerations
-
-⚠️ **Warning**: Unsigned updates bypass security checks and should only be used for:
-- Development and testing
-- Internal distribution
-- When you control the update source
-
-For public distribution, always use proper code signing and notarization.
+### Reliability
+- No dependency on code signing certificates
+- Works consistently across macOS versions
+- No complex permission issues
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **"Signature verification failed" errors**
-   - Ensure `ALLOW_UNSIGNED_UPDATES=true` is set
-   - Check that the update manager is properly configured
+1. **Download fails**
+   - Check your internet connection
+   - Try downloading again
+   - Check GitHub for the release manually
 
-2. **Updates not downloading**
-   - Verify GitHub repository configuration
-   - Check network connectivity
-   - Ensure release files are properly uploaded
+2. **Can't find the downloaded file**
+   - Check your Downloads folder
+   - Look for a zip file with the app name
+   - The file should be named something like `Compress-0.2.0-mac.zip`
 
-3. **Installation failures**
-   - Check macOS Gatekeeper settings
-   - Verify app permissions
-   - Try manual installation from GitHub releases
+3. **Installation fails**
+   - Make sure you're dragging to the Applications folder
+   - Check that you have write permissions
+   - Try quitting the app before replacing it
+
+4. **App won't open after update**
+   - Check Gatekeeper settings in System Preferences
+   - Right-click the app and select "Open"
+   - You may need to allow the app in Security & Privacy
 
 ### Debug Mode
 
-Enable debug logging by setting:
-
-```bash
-export DEBUG=electron-updater
-npm run dist:dev
-```
+If you're having issues, you can check the console logs for detailed information about the update process.
 
 ## GitHub Releases
 
-When publishing unsigned updates:
+Updates are distributed through GitHub releases:
 
-1. Create a new release on GitHub
-2. Upload the built `.zip` file
-3. Tag the release with the version number (e.g., `v0.2.0`)
-4. The app will automatically detect and download the update
+1. **Release Process**
+   - New versions are published as GitHub releases
+   - Each release includes a macOS zip file
+   - The app automatically detects new releases
 
-## File Structure
+2. **Manual Download**
+   - If the in-app update fails, you can download manually
+   - Visit the GitHub releases page
+   - Download the latest macOS zip file
+   - Follow the same installation instructions
 
-```
-dist/
-├── Compress-0.2.0-mac.zip          # Main app bundle
-├── latest-mac.yml                  # Update metadata
-└── Compress-0.2.0-mac.zip.blockmap # Delta update data
-```
+## File Locations
 
-The `latest-mac.yml` file contains metadata that the auto-updater uses to check for updates.
+### Downloads
+- Update files are saved to: `~/Downloads/`
+- Files are named: `Compress-{version}-mac.zip`
+
+### Application
+- Current app location: `/Applications/Compress.app`
+- New app should replace the existing one
+
+## Security Considerations
+
+### Download Verification
+- Files are downloaded directly from GitHub
+- GitHub provides HTTPS encryption
+- You can verify the download on GitHub
+
+### Installation Safety
+- Manual installation prevents automatic code execution
+- You can inspect the app before installing
+- Standard macOS app installation process
+
+## Future Improvements
+
+The update system may be enhanced with:
+
+1. **Checksum verification** - Verify download integrity
+2. **Delta updates** - Download only changed files
+3. **Background downloads** - Download updates automatically
+4. **Rollback support** - Revert to previous version
+
+## Support
+
+If you encounter issues with updates:
+
+1. Check this documentation first
+2. Try the troubleshooting steps above
+3. Visit the GitHub repository for manual downloads
+4. Report issues on the GitHub repository
+
+## Technical Details
+
+### Update Detection
+- Uses GitHub API to check for latest releases
+- Compares semantic versions
+- Ignores pre-release versions by default
+
+### Download Process
+- Downloads using Node.js https module
+- Shows real-time progress
+- Handles network errors gracefully
+- Saves to user's Downloads folder
+
+### Installation Flow
+- Opens Downloads folder automatically
+- Provides clear step-by-step instructions
+- No automatic file manipulation
+- User maintains full control

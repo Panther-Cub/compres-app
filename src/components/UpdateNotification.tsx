@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Download, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Download, X, CheckCircle, AlertCircle, FolderOpen } from 'lucide-react';
 import { Button } from './ui';
 import { macAnimations } from '../lib/animations';
 
@@ -69,25 +69,18 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = ({
   const handleInstall = async () => {
     if (window.electronAPI) {
       try {
-        // Show installing state
-        setIsDownloading(true);
-        setError(null);
-        
         const result = await window.electronAPI.installUpdate();
         
         if (result.success) {
-          // Show restart confirmation
-          if (window.confirm('Update installed successfully! The app will restart to apply the changes. Click OK to restart now, or Cancel to restart later.')) {
-            // The app should restart automatically, but if it doesn't, we can force it
-            window.electronAPI.installUpdate();
-          }
+          // The dialog will handle the installation instructions
+          console.log('Installation dialog shown successfully');
+          // Dismiss the notification after showing the dialog
+          handleDismiss();
         } else {
           setError(result.error || 'Installation failed');
-          setIsDownloading(false);
         }
       } catch (error: any) {
         setError(error.message || 'Installation failed');
-        setIsDownloading(false);
       }
     }
   };
@@ -168,7 +161,7 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = ({
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-xs text-green-600">
                 <CheckCircle className="w-3 h-3" />
-                <span>Update ready to install</span>
+                <span>Update downloaded to Downloads folder</span>
               </div>
               <div className="flex gap-2">
                 <Button 
@@ -176,6 +169,7 @@ const UpdateNotification: React.FC<UpdateNotificationProps> = ({
                   size="sm"
                   className="flex-1"
                 >
+                  <FolderOpen className="w-3 h-3 mr-1" />
                   Install Update
                 </Button>
                 <Button 

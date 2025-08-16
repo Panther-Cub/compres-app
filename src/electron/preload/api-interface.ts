@@ -77,5 +77,6 @@ export interface ElectronAPI {
   getUpdateStatus: () => Promise<{ status: string; progress?: number; version?: string; releaseNotes?: string; error?: string; currentVersion?: string }>;
   getUpdateSettings: () => Promise<{ autoUpdateEnabled: boolean; lastUpdateVersion: string | null; lastAppVersion: string | null }>;
   saveUpdateSettings: (settings: { autoUpdateEnabled: boolean; lastUpdateVersion?: string | null; lastAppVersion?: string | null }) => Promise<void>;
+
   onUpdateStatus: (callback: (data: any) => void) => void;
 }

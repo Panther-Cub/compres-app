@@ -79,6 +79,7 @@ export function createElectronAPI(): any {
   getUpdateStatus: () => ipcRenderer.invoke('update:get-status'),
   getUpdateSettings: () => ipcRenderer.invoke('update:get-settings'),
   saveUpdateSettings: (settings: any) => ipcRenderer.invoke('update:save-settings', settings),
+
   onUpdateStatus: (callback: (data: any) => void) => {
     ipcRenderer.on('update-status', (_, data) => callback(data));
   }

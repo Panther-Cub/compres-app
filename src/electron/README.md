@@ -63,7 +63,7 @@ Contains all IPC communication handlers:
 - Thumbnail generation
 - Settings management
 - Overlay window communication
-- Auto-updater operations
+- Update manager operations
 
 ### `menu-manager.ts`
 Creates and manages the application menu:
@@ -96,7 +96,7 @@ Implements the Electron API with IPC communication.
 ```typescript
 import { 
   setupFFmpeg, 
-  setupAutoUpdater, 
+  setupUpdateManager, 
   createMainWindow, 
   createTray, 
   setupIpcHandlers,
@@ -110,8 +110,8 @@ setupFFmpeg();
 const mainWindow = createMainWindow();
 const tray = createTray();
 
-// Setup auto-updater
-setupAutoUpdater(mainWindow, tray);
+// Setup update manager
+setupUpdateManager(mainWindow, tray);
 
 // Setup IPC handlers
 setupIpcHandlers();

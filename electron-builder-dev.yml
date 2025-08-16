@@ -19,7 +19,7 @@ publish:
     owner: "Panther-Cub"
     repo: "compress-app"
     private: false
-electronUpdaterCompatibility: ">=5.0.0"
+
 mac:
   category: "public.app-category.productivity"
   icon: "assets/Vanilla.icns"

@@ -197,13 +197,8 @@ function App() {
           setUpdateInfo(data);
           setShowUpdateNotification(true);
         } else if (data.status === 'error') {
-          // Log errors but don't show them to user unless they're unexpected
-          if (!data.error?.includes('Code signature') && 
-              !data.error?.includes('code has no resources but signature indicates they must be present')) {
-            console.error('Unexpected update error:', data.error);
-          } else {
-            console.log('Expected code signature error for unsigned app:', data.error);
-          }
+          // Log update errors
+          console.error('Update error:', data.error);
         }
       });
 

@@ -6,6 +6,12 @@
 export { setupFFmpeg } from './ffmpeg-setup';
 export { UpdateManager } from './update-manager';
 
+// Update manager setup function
+export const setupUpdateManager = (window: Electron.BrowserWindow, tray: Electron.Tray | null) => {
+  const { UpdateManager } = require('./update-manager');
+  UpdateManager.getInstance().initialize(window, tray);
+};
+
 // Window management
 export {
   createMainWindow,
