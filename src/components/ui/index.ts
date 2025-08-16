@@ -8,3 +8,4 @@ export { Progress } from './progress';
 export { RadioGroup, RadioGroupItem } from './radio-group';
 export { Select, SelectOption } from './select';
 export { Switch } from './switch';
+export { default as Tooltip } from './tooltip';

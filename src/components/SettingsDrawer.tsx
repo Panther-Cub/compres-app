@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Settings, Zap, FolderOpen, Sliders, X, Globe, Share2, Monitor, Palette, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from './ui';
+import { Button, Tooltip } from './ui';
 import { PresetRecommendations } from './PresetRecommendations';
 import AdvancedSettings from './AdvancedSettings';
 import DefaultsDrawer from './DefaultsDrawer';
@@ -106,9 +106,21 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         <div className="h-full flex flex-col">
           {/* Header */}
           <div className="p-4 border-b border-border/20 flex-shrink-0">
-            <div className="flex items-center gap-2 mb-4">
-              <Settings className="w-4 h-4" />
-              <h2 className="text-base font-medium">Settings</h2>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                <h2 className="text-base font-medium">Settings</h2>
+              </div>
+              <Tooltip id="close-settings-tooltip" content="Close settings">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggleDrawer}
+                  className="h-6 w-6 p-0"
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </Tooltip>
             </div>
             
             {/* Tabs */}
@@ -117,18 +129,19 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
                 return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all ${
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                    }`}
-                  >
-                    <Icon className="w-3 h-3" />
-                    {tab.label}
-                  </button>
+                  <Tooltip key={tab.id} id={`${tab.id}-tab-tooltip`} content={tab.label}>
+                    <button
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all ${
+                        isActive
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                      }`}
+                    >
+                      <Icon className="w-3 h-3" />
+                      {tab.label}
+                    </button>
+                  </Tooltip>
                 );
               })}
             </div>
@@ -154,15 +167,17 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Preset Categories</h3>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowDefaultsDrawer(true)}
-                        className="h-6 px-2 text-xs"
-                      >
-                        <Settings className="w-3 h-3 mr-1" />
-                        Defaults
-                      </Button>
+                      <Tooltip id="defaults-settings-tooltip" content="Set default settings">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowDefaultsDrawer(true)}
+                          className="h-6 px-2 text-xs"
+                        >
+                          <Settings className="w-3 h-3 mr-1" />
+                          Defaults
+                        </Button>
+                      </Tooltip>
                     </div>
                     
                     {/* Category Navigation */}
@@ -175,18 +190,19 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         if (!hasPresets) return null;
                         
                         return (
-                          <button
-                            key={categoryKey}
-                            onClick={() => setActiveCategory(categoryKey)}
-                            className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all ${
-                              isActive
-                                ? 'bg-primary text-primary-foreground'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
-                            }`}
-                          >
-                            <Icon className="w-3 h-3" />
-                            {category.name}
-                          </button>
+                          <Tooltip key={categoryKey} id={`${categoryKey}-category-tooltip`} content={category.description}>
+                            <button
+                              onClick={() => setActiveCategory(categoryKey)}
+                              className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all ${
+                                isActive
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                              }`}
+                            >
+                              <Icon className="w-3 h-3" />
+                              {category.name}
+                            </button>
+                          </Tooltip>
                         );
                       })}
                     </div>
@@ -266,20 +282,21 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                               <h5 className="text-sm font-medium">{preset.name}</h5>
                                               <div className="h-6 flex items-center">
                                                 {isSelected && (
-                                                  <button
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      handlePresetAudioToggle(key);
-                                                    }}
-                                                    className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                                                      audioSettings.keepAudio 
-                                                        ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40' 
-                                                        : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
-                                                    }`}
-                                                    title={audioSettings.keepAudio ? 'Audio enabled - click to disable' : 'Audio disabled - click to enable'}
-                                                  >
-                                                    {audioSettings.keepAudio ? 'AUDIO' : 'MUTED'}
-                                                  </button>
+                                                  <Tooltip id={`audio-${key}-tooltip`} content={audioSettings.keepAudio ? 'Audio enabled - click to disable' : 'Audio disabled - click to enable'}>
+                                                    <button
+                                                      onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handlePresetAudioToggle(key);
+                                                      }}
+                                                      className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                                                        audioSettings.keepAudio 
+                                                          ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40' 
+                                                          : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
+                                                      }`}
+                                                    >
+                                                      {audioSettings.keepAudio ? 'AUDIO' : 'MUTED'}
+                                                    </button>
+                                                  </Tooltip>
                                                 )}
                                               </div>
                                             </div>
@@ -296,16 +313,17 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                                }`}
                                              />
                                              {preset.category === 'custom' && (
-                                               <button
-                                                 onClick={(e) => {
-                                                   e.stopPropagation();
-                                                   handleCustomPresetRemove(key);
-                                                 }}
-                                                 className="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors"
-                                                 title="Delete custom preset"
-                                               >
-                                                 <X className="w-3 h-3 text-red-500" />
-                                               </button>
+                                               <Tooltip id={`delete-${key}-tooltip`} content="Delete custom preset">
+                                                 <button
+                                                   onClick={(e) => {
+                                                     e.stopPropagation();
+                                                     handleCustomPresetRemove(key);
+                                                   }}
+                                                   className="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors"
+                                                 >
+                                                   <X className="w-3 h-3 text-red-500" />
+                                                 </button>
+                                               </Tooltip>
                                              )}
                                            </div>
                                         </div>
@@ -359,20 +377,21 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                         <div className="flex items-center gap-2 mb-1">
                                           <h4 className="text-sm font-medium">{preset.name}</h4>
                                           <div className="h-6 flex items-center">
-                                            <button
-                                              onClick={(e) => {
-                                                e.stopPropagation();
-                                                handlePresetAudioToggle(key);
-                                              }}
-                                              className={`px-2 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${
-                                                audioSettings.keepAudio 
-                                                  ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40' 
-                                                  : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
-                                              }`}
-                                              title={audioSettings.keepAudio ? 'Audio enabled - click to disable' : 'Audio disabled - click to enable'}
-                                            >
-                                              {audioSettings.keepAudio ? 'AUDIO' : 'MUTED'}
-                                            </button>
+                                            <Tooltip id={`active-audio-${key}-tooltip`} content={audioSettings.keepAudio ? 'Audio enabled - click to disable' : 'Audio disabled - click to enable'}>
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handlePresetAudioToggle(key);
+                                                }}
+                                                className={`px-2 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${
+                                                  audioSettings.keepAudio 
+                                                    ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40' 
+                                                    : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
+                                                }`}
+                                              >
+                                                {audioSettings.keepAudio ? 'AUDIO' : 'MUTED'}
+                                              </button>
+                                            </Tooltip>
                                           </div>
                                         </div>
                                         <p className="text-sm text-muted-foreground leading-relaxed">
@@ -380,16 +399,17 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                         </p>
                                       </div>
                                       <div className="flex items-center gap-2 ml-3">
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleRemovePreset(key);
-                                          }}
-                                          className="p-1 hover:bg-muted rounded transition-colors cursor-pointer"
-                                          title="Remove from active presets"
-                                        >
-                                          <X className="w-3 h-3 text-muted-foreground" />
-                                        </button>
+                                        <Tooltip id={`remove-active-${key}-tooltip`} content="Remove from active presets">
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleRemovePreset(key);
+                                            }}
+                                            className="p-1 hover:bg-muted rounded transition-colors cursor-pointer"
+                                          >
+                                            <X className="w-3 h-3 text-muted-foreground" />
+                                          </button>
+                                        </Tooltip>
                                       </div>
                                     </div>
                                   </motion.div>
@@ -411,15 +431,17 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <p className="text-xs text-muted-foreground">Where compressed videos will be saved for this session.</p>
                     
                     <div className="space-y-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={onSelectOutputDirectory}
-                        className="w-full justify-start"
-                      >
-                        <FolderOpen className="w-4 h-4 mr-2" />
-                        {outputDirectory || 'Select output directory...'}
-                      </Button>
+                      <Tooltip id="output-directory-tooltip" content="Select output directory for compressed videos">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={onSelectOutputDirectory}
+                          className="w-full justify-start"
+                        >
+                          <FolderOpen className="w-4 h-4 mr-2" />
+                          {outputDirectory || 'Select output directory...'}
+                        </Button>
+                      </Tooltip>
                       
                       {isUsingDefault && (
                         <p className="text-xs text-muted-foreground">
@@ -442,7 +464,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       advancedSettings={advancedSettings}
                       onAdvancedSettingsChange={onAdvancedSettingsChange}
                       showAdvanced={true}
-                      onToggleAdvanced={() => {}} // Always show in this tab
+                      onToggleAdvanced={() => {}}
                       onSaveCustomPreset={onSaveCustomPreset}
                     />
                   </div>

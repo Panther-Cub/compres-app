@@ -1,7 +1,7 @@
 import React from 'react';
 import { Coffee, Info, Star, Minimize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Button } from './ui';
+import { Button, Tooltip } from './ui';
 import AppIcon from './AppIcon';
 import ThemeToggle from './ThemeToggle';
 import { macAnimations } from '../lib/animations';
@@ -48,43 +48,50 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         >
           {selectedFilesCount > 0 ? `${selectedFilesCount} file${selectedFilesCount > 1 ? 's' : ''}` : 'Drop videos'}
         </motion.span>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onShowDefaults}
-          className="non-draggable text-[0.625rem]"
-        >
-          <Star className="w-3 h-3" />
-        </Button>
-        {onToggleOverlay && (
+        <Tooltip id="defaults-tooltip" content="Set default settings">
           <Button
             variant="ghost"
             size="sm"
-            onClick={onToggleOverlay}
+            onClick={onShowDefaults}
             className="non-draggable text-[0.625rem]"
-            title="Switch to overlay"
           >
-            <Minimize2 className="w-3 h-3" />
+            <Star className="w-3 h-3" />
           </Button>
+        </Tooltip>
+        {onToggleOverlay && (
+          <Tooltip id="overlay-tooltip" content="Switch to overlay mode">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggleOverlay}
+              className="non-draggable text-[0.625rem]"
+            >
+              <Minimize2 className="w-3 h-3" />
+            </Button>
+          </Tooltip>
         )}
         <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onShowAbout}
-          className="non-draggable text-[0.625rem]"
-        >
-          <Info className="w-3 h-3" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBuyCoffee}
-          className="non-draggable text-[0.625rem]"
-        >
-          <Coffee className="w-3 h-3 mr-1" />
-          Buy Coffee
-        </Button>
+        <Tooltip id="about-tooltip" content="About Compres">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onShowAbout}
+            className="non-draggable text-[0.625rem]"
+          >
+            <Info className="w-3 h-3" />
+          </Button>
+        </Tooltip>
+        <Tooltip id="coffee-tooltip" content="Support the developer">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBuyCoffee}
+            className="non-draggable text-[0.625rem]"
+          >
+            <Coffee className="w-3 h-3 mr-1" />
+            Buy Coffee
+          </Button>
+        </Tooltip>
       </motion.div>
     </motion.header>
   );

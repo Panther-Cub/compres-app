@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Play, Settings, Edit3, ArrowLeft, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from './ui';
+import { Button, Tooltip } from './ui';
 import { cn } from '../lib/utils';
 import { macAnimations, drawerVariants } from '../lib/animations';
 import VideoList from './VideoList';
@@ -52,15 +52,17 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
           variants={macAnimations.slideUp}
         >
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={onReset}
-              className="non-draggable text-sm"
-            >
-              <ArrowLeft className="w-3 h-3 mr-2" />
-              Back
-            </Button>
+            <Tooltip id="back-tooltip" content="Go back to file selection">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={onReset}
+                className="non-draggable text-sm"
+              >
+                <ArrowLeft className="w-3 h-3 mr-2" />
+                Back
+              </Button>
+            </Tooltip>
             <div className="h-4 w-px bg-border/30"></div>
             <span className="text-sm text-muted-foreground/70">
               {selectedFiles.length} video{selectedFiles.length > 1 ? 's' : ''} selected
@@ -68,25 +70,29 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
           </div>
           
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onAddMoreVideos}
-              className="non-draggable text-sm"
-            >
-              <Plus className="w-3 h-3 mr-2" />
-              Add More Videos
-            </Button>
-            {selectedFiles.length > 0 && (
+            <Tooltip id="add-more-tooltip" content="Add more videos to the queue">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowBatchRename(true)}
+                onClick={onAddMoreVideos}
                 className="non-draggable text-sm"
               >
-                <Edit3 className="w-3 h-3 mr-2" />
-                Rename Files
+                <Plus className="w-3 h-3 mr-2" />
+                Add More Videos
               </Button>
+            </Tooltip>
+            {selectedFiles.length > 0 && (
+              <Tooltip id="rename-tooltip" content="Batch rename selected files">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowBatchRename(true)}
+                  className="non-draggable text-sm"
+                >
+                  <Edit3 className="w-3 h-3 mr-2" />
+                  Rename Files
+                </Button>
+              </Tooltip>
             )}
           </div>
         </motion.div>
@@ -115,29 +121,42 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
         >
           <div className="flex gap-3">
             <div className="flex-1">
+              <Tooltip 
+                id="compress-tooltip" 
+                content={
+                  isCompressing ? 'Compression in progress...' :
+                  selectedFiles.length === 0 ? 'No videos selected' :
+                  selectedPresets.length === 0 ? 'No presets selected' :
+                  !settings.outputDirectory ? 'Please select output folder' :
+                  `Compress ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''}`
+                }
+              >
+                <Button 
+                  onClick={onCompress}
+                  disabled={isCompressing || selectedFiles.length === 0 || selectedPresets.length === 0 || !settings.outputDirectory}
+                  className="mac-button w-full non-draggable text-sm"
+                  size="sm"
+                >
+                  <Play className="w-3 h-3 mr-2" />
+                  {isCompressing ? 'Compressing...' : 
+                   !settings.outputDirectory ? 'Select Output Folder' :
+                   settings.outputDirectory.includes('Compressed Videos') ? 
+                     `Compres ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''} to Desktop` :
+                     `Compres ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''}`}
+                </Button>
+              </Tooltip>
+            </div>
+            <Tooltip id="settings-tooltip" content={drawerOpen ? 'Hide settings panel' : 'Show settings panel'}>
               <Button 
-                onClick={onCompress}
-                disabled={isCompressing || selectedFiles.length === 0 || selectedPresets.length === 0 || !settings.outputDirectory}
-                className="mac-button w-full non-draggable text-sm"
+                variant="outline"
+                onClick={onToggleDrawer}
+                className="mac-button non-draggable text-sm"
                 size="sm"
               >
-                <Play className="w-3 h-3 mr-2" />
-                {isCompressing ? 'Compressing...' : 
-                 !settings.outputDirectory ? 'Select Output Folder' :
-                 settings.outputDirectory.includes('Compressed Videos') ? 
-                   `Compres ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''} to Desktop` :
-                   `Compres ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''}`}
+                <Settings className="w-3 h-3 mr-2" />
+                {drawerOpen ? 'Hide' : 'Show'} Settings
               </Button>
-            </div>
-            <Button 
-              variant="outline"
-              onClick={onToggleDrawer}
-              className="mac-button non-draggable text-sm"
-              size="sm"
-            >
-              <Settings className="w-3 h-3 mr-2" />
-              {drawerOpen ? 'Hide' : 'Show'} Settings
-            </Button>
+            </Tooltip>
           </div>
         </motion.div>
       </motion.div>

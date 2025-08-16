@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Grid, List, X, Play, FolderOpen, ZoomIn, ZoomOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from './ui';
+import { Button, Tooltip } from './ui';
 import VideoThumbnail from './VideoThumbnail';
 import { containerVariants, macAnimations } from '../lib/animations';
 import type { VideoListProps } from '../types';
@@ -31,30 +31,36 @@ const VideoList: React.FC<VideoListProps> = ({
       >
         <div className="flex items-center gap-2">
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => onViewModeChange('grid')}
-              className="non-draggable text-sm"
-            >
-              <Grid className="w-3 h-3" />
-            </Button>
+            <Tooltip id="grid-view-tooltip" content="Grid view">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => onViewModeChange('grid')}
+                className="non-draggable text-sm"
+              >
+                <Grid className="w-3 h-3" />
+              </Button>
+            </Tooltip>
           </motion.div>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => onViewModeChange('list')}
-              className="non-draggable text-sm"
-            >
-              <List className="w-3 h-3" />
-            </Button>
+            <Tooltip id="list-view-tooltip" content="List view">
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => onViewModeChange('list')}
+                className="non-draggable text-sm"
+              >
+                <List className="w-3 h-3" />
+              </Button>
+            </Tooltip>
           </motion.div>
           
           {/* Grid Zoom Controls - only show in grid view */}
           {viewMode === 'grid' && (
             <div className="flex items-center gap-2 ml-4 pl-4 border-l border-border/20">
-              <ZoomOut className="w-3 h-3 text-muted-foreground" />
+              <Tooltip id="zoom-out-tooltip" content="Zoom out">
+                <ZoomOut className="w-3 h-3 text-muted-foreground cursor-pointer" />
+              </Tooltip>
               <input
                 type="range"
                 min="120"
@@ -63,7 +69,9 @@ const VideoList: React.FC<VideoListProps> = ({
                 onChange={(e) => setGridZoom(Number(e.target.value))}
                 className="w-20 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer slider"
               />
-              <ZoomIn className="w-3 h-3 text-muted-foreground" />
+              <Tooltip id="zoom-in-tooltip" content="Zoom in">
+                <ZoomIn className="w-3 h-3 text-muted-foreground cursor-pointer" />
+              </Tooltip>
             </div>
           )}
         </div>
@@ -126,35 +134,41 @@ const VideoList: React.FC<VideoListProps> = ({
                               )}
                             </div>
                           </div>
-                                                                                <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onRemoveFile(file)}
-                            className="non-draggable opacity-60 hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
+                                                                                <Tooltip id={`remove-${file}-tooltip`} content="Remove from queue">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onRemoveFile(file)}
+                              className="non-draggable opacity-60 hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </Tooltip>
                         </div>
                         {/* Action buttons */}
                         <div className="flex justify-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onOpenFile(file)}
-                            className="text-xs px-2 py-1 h-7"
-                          >
-                            <Play className="w-3 h-3 mr-1" />
-                            Play
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onShowInFinder(file)}
-                            className="text-xs px-2 py-1 h-7"
-                          >
-                            <FolderOpen className="w-3 h-3 mr-1" />
-                            Show
-                          </Button>
+                          <Tooltip id={`play-${file}-tooltip`} content="Play video">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onOpenFile(file)}
+                              className="text-xs px-2 py-1 h-7"
+                            >
+                              <Play className="w-3 h-3 mr-1" />
+                              Play
+                            </Button>
+                          </Tooltip>
+                          <Tooltip id={`show-${file}-tooltip`} content="Show in Finder">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onShowInFinder(file)}
+                              className="text-xs px-2 py-1 h-7"
+                            >
+                              <FolderOpen className="w-3 h-3 mr-1" />
+                              Show
+                            </Button>
+                          </Tooltip>
                         </div>
                       </div>
                     </motion.div>
@@ -211,35 +225,41 @@ const VideoList: React.FC<VideoListProps> = ({
                             </div>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => onOpenFile(file)}
-                              className="text-xs px-1.5 py-0.5 h-6"
-                            >
-                              <Play className="w-3 h-3 mr-1" />
-                              Play
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => onShowInFinder(file)}
-                              className="text-xs px-1.5 py-0.5 h-6"
-                            >
-                              <FolderOpen className="w-3 h-3 mr-1" />
-                              Show
-                            </Button>
+                            <Tooltip id={`play-list-${file}-tooltip`} content="Play video">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onOpenFile(file)}
+                                className="text-xs px-1.5 py-0.5 h-6"
+                              >
+                                <Play className="w-3 h-3 mr-1" />
+                                Play
+                              </Button>
+                            </Tooltip>
+                            <Tooltip id={`show-list-${file}-tooltip`} content="Show in Finder">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => onShowInFinder(file)}
+                                className="text-xs px-1.5 py-0.5 h-6"
+                              >
+                                <FolderOpen className="w-3 h-3 mr-1" />
+                                Show
+                              </Button>
+                            </Tooltip>
                             <motion.div
                               whileTap={{ scale: 0.9 }}
                             >
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onRemoveFile(file)}
-                                className="non-draggable opacity-60 hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
+                              <Tooltip id={`remove-list-${file}-tooltip`} content="Remove from queue">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => onRemoveFile(file)}
+                                  className="non-draggable opacity-60 hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </Tooltip>
                             </motion.div>
                           </div>
                         </div>
