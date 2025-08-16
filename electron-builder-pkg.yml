@@ -1,6 +1,6 @@
 # PKG build configuration for unsigned distribution
-appId: "com.pantherandcub.compress"
-productName: "Compress"
+appId: "com.pantherandcub.compres"
+productName: "Compres"
 directories:
   output: "dist"
 files:
@@ -17,7 +17,7 @@ extends: null
 publish:
   - provider: "github"
     owner: "Panther-Cub"
-    repo: "compress-app"
+    repo: "compres-app"
     private: false
 
 # PKG specific settings

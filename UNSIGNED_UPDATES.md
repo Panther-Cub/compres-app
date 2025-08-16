@@ -67,13 +67,13 @@ When you click "Quit & Install", you'll see these instructions:
 
 ### If macOS blocks the app after installation:
 - The installer should automatically remove quarantine attributes
-- If not, you can manually run: `xattr -cr /Applications/Compress.app`
+- If not, you can manually run: `xattr -cr /Applications/Compres.app`
 
 ## Manual Download
 
 If the automatic update system doesn't work, you can manually download updates:
 
-1. Go to the [GitHub releases page](https://github.com/Panther-Cub/compress-app/releases)
+1. Go to the [GitHub releases page](https://github.com/Panther-Cub/compres-app/releases)
 2. Download the latest `.pkg` file
 3. Run the installer manually
 

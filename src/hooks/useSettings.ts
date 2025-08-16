@@ -23,8 +23,8 @@ const DEFAULT_USER_SETTINGS: UserDefaults = {
 
 // Storage keys for localStorage
 const STORAGE_KEYS = {
-  USER_DEFAULTS: 'compress-user-defaults',
-  CURRENT_SETTINGS: 'compress-current-settings'
+  USER_DEFAULTS: 'compres-user-defaults',
+  CURRENT_SETTINGS: 'compres-current-settings'
 };
 
 export const useSettings = (): UseSettingsReturn => {

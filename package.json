@@ -1,6 +1,6 @@
 {
   "name": "compres",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A minimalistic video compression app for web optimization",
   "main": "build/main.js",
   "homepage": "./",
@@ -67,7 +67,7 @@
     "version:help": "node scripts/version-manager.js help"
   },
   "build": {
-    "appId": "com.pantherandcub.compress",
+    "appId": "com.pantherandcub.compres",
     "productName": "Compres",
     "directories": {
       "output": "dist"
@@ -92,7 +92,7 @@
       {
         "provider": "github",
         "owner": "Panther-Cub",
-        "repo": "compress-app",
+        "repo": "compres-app",
         "private": false
       }
     ],

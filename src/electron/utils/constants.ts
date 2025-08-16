@@ -54,7 +54,7 @@ export const APP_CONSTANTS = {
   
   // GitHub
   GITHUB_OWNER: 'Panther-Cub',
-  GITHUB_REPO: 'compress-app',
+  GITHUB_REPO: 'compres-app',
   BUY_ME_COFFEE_URL: 'https://buymeacoffee.com/pantherandcub'
 } as const;
 

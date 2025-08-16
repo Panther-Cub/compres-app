@@ -66,7 +66,7 @@ The update system uses these settings:
 // GitHub integration
 provider: 'github'
 owner: 'Panther-Cub'
-repo: 'compress-app'
+repo: 'compres-app'
 
 // Download settings
 downloadPath: '~/Downloads' // User's Downloads folder
@@ -126,7 +126,7 @@ When publishing updates:
 
 ```
 dist/
-├── Compress-0.2.0-mac.pkg          # Main app installer
+├── Compres-0.2.0-mac.pkg          # Main app installer
 └── latest-mac.yml                  # Update metadata (optional)
 ```
 
