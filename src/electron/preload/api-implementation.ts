@@ -6,7 +6,7 @@ export function createElectronAPI(): ElectronAPI {
     // File selection
     selectFiles: () => ipcRenderer.invoke('select-files'),
     selectOutputDirectory: () => ipcRenderer.invoke('select-output-directory'),
-    getDefaultOutputDirectory: () => ipcRenderer.invoke('get-default-output-directory'),
+    getDefaultOutputDirectory: (folderName?: string) => ipcRenderer.invoke('get-default-output-directory', folderName),
     batchRenameFiles: (data: any) => ipcRenderer.invoke('batch-rename-files', data),
     
     // Video compression - FIXED: Updated to match backend signatures

@@ -50,6 +50,8 @@ function App() {
     setPresetSettings,
     outputDirectory,
     defaultOutputDirectory,
+    outputFolderName,
+    defaultOutputFolderName,
     presets,
     drawerOpen,
     showAdvanced,
@@ -58,6 +60,8 @@ function App() {
     handlePresetToggle,
     handleSelectOutputDirectory,
     setDefaultOutputDirectory,
+    handleOutputFolderNameChange,
+    setDefaultOutputFolderName,
     toggleDrawer,
     toggleAdvanced,
     handleAdvancedSettingsChange,
@@ -405,6 +409,10 @@ function App() {
     onSelectOutputDirectory: handleSelectOutputDirectory,
     defaultOutputDirectory,
     onSetDefaultOutputDirectory: setDefaultOutputDirectory,
+    outputFolderName,
+    onOutputFolderNameChange: handleOutputFolderNameChange,
+    defaultOutputFolderName,
+    onSetDefaultOutputFolderName: setDefaultOutputFolderName,
     drawerOpen,
     onToggleDrawer: toggleDrawer,
     advancedSettings,
@@ -562,6 +570,8 @@ function App() {
             resetToDefaults={resetToDefaults}
             defaultOutputDirectory={defaultOutputDirectory}
             onSetDefaultOutputDirectory={setDefaultOutputDirectory}
+            defaultOutputFolderName={defaultOutputFolderName}
+            onSetDefaultOutputFolderName={setDefaultOutputFolderName}
           />
         )}
       </AnimatePresence>

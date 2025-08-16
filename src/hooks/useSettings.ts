@@ -6,6 +6,7 @@ import { getDefaultPresets, PRESET_REGISTRY } from '../shared/presetRegistry';
 const DEFAULT_USER_SETTINGS: UserDefaults = {
   defaultPresets: getDefaultPresets(),
   defaultOutputDirectory: '',
+  defaultOutputFolderName: 'Compressed Videos',
   defaultPresetSettings: {},
   defaultAdvancedSettings: {
     crf: 25,
@@ -33,6 +34,8 @@ export const useSettings = (): UseSettingsReturn => {
   const [presetSettings, setPresetSettings] = useState<Record<string, PresetSettings>>({});
   const [outputDirectory, setOutputDirectory] = useState<string>('');
   const [defaultOutputDirectory, setDefaultOutputDirectory] = useState<string>('');
+  const [outputFolderName, setOutputFolderName] = useState<string>(DEFAULT_USER_SETTINGS.defaultOutputFolderName);
+  const [defaultOutputFolderName, setDefaultOutputFolderName] = useState<string>(DEFAULT_USER_SETTINGS.defaultOutputFolderName);
   const [presets, setPresets] = useState<Record<string, Preset>>({});
   const [drawerOpen, setDrawerOpen] = useState<boolean>(true);
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
@@ -75,6 +78,7 @@ export const useSettings = (): UseSettingsReturn => {
       const userDefaults: UserDefaults = {
         defaultPresets,
         defaultOutputDirectory,
+        defaultOutputFolderName,
         defaultPresetSettings,
         defaultAdvancedSettings,
         drawerOpen
@@ -84,7 +88,7 @@ export const useSettings = (): UseSettingsReturn => {
     } catch (error) {
       console.error('Error saving user defaults:', error);
     }
-  }, [defaultPresets, defaultOutputDirectory, defaultPresetSettings, defaultAdvancedSettings, drawerOpen]);
+  }, [defaultPresets, defaultOutputDirectory, defaultOutputFolderName, defaultPresetSettings, defaultAdvancedSettings, drawerOpen]);
 
   // Reset to default settings
   const resetToDefaults = useCallback((): void => {
@@ -118,6 +122,8 @@ export const useSettings = (): UseSettingsReturn => {
       setDefaultPresets(userDefaults.defaultPresets);
       setDefaultPresetSettings(userDefaults.defaultPresetSettings);
       setDefaultAdvancedSettings(userDefaults.defaultAdvancedSettings);
+      setDefaultOutputFolderName(userDefaults.defaultOutputFolderName);
+      setOutputFolderName(userDefaults.defaultOutputFolderName);
       setDrawerOpen(userDefaults.drawerOpen);
 
       // Only apply user defaults to current session if user has actually set them
@@ -178,7 +184,7 @@ export const useSettings = (): UseSettingsReturn => {
       console.warn('Electron API not available');
       return;
     }
-    const defaultDir = await window.electronAPI.getDefaultOutputDirectory();
+    const defaultDir = await window.electronAPI.getDefaultOutputDirectory(userDefaults.defaultOutputFolderName);
             setDefaultOutputDirectory(defaultDir);
             setOutputDirectory(defaultDir);
           } catch (err) {
@@ -216,7 +222,7 @@ export const useSettings = (): UseSettingsReturn => {
     if (hasUserSetDefaults) {
       saveUserDefaults();
     }
-  }, [defaultPresets, defaultPresetSettings, defaultAdvancedSettings, defaultOutputDirectory, saveUserDefaults]);
+  }, [defaultPresets, defaultPresetSettings, defaultAdvancedSettings, defaultOutputDirectory, defaultOutputFolderName, saveUserDefaults]);
 
   const handlePresetToggle = useCallback((presetKey: string): void => {
     console.log('Preset toggle called for:', presetKey);
@@ -281,6 +287,25 @@ export const useSettings = (): UseSettingsReturn => {
   const handleSetDefaultOutputDirectory = useCallback((directory: string): void => {
     setDefaultOutputDirectory(directory);
     setOutputDirectory(directory);
+  }, []);
+
+  const handleOutputFolderNameChange = useCallback(async (name: string): Promise<void> => {
+    setOutputFolderName(name);
+    
+    // Update the output directory to use the new folder name
+    if (window.electronAPI && name.trim()) {
+      try {
+        const newOutputDir = await window.electronAPI.getDefaultOutputDirectory(name.trim());
+        setOutputDirectory(newOutputDir);
+      } catch (error) {
+        console.error('Error updating output directory with new folder name:', error);
+      }
+    }
+  }, []);
+
+  const handleSetDefaultOutputFolderName = useCallback((name: string): void => {
+    setDefaultOutputFolderName(name);
+    setOutputFolderName(name);
   }, []);
 
   const toggleDrawer = useCallback((): void => {
@@ -349,6 +374,8 @@ export const useSettings = (): UseSettingsReturn => {
     setPresetSettings: handlePresetSettingsChange,
     outputDirectory,
     defaultOutputDirectory,
+    outputFolderName,
+    defaultOutputFolderName,
     presets,
     drawerOpen,
     showAdvanced,
@@ -357,6 +384,8 @@ export const useSettings = (): UseSettingsReturn => {
     handlePresetToggle,
     handleSelectOutputDirectory,
     setDefaultOutputDirectory: handleSetDefaultOutputDirectory,
+    handleOutputFolderNameChange,
+    setDefaultOutputFolderName: handleSetDefaultOutputFolderName,
     toggleDrawer,
     toggleAdvanced,
     handleAdvancedSettingsChange,

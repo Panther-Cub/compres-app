@@ -3,7 +3,7 @@ export interface ElectronAPI {
   // File selection
   selectFiles: () => Promise<string[]>;
   selectOutputDirectory: () => Promise<string>;
-  getDefaultOutputDirectory: () => Promise<string>;
+  getDefaultOutputDirectory: (folderName?: string) => Promise<string>;
   batchRenameFiles: (data: { files: string[]; newNames: Record<string, string> }) => Promise<Array<{
     success: boolean;
     oldPath: string;

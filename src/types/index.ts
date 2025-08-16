@@ -55,6 +55,10 @@ export interface Settings {
   onSelectOutputDirectory: () => void;
   defaultOutputDirectory: string;
   onSetDefaultOutputDirectory: (directory: string) => void;
+  outputFolderName: string;
+  onOutputFolderNameChange: (name: string) => Promise<void>;
+  defaultOutputFolderName: string;
+  onSetDefaultOutputFolderName: (name: string) => void;
   advancedSettings: AdvancedSettings;
   onAdvancedSettingsChange: (settings: AdvancedSettings) => void;
   showAdvanced: boolean;
@@ -172,6 +176,10 @@ export interface SettingsDrawerProps {
   onSelectOutputDirectory: () => void;
   defaultOutputDirectory: string;
   onSetDefaultOutputDirectory: (directory: string) => void;
+  outputFolderName: string;
+  onOutputFolderNameChange: (name: string) => Promise<void>;
+  defaultOutputFolderName: string;
+  onSetDefaultOutputFolderName: (name: string) => void;
   drawerOpen: boolean;
   onToggleDrawer: () => void;
   advancedSettings: AdvancedSettings;
@@ -242,6 +250,8 @@ export interface UseSettingsReturn {
   setPresetSettings: (presetId: string, settings: PresetSettings) => void;
   outputDirectory: string;
   defaultOutputDirectory: string;
+  outputFolderName: string;
+  defaultOutputFolderName: string;
   presets: Record<string, Preset>;
   drawerOpen: boolean;
   showAdvanced: boolean;
@@ -250,6 +260,8 @@ export interface UseSettingsReturn {
   handlePresetToggle: (presetId: string) => void;
   handleSelectOutputDirectory: () => void;
   setDefaultOutputDirectory: (directory: string) => void;
+  handleOutputFolderNameChange: (name: string) => Promise<void>;
+  setDefaultOutputFolderName: (name: string) => void;
   toggleDrawer: () => void;
   toggleAdvanced: () => void;
   handleAdvancedSettingsChange: (settings: AdvancedSettings) => void;
@@ -273,6 +285,7 @@ export interface UseSettingsReturn {
 export interface UserDefaults {
   defaultPresets: string[];
   defaultOutputDirectory: string;
+  defaultOutputFolderName: string;
   defaultPresetSettings: Record<string, PresetSettings>;
   defaultAdvancedSettings: AdvancedSettings;
   drawerOpen: boolean;

@@ -21,6 +21,8 @@ interface DefaultsDrawerProps extends Pick<SettingsDrawerProps,
   | 'advancedSettings'
   | 'defaultOutputDirectory'
   | 'onSetDefaultOutputDirectory'
+  | 'defaultOutputFolderName'
+  | 'onSetDefaultOutputFolderName'
 > {
   isOpen: boolean;
   onClose: () => void;
@@ -44,7 +46,9 @@ const DefaultsDrawer: React.FC<DefaultsDrawerProps> = ({
   saveUserDefaults,
   resetToDefaults,
   defaultOutputDirectory,
-  onSetDefaultOutputDirectory
+  onSetDefaultOutputDirectory,
+  defaultOutputFolderName,
+  onSetDefaultOutputFolderName
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('presets');
 
@@ -314,6 +318,50 @@ const DefaultsDrawer: React.FC<DefaultsDrawerProps> = ({
                         <p className="text-xs text-muted-foreground/70 font-medium">Default Location:</p>
                         <p className="text-sm text-muted-foreground truncate">
                           {defaultOutputDirectory}
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Default Folder Name Tab */}
+            {activeTab === 'folder' && (
+              <motion.div 
+                className="space-y-3"
+                variants={macAnimations.slideUp}
+              >
+                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Default Folder Name</h3>
+                <p className="text-xs text-muted-foreground">Set the default name for the compressed videos folder.</p>
+                
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <label htmlFor="default-folder-name-input" className="text-xs font-medium text-muted-foreground">
+                      Default Folder Name
+                    </label>
+                    <input
+                      id="default-folder-name-input"
+                      type="text"
+                      value={defaultOutputFolderName}
+                      onChange={(e) => onSetDefaultOutputFolderName(e.target.value)}
+                      placeholder="Enter default folder name..."
+                      className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                    />
+                  </div>
+                  
+                  <AnimatePresence>
+                    {defaultOutputFolderName && (
+                      <motion.div 
+                        className="space-y-2 p-3 bg-muted/30 rounded-full"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <p className="text-xs text-muted-foreground/70 font-medium">Default Folder Name:</p>
+                        <p className="text-sm text-muted-foreground">
+                          {defaultOutputFolderName}
                         </p>
                       </motion.div>
                     )}

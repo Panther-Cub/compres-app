@@ -29,6 +29,10 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   onSelectOutputDirectory,
   defaultOutputDirectory,
   onSetDefaultOutputDirectory,
+  outputFolderName,
+  onOutputFolderNameChange,
+  defaultOutputFolderName,
+  onSetDefaultOutputFolderName,
   drawerOpen,
   onToggleDrawer,
   advancedSettings,
@@ -487,6 +491,33 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       )}
                     </div>
                   </div>
+
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Output Folder Name</h3>
+                    <p className="text-xs text-muted-foreground">Customize the name of the folder where compressed videos will be saved.</p>
+                    
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <label htmlFor="folder-name-input" className="text-xs font-medium text-muted-foreground">
+                          Folder Name
+                        </label>
+                        <input
+                          id="folder-name-input"
+                          type="text"
+                          value={outputFolderName}
+                          onChange={(e) => onOutputFolderNameChange(e.target.value).catch(console.error)}
+                          placeholder="Enter folder name..."
+                          className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                        />
+                      </div>
+                      
+                      {outputFolderName === defaultOutputFolderName && (
+                        <p className="text-xs text-muted-foreground">
+                          Using default folder name: {defaultOutputFolderName}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -532,6 +563,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             resetToDefaults={resetToDefaults}
             defaultOutputDirectory={defaultOutputDirectory}
             onSetDefaultOutputDirectory={onSetDefaultOutputDirectory}
+            defaultOutputFolderName={defaultOutputFolderName}
+            onSetDefaultOutputFolderName={onSetDefaultOutputFolderName}
           />
         )}
       </AnimatePresence>

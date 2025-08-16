@@ -247,11 +247,12 @@ export function setupIpcHandlers(): void {
     }
   });
 
-  ipcMain.handle('get-default-output-directory', async () => {
+  ipcMain.handle('get-default-output-directory', async (event, folderName?: string) => {
     try {
       const homeDir = os.homedir();
       const desktopDir = path.join(homeDir, 'Desktop');
-      const compressedVideosDir = path.join(desktopDir, APP_CONSTANTS.DEFAULT_OUTPUT_DIR);
+      const folderToUse = folderName || APP_CONSTANTS.DEFAULT_OUTPUT_DIR;
+      const compressedVideosDir = path.join(desktopDir, folderToUse);
       
       // Create the directory if it doesn't exist
       if (!fs.existsSync(compressedVideosDir)) {

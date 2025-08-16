@@ -22,10 +22,10 @@ export function sendCompressionEvent(
 }
 
 // Helper function to get default output directory for Mac
-export function getDefaultOutputDirectory(): string {
+export function getDefaultOutputDirectory(folderName: string = 'Compressed Videos'): string {
   const homeDir = os.homedir();
   const desktopDir = path.join(homeDir, 'Desktop');
-  const compressedVideosDir = path.join(desktopDir, 'Compressed Videos');
+  const compressedVideosDir = path.join(desktopDir, folderName);
   
   // Create the directory if it doesn't exist
   if (!fs.existsSync(compressedVideosDir)) {
