@@ -27,6 +27,7 @@ export interface ElectronAPI {
   }) => Promise<any[]>;
   getPresets: () => Promise<Record<string, any>>;
   getAllPresets: () => Promise<Record<string, any>>;
+  getCustomPresets: () => Promise<Record<string, any>>;
   addCustomPreset: (presetId: string, preset: any) => Promise<{ success: boolean; presetId: string }>;
   removeCustomPreset: (presetId: string) => Promise<{ success: boolean; presetId: string }>;
   isCustomPreset: (presetId: string) => Promise<boolean>;

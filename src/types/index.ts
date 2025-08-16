@@ -30,6 +30,7 @@ export interface Preset {
   id: string;
   name: string;
   description: string;
+  category?: 'web' | 'social' | 'mac' | 'custom';
   crf: number;
   videoBitrate: string;
   audioBitrate: string;
@@ -59,6 +60,7 @@ export interface Settings {
   showAdvanced: boolean;
   onToggleAdvanced: () => void;
   onSaveCustomPreset: () => void;
+  handleCustomPresetRemove: (presetId: string) => Promise<void>;
   selectedFiles: string[];
   fileInfos: Record<string, FileInfo>;
   // New default settings properties
@@ -70,6 +72,7 @@ export interface Settings {
   setDefaultAdvancedSettings: (settings: AdvancedSettings) => void;
   saveUserDefaults: () => void;
   resetToDefaults: () => void;
+  handleReorderPresets: (newOrder: string[]) => void;
 }
 
 // Theme types
@@ -176,6 +179,7 @@ export interface SettingsDrawerProps {
   showAdvanced: boolean;
   onToggleAdvanced: () => void;
   onSaveCustomPreset: () => void;
+  handleCustomPresetRemove: (presetId: string) => Promise<void>;
   selectedFiles: string[];
   fileInfos: Record<string, FileInfo>;
   // New default settings props
@@ -251,7 +255,9 @@ export interface UseSettingsReturn {
   handleAdvancedSettingsChange: (settings: AdvancedSettings) => void;
   handleSaveCustomPreset: () => void;
   handleCustomPresetSave: (customPreset: any) => Promise<void>;
+  handleCustomPresetRemove: (presetId: string) => Promise<void>;
   setShowCustomPresetModal: (show: boolean) => void;
+  handleReorderPresets: (newOrder: string[]) => void;
   // New persistent settings methods
   defaultPresets: string[];
   setDefaultPresets: (presets: string[]) => void;

@@ -9,8 +9,13 @@ import {
   addCustomPreset,
   removeCustomPreset,
   getAllPresets,
-  isCustomPreset
+  isCustomPreset,
+  getCustomPresets
 } from './compression';
+import { 
+  addCustomPresetWithPersistence, 
+  removeCustomPresetWithPersistence 
+} from './compression/custom-preset-manager';
 import { getDefaultOutputDirectory } from './compression/utils';
 import { 
   getMainWindow, 
@@ -72,7 +77,7 @@ export function setupIpcHandlers(): void {
   // Custom preset management
   ipcMain.handle('add-custom-preset', async (event, presetId: string, preset: any) => {
     try {
-      addCustomPreset(presetId, preset);
+      addCustomPresetWithPersistence(presetId, preset);
       return { success: true, presetId };
     } catch (error) {
       console.error('Error adding custom preset:', error);
@@ -82,7 +87,7 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('remove-custom-preset', async (event, presetId: string) => {
     try {
-      removeCustomPreset(presetId);
+      removeCustomPresetWithPersistence(presetId);
       return { success: true, presetId };
     } catch (error) {
       console.error('Error removing custom preset:', error);
@@ -95,6 +100,15 @@ export function setupIpcHandlers(): void {
       return getAllPresets();
     } catch (error) {
       console.error('Error getting all presets:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-custom-presets', async () => {
+    try {
+      return getCustomPresets();
+    } catch (error) {
+      console.error('Error getting custom presets:', error);
       throw error;
     }
   });

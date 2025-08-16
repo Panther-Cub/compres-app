@@ -11,6 +11,7 @@ import {
   setupIpcHandlers,
   createApplicationMenu
 } from './electron';
+import { initializeCustomPresets } from './electron/compression/custom-preset-manager';
 
 // System resource monitoring
 let systemMonitorInterval: NodeJS.Timeout | null = null;
@@ -34,6 +35,9 @@ function initializeApp() {
   
   // Setup FFmpeg
   setupFFmpeg();
+  
+  // Initialize custom presets (load from file)
+  initializeCustomPresets();
   
   // Create windows
   const mainWindow = createMainWindow();

@@ -126,6 +126,8 @@ export const useSettings = (): UseSettingsReturn => {
       
       if (hasUserSetDefaults) {
         console.log('User has set defaults - applying to current session');
+        console.log('Default presets to apply:', userDefaults.defaultPresets);
+        console.log('Default preset settings to apply:', userDefaults.defaultPresetSettings);
         setSelectedPresets(userDefaults.defaultPresets);
         setPresetSettings(userDefaults.defaultPresetSettings);
         setAdvancedSettings(userDefaults.defaultAdvancedSettings);
@@ -137,7 +139,7 @@ export const useSettings = (): UseSettingsReturn => {
         setAdvancedSettings(DEFAULT_USER_SETTINGS.defaultAdvancedSettings);
       }
 
-      // Load presets
+      // Load presets first
       if (window.electronAPI) {
         try {
           if (!window.electronAPI) {
@@ -146,6 +148,22 @@ export const useSettings = (): UseSettingsReturn => {
     }
     const presetsData = await window.electronAPI.getAllPresets();
           setPresets(presetsData);
+          
+          // After presets are loaded, ensure all selected presets have default settings
+          if (hasUserSetDefaults) {
+            console.log('Ensuring all selected presets have default settings');
+            const updatedPresetSettings = { ...userDefaults.defaultPresetSettings };
+            
+            // Add default settings for any selected presets that don't have them
+            userDefaults.defaultPresets.forEach(presetId => {
+              if (!updatedPresetSettings[presetId]) {
+                updatedPresetSettings[presetId] = { keepAudio: true };
+                console.log('Added default settings for preset:', presetId);
+              }
+            });
+            
+            setPresetSettings(updatedPresetSettings);
+          }
         } catch (err) {
           console.error('Error loading presets:', err);
         }
@@ -201,18 +219,41 @@ export const useSettings = (): UseSettingsReturn => {
   }, [defaultPresets, defaultPresetSettings, defaultAdvancedSettings, defaultOutputDirectory, saveUserDefaults]);
 
   const handlePresetToggle = useCallback((presetKey: string): void => {
-    setSelectedPresets(prev => 
-      prev.includes(presetKey) 
+    console.log('Preset toggle called for:', presetKey);
+    setSelectedPresets(prev => {
+      const newSelection = prev.includes(presetKey) 
         ? prev.filter(p => p !== presetKey)
-        : [...prev, presetKey]
-    );
+        : [...prev, presetKey];
+      console.log('New preset selection:', newSelection);
+      
+      // If adding a preset, ensure it has default settings
+      if (!prev.includes(presetKey) && newSelection.includes(presetKey)) {
+        setPresetSettings(currentSettings => {
+          if (!currentSettings[presetKey]) {
+            console.log('Adding default settings for newly selected preset:', presetKey);
+            return {
+              ...currentSettings,
+              [presetKey]: { keepAudio: true }
+            };
+          }
+          return currentSettings;
+        });
+      }
+      
+      return newSelection;
+    });
   }, []);
 
   const handlePresetSettingsChange = useCallback((presetId: string, settings: PresetSettings): void => {
-    setPresetSettings(prev => ({
-      ...prev,
-      [presetId]: settings
-    }));
+    console.log('Preset settings change for:', presetId, settings);
+    setPresetSettings(prev => {
+      const newSettings = {
+        ...prev,
+        [presetId]: settings
+      };
+      console.log('New preset settings:', newSettings);
+      return newSettings;
+    });
   }, []);
 
   const handleSelectOutputDirectory = useCallback(async (): Promise<void> => {
@@ -277,6 +318,31 @@ export const useSettings = (): UseSettingsReturn => {
     setShowCustomPresetModal(false);
   }, []);
 
+  const handleCustomPresetRemove = useCallback(async (presetId: string): Promise<void> => {
+    try {
+      if (window.electronAPI) {
+        // Remove the custom preset via the API
+        await window.electronAPI.removeCustomPreset(presetId);
+        
+        // Reload all presets to reflect the removal
+        const updatedPresets = await window.electronAPI.getAllPresets();
+        setPresets(updatedPresets);
+        
+        // Remove from selected presets if it was selected
+        setSelectedPresets(prev => prev.filter(p => p !== presetId));
+        
+        console.log('Custom preset removed successfully:', presetId);
+      }
+    } catch (error) {
+      console.error('Error removing custom preset:', error);
+    }
+  }, []);
+
+  const handleReorderPresets = useCallback((newOrder: string[]): void => {
+    // Update the selected presets order
+    setSelectedPresets(newOrder);
+  }, []);
+
   return {
     selectedPresets,
     presetSettings,
@@ -296,6 +362,7 @@ export const useSettings = (): UseSettingsReturn => {
     handleAdvancedSettingsChange,
     handleSaveCustomPreset,
     handleCustomPresetSave,
+    handleCustomPresetRemove,
     setShowCustomPresetModal,
     // New persistent settings methods
     defaultPresets,
@@ -305,6 +372,7 @@ export const useSettings = (): UseSettingsReturn => {
     defaultAdvancedSettings,
     setDefaultAdvancedSettings,
     saveUserDefaults,
-    resetToDefaults
+    resetToDefaults,
+    handleReorderPresets
   };
 };

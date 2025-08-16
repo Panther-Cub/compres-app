@@ -1,4 +1,5 @@
 import { BrowserWindow } from 'electron';
+import fs from 'fs';
 import { 
   CompressionResult, 
   AdvancedCompressionSettings
@@ -249,6 +250,20 @@ export class CompressionManager {
     // Validate batch size
     if (files.length > this.maxVideosPerBatch) {
       const error = `Too many videos selected (${files.length}). Maximum allowed is ${this.maxVideosPerBatch}. Please select fewer videos or increase the limit in settings.`;
+      console.error(error);
+      throw new Error(error);
+    }
+    
+    // Validate that all files exist before starting compression
+    const missingFiles: string[] = [];
+    for (const file of files) {
+      if (!fs.existsSync(file)) {
+        missingFiles.push(file);
+      }
+    }
+    
+    if (missingFiles.length > 0) {
+      const error = `The following files no longer exist and cannot be compressed:\n${missingFiles.join('\n')}\n\nPlease re-select the files and try again.`;
       console.error(error);
       throw new Error(error);
     }

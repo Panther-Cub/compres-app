@@ -63,6 +63,7 @@ function App() {
     handleAdvancedSettingsChange,
     handleSaveCustomPreset,
     handleCustomPresetSave,
+    handleCustomPresetRemove,
     setShowCustomPresetModal,
     // New default settings methods
     defaultPresets,
@@ -72,7 +73,8 @@ function App() {
     defaultAdvancedSettings,
     setDefaultAdvancedSettings,
     saveUserDefaults,
-    resetToDefaults
+    resetToDefaults,
+    handleReorderPresets
   } = useSettings();
 
   const { theme, toggleTheme } = useTheme();
@@ -417,6 +419,7 @@ function App() {
     showAdvanced,
     onToggleAdvanced: toggleAdvanced,
     onSaveCustomPreset: handleSaveCustomPreset,
+    handleCustomPresetRemove,
     selectedFiles,
     fileInfos,
     // New default settings props
@@ -427,7 +430,8 @@ function App() {
     defaultAdvancedSettings,
     setDefaultAdvancedSettings,
     saveUserDefaults,
-    resetToDefaults
+    resetToDefaults,
+    handleReorderPresets
   };
 
   return (

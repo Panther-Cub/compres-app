@@ -16,6 +16,7 @@ export interface CompressionSettings {
 export interface VideoPreset {
   name: string;
   description: string;
+  category?: 'web' | 'social' | 'mac' | 'custom';
   settings: CompressionSettings;
 }
 

@@ -1,96 +1,44 @@
 import { VideoPreset } from './types';
 
-// Video presets configuration
+// Video presets configuration - Categorized for different use cases
 export const videoPresets: Record<string, VideoPreset> = {
-  'web-optimized': {
-    name: 'Web Optimized',
-    description: 'Optimized for web streaming with good quality and small file size',
+  // WEB CATEGORY - Optimized for web streaming and embedding
+  'web-hero': {
+    name: 'Web Hero',
+    description: 'High quality for hero videos and main content (1080p)',
+    category: 'web',
     settings: {
       videoCodec: 'libx264',
-      videoBitrate: '1000k',
-      audioCodec: 'aac',
-      audioBitrate: '64k',
-      resolution: '1280x720',
-      fps: 30,
-      crf: 27,
-      preset: 'medium'
-    }
-  },
-  'mac-hardware': {
-    name: 'Mac Hardware Accelerated',
-    description: 'Uses Mac VideoToolbox for faster encoding',
-    settings: {
-      videoCodec: 'h264_videotoolbox',
-      videoBitrate: '1000k',
-      audioCodec: 'aac',
-      audioBitrate: '64k',
-      resolution: '1280x720',
-      fps: 30,
-      crf: 27,
-      preset: 'medium'
-    }
-  },
-  'mac-hevc': {
-    name: 'Mac HEVC Hardware',
-    description: 'Hardware-accelerated HEVC encoding for maximum efficiency',
-    settings: {
-      videoCodec: 'hevc_videotoolbox',
-      videoBitrate: '800k',
-      audioCodec: 'aac',
-      audioBitrate: '64k',
-      resolution: '1280x720',
-      fps: 30,
-      crf: 28,
-      preset: 'medium'
-    }
-  },
-  'mac-ultra-fast': {
-    name: 'Mac Ultra Fast',
-    description: 'Maximum speed with hardware acceleration for quick previews',
-    settings: {
-      videoCodec: 'h264_videotoolbox',
-      videoBitrate: '500k',
-      audioCodec: 'aac',
-      audioBitrate: '48k',
-      resolution: '1280x720',
-      fps: 30,
-      crf: 30,
-      preset: 'ultrafast'
-    }
-  },
-  'mac-high-quality': {
-    name: 'Mac High Quality',
-    description: 'High quality with hardware acceleration for professional use',
-    settings: {
-      videoCodec: 'hevc_videotoolbox',
       videoBitrate: '2000k',
       audioCodec: 'aac',
       audioBitrate: '128k',
       resolution: '1920x1080',
       fps: 30,
       crf: 23,
-      preset: 'slow'
-    }
-  },
-  'webm-modern': {
-    name: 'WebM Modern',
-    description: 'Modern WebM format with VP9 for better compression',
-    settings: {
-      videoCodec: 'libvpx-vp9',
-      videoBitrate: '800k',
-      audioCodec: 'libopus',
-      audioBitrate: '64k',
-      resolution: '1280x720',
-      fps: 30,
-      crf: 30,
       preset: 'medium'
     }
   },
-  'hevc-efficient': {
-    name: 'HEVC Efficient',
-    description: 'H.265/HEVC for maximum compression efficiency',
+  'web-standard': {
+    name: 'Web Standard',
+    description: 'Balanced quality and size for general web use (720p)',
+    category: 'web',
     settings: {
-      videoCodec: 'libx265',
+      videoCodec: 'libx264',
+      videoBitrate: '1000k',
+      audioCodec: 'aac',
+      audioBitrate: '96k',
+      resolution: '1280x720',
+      fps: 30,
+      crf: 25,
+      preset: 'medium'
+    }
+  },
+  'web-light': {
+    name: 'Web Light',
+    description: 'Small file size for faster loading (720p, compressed)',
+    category: 'web',
+    settings: {
+      videoCodec: 'libx264',
       videoBitrate: '600k',
       audioCodec: 'aac',
       audioBitrate: '64k',
@@ -100,40 +48,107 @@ export const videoPresets: Record<string, VideoPreset> = {
       preset: 'medium'
     }
   },
-  'thumbnail-preview': {
-    name: 'Thumbnail Preview',
-    description: 'Small file size for thumbnails and previews',
+
+  // SOCIAL CATEGORY - Optimized for social media platforms
+  'social-vertical': {
+    name: 'Social Vertical',
+    description: 'Optimized for Instagram, TikTok, and Stories (9:16)',
+    category: 'social',
     settings: {
       videoCodec: 'libx264',
-      videoBitrate: '200k',
+      videoBitrate: '1500k',
       audioCodec: 'aac',
-      audioBitrate: '32k',
-      resolution: '640x360',
-      fps: 15,
-      crf: 35,
-      preset: 'ultrafast'
+      audioBitrate: '128k',
+      resolution: '1080x1920',
+      fps: 30,
+      crf: 24,
+      preset: 'medium'
     }
   },
-  'ultra-compressed': {
-    name: 'Ultra Compressed',
-    description: 'Maximum compression for very small file sizes',
+  'social-square': {
+    name: 'Social Square',
+    description: 'Perfect for Instagram posts and Facebook (1:1)',
+    category: 'social',
     settings: {
       videoCodec: 'libx264',
-      videoBitrate: '400k',
+      videoBitrate: '1200k',
       audioCodec: 'aac',
-      audioBitrate: '48k',
+      audioBitrate: '96k',
+      resolution: '1080x1080',
+      fps: 30,
+      crf: 25,
+      preset: 'medium'
+    }
+  },
+  'social-horizontal': {
+    name: 'Social Horizontal',
+    description: 'For YouTube, Facebook, and Twitter (16:9)',
+    category: 'social',
+    settings: {
+      videoCodec: 'libx264',
+      videoBitrate: '1800k',
+      audioCodec: 'aac',
+      audioBitrate: '128k',
+      resolution: '1920x1080',
+      fps: 30,
+      crf: 23,
+      preset: 'medium'
+    }
+  },
+
+  // MAC CATEGORY - Hardware accelerated for Mac users
+  'mac-fast': {
+    name: 'Mac Fast',
+    description: 'Hardware accelerated for quick compression (VideoToolbox)',
+    category: 'mac',
+    settings: {
+      videoCodec: 'h264_videotoolbox',
+      videoBitrate: '1500k',
+      audioCodec: 'aac',
+      audioBitrate: '96k',
       resolution: '1280x720',
-      fps: 24,
-      crf: 35,
+      fps: 30,
+      crf: 25,
+      preset: 'medium'
+    }
+  },
+  'mac-efficient': {
+    name: 'Mac Efficient',
+    description: 'HEVC hardware encoding for maximum compression',
+    category: 'mac',
+    settings: {
+      videoCodec: 'hevc_videotoolbox',
+      videoBitrate: '800k',
+      audioCodec: 'aac',
+      audioBitrate: '64k',
+      resolution: '1280x720',
+      fps: 30,
+      crf: 28,
+      preset: 'medium'
+    }
+  },
+  'mac-quality': {
+    name: 'Mac Quality',
+    description: 'High quality with hardware acceleration',
+    category: 'mac',
+    settings: {
+      videoCodec: 'hevc_videotoolbox',
+      videoBitrate: '2500k',
+      audioCodec: 'aac',
+      audioBitrate: '128k',
+      resolution: '1920x1080',
+      fps: 30,
+      crf: 22,
       preset: 'slow'
     }
   }
 };
 
-// In-memory custom presets storage (will be replaced with file-based storage in main process)
-const customPresets: Record<string, VideoPreset> = {};
+// In-memory custom presets storage (file operations handled in main process)
+let customPresets: Record<string, VideoPreset> = {};
+let customPresetsLoaded = false;
 
-// Function to add a custom preset (in-memory only for now)
+// Function to add a custom preset (in-memory only, file operations in main process)
 export const addCustomPreset = (presetId: string, preset: VideoPreset): void => {
   // Ensure preset ID starts with 'custom-' to avoid conflicts with built-in presets
   const safePresetId = presetId.startsWith('custom-') ? presetId : `custom-${presetId}`;
@@ -143,13 +158,19 @@ export const addCustomPreset = (presetId: string, preset: VideoPreset): void => 
     throw new Error(`Cannot create custom preset with ID '${safePresetId}' as it conflicts with a built-in preset`);
   }
   
-  videoPresets[safePresetId] = preset;
-  customPresets[safePresetId] = preset;
+  // Ensure custom presets have the 'custom' category
+  const customPresetWithCategory = {
+    ...preset,
+    category: 'custom' as const
+  };
+  
+  videoPresets[safePresetId] = customPresetWithCategory;
+  customPresets[safePresetId] = customPresetWithCategory;
   
   console.log(`Custom preset added: ${safePresetId}`);
 };
 
-// Function to remove a custom preset
+// Function to remove a custom preset (in-memory only, file operations in main process)
 export const removeCustomPreset = (presetId: string): void => {
   if (videoPresets[presetId] && presetId.startsWith('custom-')) {
     delete videoPresets[presetId];
@@ -167,4 +188,27 @@ export const getAllPresets = (): Record<string, VideoPreset> => {
 // Function to check if a preset is custom
 export const isCustomPreset = (presetId: string): boolean => {
   return presetId.startsWith('custom-');
+};
+
+// Function to get only custom presets
+export const getCustomPresets = (): Record<string, VideoPreset> => {
+  return { ...customPresets };
+};
+
+// Function to load custom presets from data (called by main process)
+export const loadCustomPresetsFromData = (customPresetsData: Record<string, VideoPreset>): void => {
+  customPresets = { ...customPresetsData };
+  
+  // Add to main presets object
+  Object.entries(customPresets).forEach(([presetId, preset]) => {
+    videoPresets[presetId] = preset;
+  });
+  
+  customPresetsLoaded = true;
+  console.log(`Loaded ${Object.keys(customPresets).length} custom presets`);
+};
+
+// Function to check if custom presets are loaded
+export const areCustomPresetsLoaded = (): boolean => {
+  return customPresetsLoaded;
 };
