@@ -1,6 +1,6 @@
 {
   "name": "compres",
-  "version": "0.2.4",
+  "version": "0.2.2",
   "description": "A minimalistic video compression app for web optimization",
   "main": "build/main.js",
   "homepage": "./",
