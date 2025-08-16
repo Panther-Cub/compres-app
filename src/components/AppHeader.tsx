@@ -1,7 +1,8 @@
 import React from 'react';
-import { Zap, Coffee, Info, Star, Monitor } from 'lucide-react';
+import { Coffee, Info, Star, Minimize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from './ui';
+import AppIcon from './AppIcon';
 import ThemeToggle from './ThemeToggle';
 import { macAnimations } from '../lib/animations';
 import type { AppHeaderProps } from '../types';
@@ -31,9 +32,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.2 }}
         >
-          <Zap className="w-3 h-3 text-foreground/70" />
+          <AppIcon size={18} className="text-foreground/70" />
         </motion.div>
-        <span className="text-[0.625rem] font-normal text-foreground/70">Compress</span>
+        <span className="text-[0.625rem] font-normal text-foreground/70">Compres</span>
       </motion.div>
       <motion.div 
         className="flex items-center gap-2"
@@ -61,9 +62,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             size="sm"
             onClick={onToggleOverlay}
             className="non-draggable text-[0.625rem]"
-            title="Show overlay"
+            title="Switch to overlay"
           >
-            <Monitor className="w-3 h-3" />
+            <Minimize2 className="w-3 h-3" />
           </Button>
         )}
         <ThemeToggle theme={theme} onToggle={onToggleTheme} />

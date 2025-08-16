@@ -1,5 +1,5 @@
 {
-  "name": "compress",
+  "name": "compres",
   "version": "0.2.4",
   "description": "A minimalistic video compression app for web optimization",
   "main": "build/main.js",
@@ -67,7 +67,7 @@
   },
   "build": {
     "appId": "com.pantherandcub.compress",
-    "productName": "Compress",
+    "productName": "Compres",
     "directories": {
       "output": "dist"
     },

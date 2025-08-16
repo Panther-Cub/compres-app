@@ -139,7 +139,7 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
                 <div className="space-y-0.5">
                   <Label htmlFor="startup-toggle" className="text-sm">Open at Login</Label>
                   <p className="text-xs text-muted-foreground">
-                    Automatically start Compress when you log in to your Mac
+                    Automatically start Compres when you log in to your Mac
                   </p>
                 </div>
                 <Switch

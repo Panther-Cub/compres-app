@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Monitor } from 'lucide-react';
+import { Maximize2 } from 'lucide-react';
 import { macAnimations } from '../lib/animations';
 import { Button } from './ui';
 
@@ -110,9 +110,9 @@ const OverlayDropZone: React.FC = () => {
           size="sm"
           onClick={handleToggleToMain}
           className="text-foreground/70 hover:text-foreground/90 hover:bg-foreground/15 backdrop-blur-sm border border-foreground/10 transition-all"
-          title="Switch to main window"
+          title="Expand to full window"
         >
-          <Monitor className="w-4 h-4" />
+          <Maximize2 className="w-4 h-4" />
         </Button>
       </motion.div>
 

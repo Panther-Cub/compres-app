@@ -7,10 +7,10 @@ import { APP_CONSTANTS } from './utils/constants';
 export function createApplicationMenu(): Menu {
   const template: Electron.MenuItemConstructorOptions[] = [
     {
-      label: 'Compress',
+      label: 'Compres',
       submenu: [
         {
-          label: 'About Compress',
+          label: 'About Compres',
           click: async () => {
             // If overlay is visible, switch to main window first
             const overlayWindow = getOverlayWindow();

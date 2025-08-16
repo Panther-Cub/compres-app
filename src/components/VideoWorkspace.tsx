@@ -125,8 +125,8 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
                 {isCompressing ? 'Compressing...' : 
                  !settings.outputDirectory ? 'Select Output Folder' :
                  settings.outputDirectory.includes('Compressed Videos') ? 
-                   `Compress ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''} to Desktop` :
-                   `Compress ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''}`}
+                   `Compres ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''} to Desktop` :
+                   `Compres ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''}`}
               </Button>
             </div>
             <Button 

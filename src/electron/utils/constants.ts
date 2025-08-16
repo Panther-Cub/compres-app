@@ -3,7 +3,7 @@
  */
 export const APP_CONSTANTS = {
   // App information
-  APP_NAME: 'Compress',
+  APP_NAME: 'Compres',
   APP_DESCRIPTION: 'Video Compression Tool',
   
   // File validation

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Zap, Heart } from 'lucide-react';
+import { X, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from './ui';
+import AppIcon from './AppIcon';
 import { macAnimations, overlayVariants } from '../lib/animations';
 
 interface AboutModalProps {
@@ -50,9 +51,9 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <Zap className="w-4 h-4 text-foreground/70" />
+                  <AppIcon size={24} className="text-foreground/70" />
                 </motion.div>
-                <h2 className="text-lg font-light">About Compress</h2>
+                <h2 className="text-lg font-light">About Compres</h2>
               </div>
               <Button
                 variant="ghost"
