@@ -13,9 +13,11 @@ import {
 import { ProgressHandler } from '../progressHandler';
 import { ValidationUtils } from '../validation';
 import { CompressionErrorHandler } from '../error-handler';
+import { MemoryManager } from '../memory-manager';
 
 // Track active compression processes for cancellation
 const activeCompressions = new Map<string, FFmpegCommand>();
+const memoryManager = MemoryManager.getInstance();
 
 export interface CompressionContext {
   file: string;
@@ -124,6 +126,7 @@ export abstract class BaseCompressionStrategy {
 
     // Store the command for potential cancellation
     activeCompressions.set(taskKey, command);
+    memoryManager.trackCompression(taskKey, command);
 
     command
       .output(outputPath)
@@ -161,24 +164,37 @@ export abstract class BaseCompressionStrategy {
   protected handleProgress(progress: FFmpegProgress): void {
     const { taskKey } = this.context;
     
-    const rawPercent = progress.percent || 0;
-    const adjustedPercent = this.progressHandler.calculateAdjustedProgress(rawPercent);
-    
-    // Use the new fluid update system
-    if (this.progressHandler.shouldUpdateUI(adjustedPercent)) {
-      console.log(`Progress for ${this.context.fileName}-${this.context.presetKey}: ${adjustedPercent.toFixed(1)}%`);
+    try {
+      const rawPercent = progress.percent || 0;
+      const adjustedPercent = this.progressHandler.calculateAdjustedProgress(rawPercent);
       
-      // Update batch progress if available
-      if (this.context.batchProgressManager) {
-        this.context.batchProgressManager.updateTaskProgress(taskKey, adjustedPercent);
+      // Use the new fluid update system
+      if (this.progressHandler.shouldUpdateUI(adjustedPercent)) {
+        console.log(`Progress for ${taskKey}: ${adjustedPercent.toFixed(1)}%`);
+        
+        // Update batch progress if available
+        if (this.context.batchProgressManager) {
+          try {
+            this.context.batchProgressManager.updateTaskProgress(taskKey, adjustedPercent);
+          } catch (error) {
+            console.warn('Error updating batch progress:', error);
+          }
+        }
+        
+        // Send progress event with proper task key
+        try {
+          sendCompressionEvent('compression-progress', {
+            file: this.context.fileName,
+            preset: this.context.presetKey,
+            percent: adjustedPercent,
+            timemark: progress.timemark
+          }, this.context.mainWindow);
+        } catch (error) {
+          console.warn('Error sending progress event:', error);
+        }
       }
-      
-      sendCompressionEvent('compression-progress', {
-        file: this.context.fileName,
-        preset: this.context.presetKey,
-        percent: adjustedPercent,
-        timemark: progress.timemark
-      }, this.context.mainWindow);
+    } catch (error) {
+      console.error('Error in handleProgress:', error);
     }
   }
 
@@ -188,40 +204,66 @@ export abstract class BaseCompressionStrategy {
   protected handleEnd(): void {
     const { fileName, presetKey, outputPath, mainWindow, taskKey } = this.context;
     
-    console.log(`Completed compression: ${fileName} with preset ${presetKey}`);
-    console.log(`File saved to: ${outputPath}`);
-    
-    // Verify output file was created and has size > 0
     try {
-      ValidationUtils.validateOutputFile(outputPath);
-      const stats = require('fs').statSync(outputPath);
-      console.log(`Output file verified: ${outputPath} (${stats.size} bytes)`);
-    } catch (verifyError) {
-      console.error(`Output file verification failed:`, verifyError);
+      console.log(`Completed compression: ${fileName} with preset ${presetKey}`);
+      console.log(`File saved to: ${outputPath}`);
+      
+      // Verify output file was created and has size > 0
+      try {
+        ValidationUtils.validateOutputFile(outputPath);
+        const stats = require('fs').statSync(outputPath);
+        console.log(`Output file verified: ${outputPath} (${stats.size} bytes)`);
+      } catch (verifyError) {
+        console.error(`Output file verification failed:`, verifyError);
+        activeCompressions.delete(taskKey);
+        memoryManager.removeCompression(taskKey);
+        throw new Error(`Output verification failed: ${verifyError}`);
+      }
+      
+      // Send final 100% progress before completion
+      try {
+        sendCompressionEvent('compression-progress', {
+          file: fileName,
+          preset: presetKey,
+          percent: 100,
+          timemark: '00:00:00'
+        }, mainWindow);
+      } catch (progressError) {
+        console.warn('Error sending final progress:', progressError);
+      }
+      
+      try {
+        sendCompressionEvent('compression-complete', {
+          file: fileName,
+          preset: presetKey,
+          outputPath
+        }, mainWindow);
+      } catch (completeError) {
+        console.warn('Error sending completion event:', completeError);
+      }
+      
+      // Update batch progress if available
+      if (this.context.batchProgressManager) {
+        try {
+          this.context.batchProgressManager.markTaskCompleted(taskKey, outputPath);
+        } catch (batchError) {
+          console.warn('Error updating batch progress:', batchError);
+        }
+      }
+      
       activeCompressions.delete(taskKey);
-      throw new Error(`Output verification failed: ${verifyError}`);
+      memoryManager.removeCompression(taskKey);
+    } catch (error) {
+      console.error('Error in handleEnd:', error);
+      // Ensure cleanup happens even if there's an error
+      try {
+        activeCompressions.delete(taskKey);
+        memoryManager.removeCompression(taskKey);
+      } catch (cleanupError) {
+        console.error('Error during cleanup in handleEnd:', cleanupError);
+      }
+      throw error;
     }
-    
-    // Send final 100% progress before completion
-    sendCompressionEvent('compression-progress', {
-      file: fileName,
-      preset: presetKey,
-      percent: 100,
-      timemark: '00:00:00'
-    }, mainWindow);
-    
-    sendCompressionEvent('compression-complete', {
-      file: fileName,
-      preset: presetKey,
-      outputPath
-    }, mainWindow);
-    
-    // Update batch progress if available
-    if (this.context.batchProgressManager) {
-      this.context.batchProgressManager.markTaskCompleted(taskKey, outputPath);
-    }
-    
-    activeCompressions.delete(taskKey);
   }
 
   /**
@@ -230,25 +272,42 @@ export abstract class BaseCompressionStrategy {
   protected handleError(err: FFmpegError): void {
     const { fileName, presetKey, file, outputPath, taskKey } = this.context;
     
-    console.error(`Error compressing ${fileName} with preset ${presetKey}:`, err.message);
-    console.error(`Full error details:`, err);
-    console.error(`Input file: ${file}`);
-    console.error(`Output path: ${outputPath}`);
-    
-    // Handle error with proper error classification
-    const compressionError = CompressionErrorHandler.handleFFmpegError(err, {
-      fileName,
-      presetKey,
-      codec: this.context.preset.settings.videoCodec
-    });
-    
-    // Update batch progress if available
-    if (this.context.batchProgressManager) {
-      this.context.batchProgressManager.markTaskFailed(taskKey, compressionError.message);
+    try {
+      console.error(`Error compressing ${fileName} with preset ${presetKey}:`, err.message);
+      console.error(`Full error details:`, err);
+      console.error(`Input file: ${file}`);
+      console.error(`Output path: ${outputPath}`);
+      
+      // Handle error with proper error classification
+      const compressionError = CompressionErrorHandler.handleFFmpegError(err, {
+        fileName,
+        presetKey,
+        codec: this.context.preset.settings.videoCodec
+      });
+      
+      // Update batch progress if available
+      if (this.context.batchProgressManager) {
+        try {
+          this.context.batchProgressManager.markTaskFailed(taskKey, compressionError.message);
+        } catch (batchError) {
+          console.warn('Error updating batch progress for failed task:', batchError);
+        }
+      }
+      
+      activeCompressions.delete(taskKey);
+      memoryManager.removeCompression(taskKey);
+      throw new Error(compressionError.message);
+    } catch (error) {
+      console.error('Error in handleError:', error);
+      // Ensure cleanup happens even if there's an error
+      try {
+        activeCompressions.delete(taskKey);
+        memoryManager.removeCompression(taskKey);
+      } catch (cleanupError) {
+        console.error('Error during cleanup in handleError:', cleanupError);
+      }
+      throw error;
     }
-    
-    activeCompressions.delete(taskKey);
-    throw new Error(compressionError.message);
   }
 
   /**

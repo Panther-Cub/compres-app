@@ -83,6 +83,10 @@ export class ValidationUtils {
     if (advancedSettings.audioBitrate && !/^\d+k$/.test(advancedSettings.audioBitrate)) {
       throw new Error(`Invalid audio bitrate format: ${advancedSettings.audioBitrate}. Must be in format: 96k`);
     }
+
+    if (advancedSettings.maxConcurrentCompressions && (advancedSettings.maxConcurrentCompressions < 1 || advancedSettings.maxConcurrentCompressions > 6)) {
+      throw new Error(`Invalid max concurrent compressions value: ${advancedSettings.maxConcurrentCompressions}. Must be between 1-6`);
+    }
   }
 
   /**

@@ -7,7 +7,8 @@ import {
   videoPresets, 
   compressVideos, 
   compressVideosAdvanced, 
-  cancelCompression 
+  cancelCompression,
+  CompressionManager
 } from './compression';
 import { getDefaultOutputDirectory } from './compression/utils';
 import { 
@@ -21,7 +22,52 @@ import {
 import { FileValidation, Settings } from './utils';
 import { APP_CONSTANTS, ERROR_MESSAGES } from './utils/constants';
 
+// Global compression manager instance
+let compressionManager: CompressionManager | null = null;
+
 export function setupIpcHandlers(): void {
+  // Initialize compression manager
+  ipcMain.handle('initialize-compression-manager', async () => {
+    const mainWindow = getMainWindow();
+    if (!mainWindow) {
+      throw new Error(ERROR_MESSAGES.WINDOW.NOT_AVAILABLE);
+    }
+    
+    compressionManager = new CompressionManager(mainWindow);
+    return { success: true };
+  });
+
+  // Compression limits and recommendations
+  ipcMain.handle('get-compression-limits', async () => {
+    if (!compressionManager) {
+      throw new Error('Compression manager not initialized');
+    }
+    
+    const recommendations = await compressionManager.getSystemRecommendations();
+    return {
+      maxConcurrent: compressionManager.getMaxConcurrentCompressions(),
+      maxVideosPerBatch: compressionManager.getMaxVideosPerBatch(),
+      recommendations
+    };
+  });
+
+  ipcMain.handle('set-max-videos-per-batch', async (event, maxVideos: number) => {
+    if (!compressionManager) {
+      throw new Error('Compression manager not initialized');
+    }
+    
+    compressionManager.setMaxVideosPerBatch(maxVideos);
+    return { success: true, maxVideos: compressionManager.getMaxVideosPerBatch() };
+  });
+
+  ipcMain.handle('get-system-recommendations', async () => {
+    if (!compressionManager) {
+      throw new Error('Compression manager not initialized');
+    }
+    
+    return await compressionManager.getSystemRecommendations();
+  });
+
   // App information
   ipcMain.handle('get-app-version', async () => {
     return app.getVersion();
@@ -518,7 +564,7 @@ export function setupIpcHandlers(): void {
     }
   });
 
-  ipcMain.handle('save-startup-settings', async (event, settings: { openAtLogin: boolean; defaultWindow: string }) => {
+  ipcMain.handle('save-startup-settings', async (event, settings: { openAtLogin: boolean; defaultWindow: string; performanceSettings?: { maxConcurrentCompressions: number } }) => {
     try {
       // Save settings using the utility
       Settings.saveStartupSettings(settings);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Monitor, Zap, Save } from 'lucide-react';
+import { Settings, Monitor, Zap, Save, Cpu } from 'lucide-react';
 import { 
   Button, 
   Card, 
@@ -25,6 +25,9 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
     openAtLogin: false,
     defaultWindow: 'overlay' as 'overlay' | 'main'
   });
+  const [performanceSettings, setPerformanceSettings] = useState({
+    maxConcurrentCompressions: 2
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   
@@ -42,6 +45,11 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
           openAtLogin: settings.openAtLogin,
           defaultWindow: settings.defaultWindow as 'overlay' | 'main'
         });
+        
+        // Load performance settings if available
+        if (settings.performanceSettings) {
+          setPerformanceSettings(settings.performanceSettings);
+        }
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -52,7 +60,10 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
     setIsSaving(true);
     try {
       if (window.electronAPI) {
-        await window.electronAPI.saveStartupSettings(startupSettings);
+        await window.electronAPI.saveStartupSettings({
+          ...startupSettings,
+          performanceSettings
+        });
         setHasChanges(false);
       }
     } catch (error) {
@@ -76,6 +87,14 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
 
   const handleDefaultWindowChange = (value: string) => {
     handleSettingChange('defaultWindow', value as 'overlay' | 'main');
+  };
+
+  const handlePerformanceSettingChange = (key: keyof typeof performanceSettings, value: any) => {
+    setPerformanceSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
+    setHasChanges(true);
   };
 
 
@@ -122,6 +141,43 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
                   checked={startupSettings.openAtLogin}
                   onCheckedChange={handleStartupToggle}
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Performance Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <Cpu className="w-4 h-4" />
+                Performance Settings
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Configure how the app uses your system resources
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <Label htmlFor="concurrency-slider">Max Concurrent Compressions</Label>
+                  <span className="text-muted-foreground">{performanceSettings.maxConcurrentCompressions}</span>
+                </div>
+                <input
+                  id="concurrency-slider"
+                  type="range"
+                  min="1"
+                  max="6"
+                  value={performanceSettings.maxConcurrentCompressions}
+                  onChange={(e) => handlePerformanceSettingChange('maxConcurrentCompressions', parseInt(e.target.value))}
+                  className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer slider"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>1 (Conservative)</span>
+                  <span>6 (Aggressive)</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Higher values compress more videos simultaneously but use more system resources
+                </p>
               </div>
             </CardContent>
           </Card>

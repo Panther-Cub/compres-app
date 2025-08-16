@@ -89,6 +89,7 @@ export interface AdvancedCompressionSettings {
   twoPass?: boolean;
   fastStart?: boolean;
   optimizeForWeb?: boolean;
+  maxConcurrentCompressions?: number;
 }
 
 export interface CompressionOptions {

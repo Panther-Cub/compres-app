@@ -20,22 +20,95 @@ import {
 import { HardwareDetection } from './hardware-detection';
 import { BatchProgressManager } from './batch-progress-manager';
 import { CompressionErrorHandler } from './error-handler';
+import { Settings } from '../utils/settings';
+import { MemoryManager, MemoryUtils } from './memory-manager';
 
 // Manager class to handle compression operations
 export class CompressionManager {
   private mainWindow: BrowserWindow;
   private maxConcurrentCompressions: number;
+  private maxVideosPerBatch: number = 10; // Configurable maximum videos per batch
   private batchProgressManager: BatchProgressManager;
   private isCancelled: boolean = false;
-  private activeCompressions: Map<string, any> = new Map();
   private compressionQueue: Promise<CompressionResult>[] = [];
   private runningCompressions: number = 0;
+  private userSetConcurrency: boolean = false; // Track if user explicitly set concurrency
+  private memoryManager: MemoryManager;
+  private memoryMonitorInterval: NodeJS.Timeout | null = null;
 
   constructor(mainWindow: BrowserWindow) {
     this.mainWindow = mainWindow;
     this.batchProgressManager = new BatchProgressManager(mainWindow);
     this.maxConcurrentCompressions = Math.max(1, Math.min(4, require('os').cpus().length - 1));
+    this.memoryManager = MemoryManager.getInstance();
+    this.memoryManager.initialize(mainWindow);
     console.log(`Compression manager initialized with max ${this.maxConcurrentCompressions} concurrent compressions`);
+  }
+
+  /**
+   * Set maximum videos per batch (user configurable)
+   */
+  setMaxVideosPerBatch(maxVideos: number): void {
+    this.maxVideosPerBatch = Math.max(1, Math.min(20, maxVideos)); // Limit between 1-20
+    console.log(`Max videos per batch set to: ${this.maxVideosPerBatch}`);
+  }
+
+  /**
+   * Get current maximum videos per batch
+   */
+  getMaxVideosPerBatch(): number {
+    return this.maxVideosPerBatch;
+  }
+
+  /**
+   * Get current maximum concurrent compressions
+   */
+  getMaxConcurrentCompressions(): number {
+    return this.maxConcurrentCompressions;
+  }
+
+  /**
+   * Get system recommendations for optimal performance
+   */
+  async getSystemRecommendations(): Promise<{
+    maxConcurrent: number;
+    maxVideosPerBatch: number;
+    recommendedMaxVideos: number;
+    hardwareAccelerated: boolean;
+    chipType: string;
+    memoryGB: number;
+  }> {
+    const capabilities = await HardwareDetection.detectCapabilities();
+    const memoryGB = Math.round(require('os').totalmem() / (1024 * 1024 * 1024));
+    
+    // Calculate recommended max videos based on system capabilities
+    let recommendedMaxVideos = 10; // Default
+    if (capabilities.hasVideoToolbox) {
+      if (memoryGB >= 16) {
+        recommendedMaxVideos = 15;
+      } else if (memoryGB >= 8) {
+        recommendedMaxVideos = 10;
+      } else {
+        recommendedMaxVideos = 6;
+      }
+    } else {
+      if (memoryGB >= 16) {
+        recommendedMaxVideos = 8;
+      } else if (memoryGB >= 8) {
+        recommendedMaxVideos = 6;
+      } else {
+        recommendedMaxVideos = 4;
+      }
+    }
+    
+    return {
+      maxConcurrent: this.maxConcurrentCompressions,
+      maxVideosPerBatch: this.maxVideosPerBatch,
+      recommendedMaxVideos,
+      hardwareAccelerated: capabilities.hasVideoToolbox,
+      chipType: capabilities.chipType,
+      memoryGB
+    };
   }
 
   /**
@@ -46,9 +119,15 @@ export class CompressionManager {
       const capabilities = await HardwareDetection.detectCapabilities();
       const recommendedConcurrency = await HardwareDetection.getRecommendedConcurrency();
       
-      this.maxConcurrentCompressions = recommendedConcurrency;
-      console.log(`Hardware optimization applied: ${capabilities.chipType} with ${capabilities.recommendedCodec} codec`);
-      console.log(`Optimized concurrency: ${this.maxConcurrentCompressions}`);
+      // Only set maxConcurrentCompressions if user hasn't explicitly set it
+      // This preserves user preferences while still providing hardware recommendations
+      if (!this.userSetConcurrency) {
+        this.maxConcurrentCompressions = recommendedConcurrency;
+        console.log(`Hardware optimization applied: ${capabilities.chipType} with ${capabilities.recommendedCodec} codec`);
+        console.log(`Optimized concurrency: ${this.maxConcurrentCompressions}`);
+      } else {
+        console.log(`Using user-specified concurrency: ${this.maxConcurrentCompressions} (hardware recommendation: ${recommendedConcurrency})`);
+      }
       
       // Send hardware info to UI
       sendCompressionEvent('hardware-detected', {
@@ -67,37 +146,56 @@ export class CompressionManager {
    */
   private async processWithConcurrencyControl<T>(tasks: (() => Promise<T>)[]): Promise<T[]> {
     const results: T[] = [];
-    const activePromises: Promise<T>[] = [];
+    const maxConcurrent = this.maxConcurrentCompressions;
     
-    for (const task of tasks) {
-      if (this.isCancelled) {
-        console.log('Compression cancelled, stopping processing');
-        break;
-      }
+    console.log(`Starting concurrency control with ${tasks.length} tasks, max concurrent: ${maxConcurrent}`);
+    
+    // Process tasks in batches
+    for (let i = 0; i < tasks.length; i += maxConcurrent) {
+      const batch = tasks.slice(i, i + maxConcurrent);
+      console.log(`Processing batch ${Math.floor(i / maxConcurrent) + 1}: tasks ${i + 1} to ${Math.min(i + maxConcurrent, tasks.length)}`);
       
-      // Wait if we've reached the concurrency limit
-      while (activePromises.length >= this.maxConcurrentCompressions) {
-        // Wait for any task to complete
-        const completedTask = await Promise.race(activePromises.map(p => p.catch(e => e)));
-        const index = activePromises.findIndex(p => p === completedTask);
-        if (index !== -1) {
-          activePromises.splice(index, 1);
-        }
-      }
-      
-      // Start new task
-      const taskPromise = task().catch(error => {
-        console.error('Task failed:', error);
-        return error;
+      // Execute batch concurrently
+      const batchPromises = batch.map((task, batchIndex) => {
+        const taskIndex = i + batchIndex;
+        console.log(`Starting task ${taskIndex + 1}/${tasks.length}`);
+        
+        return task().catch(error => {
+          console.error(`Task ${taskIndex + 1} failed:`, error);
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          } as T;
+        });
       });
       
-      activePromises.push(taskPromise);
+      // Wait for all tasks in this batch to complete
+      try {
+        const batchResults = await Promise.allSettled(batchPromises);
+        
+        for (let j = 0; j < batchResults.length; j++) {
+          const result = batchResults[j];
+          const taskIndex = i + j;
+          
+          if (result.status === 'fulfilled' && result.value) {
+            results.push(result.value);
+            console.log(`Task ${taskIndex + 1} completed successfully`);
+          } else if (result.status === 'rejected') {
+            console.error(`Task ${taskIndex + 1} rejected:`, result.reason);
+            results.push({
+              success: false,
+              error: result.reason instanceof Error ? result.reason.message : 'Task rejected'
+            } as T);
+          }
+        }
+        
+        console.log(`Batch ${Math.floor(i / maxConcurrent) + 1} completed, ${results.length}/${tasks.length} total tasks done`);
+      } catch (error) {
+        console.error(`Error in batch ${Math.floor(i / maxConcurrent) + 1}:`, error);
+      }
     }
     
-    // Wait for all remaining tasks to complete
-    const remainingResults = await Promise.all(activePromises);
-    results.push(...remainingResults);
-    
+    console.log(`All tasks completed. Total results: ${results.length}`);
     return results;
   }
 
@@ -134,6 +232,26 @@ export class CompressionManager {
     // Reset cancellation state
     this.isCancelled = false;
     this.runningCompressions = 0;
+    this.userSetConcurrency = false; // Reset user concurrency flag for new session
+    
+    // Get max concurrent compressions from system settings
+    try {
+      const startupSettings = Settings.getStartupSettings();
+      if (startupSettings.performanceSettings?.maxConcurrentCompressions) {
+        this.maxConcurrentCompressions = Math.max(1, Math.min(6, startupSettings.performanceSettings.maxConcurrentCompressions));
+        this.userSetConcurrency = true;
+        console.log(`Updated max concurrent compressions to: ${this.maxConcurrentCompressions} (from system settings)`);
+      }
+    } catch (error) {
+      console.warn('Could not load performance settings, using default:', error);
+    }
+    
+    // Validate batch size
+    if (files.length > this.maxVideosPerBatch) {
+      const error = `Too many videos selected (${files.length}). Maximum allowed is ${this.maxVideosPerBatch}. Please select fewer videos or increase the limit in settings.`;
+      console.error(error);
+      throw new Error(error);
+    }
     
     // Initialize hardware optimization
     await this.initializeHardwareOptimization();
@@ -144,6 +262,10 @@ export class CompressionManager {
     console.log('Advanced settings:', advancedSettings);
     console.log('Output directory:', outputDirectory);
     console.log(`Max concurrent compressions: ${this.maxConcurrentCompressions}`);
+    console.log(`Max videos per batch: ${this.maxVideosPerBatch}`);
+    
+    // Log initial memory usage
+    MemoryUtils.logMemoryUsage('Before compression batch');
     
     // Validate and ensure output directory exists
     try {
@@ -154,8 +276,20 @@ export class CompressionManager {
       throw new Error(compressionError.message);
     }
     
+    // Clean up any existing batch progress before initializing new one
+    try {
+      this.batchProgressManager.cleanup();
+      // Add a small delay to ensure cleanup is complete before starting new batch
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+      console.warn('Error cleaning up previous batch progress:', error);
+    }
+    
     // Initialize batch progress tracking
     this.batchProgressManager.initializeBatch(files, presetConfigs);
+    
+    // Start memory monitoring
+    this.startMemoryMonitoring();
     
     // Track file indices to handle duplicate filenames
     const fileIndices = new Map<string, number>();
@@ -219,8 +353,31 @@ export class CompressionManager {
       throw error;
     } finally {
       // Cleanup batch progress manager
-      this.batchProgressManager.cleanup();
+      try {
+        this.batchProgressManager.cleanup();
+      } catch (error) {
+        console.error('Error cleaning up batch progress manager:', error);
+      }
+      
       this.runningCompressions = 0;
+      
+      // Clean up memory using centralized memory manager
+      try {
+        this.memoryManager.cleanupCompression();
+      } catch (error) {
+        console.error('Error cleaning up memory manager:', error);
+      }
+      
+      // Check for memory leaks
+      try {
+        this.memoryManager.checkForLeaks();
+      } catch (error) {
+        console.error('Error checking for memory leaks:', error);
+      }
+      
+      // Log memory usage after cleanup
+      MemoryUtils.logMemoryUsage('After compression batch');
+      this.stopMemoryMonitoring(); // Stop monitoring after compression
     }
   }
 
@@ -241,32 +398,52 @@ export class CompressionManager {
     const fileName = getFileName(file);
     
     try {
-      // Track running compressions
+      // Track running compressions with better synchronization
       this.runningCompressions++;
       console.log(`Starting compression ${this.runningCompressions}/${this.maxConcurrentCompressions}: ${fileName}`);
       
       // Mark task as started in batch progress
-      this.batchProgressManager.markTaskStarted(taskKey);
+      try {
+        this.batchProgressManager.markTaskStarted(taskKey);
+      } catch (error) {
+        console.warn(`Failed to mark task started: ${error}`);
+      }
       
       // Validate codec support
-      const isCodecSupported = await HardwareDetection.isCodecSupported(preset.settings.videoCodec);
-      if (!isCodecSupported) {
-        const fallbackCodec = await HardwareDetection.getFallbackCodec(preset.settings.videoCodec);
-        console.warn(`Codec ${preset.settings.videoCodec} not supported, using fallback: ${fallbackCodec}`);
-        preset.settings.videoCodec = fallbackCodec;
+      let isCodecSupported = true;
+      try {
+        isCodecSupported = await HardwareDetection.isCodecSupported(preset.settings.videoCodec);
+        if (!isCodecSupported) {
+          const fallbackCodec = await HardwareDetection.getFallbackCodec(preset.settings.videoCodec);
+          console.warn(`Codec ${preset.settings.videoCodec} not supported, using fallback: ${fallbackCodec}`);
+          preset.settings.videoCodec = fallbackCodec;
+        }
+      } catch (error) {
+        console.warn(`Hardware detection failed for ${fileName}:`, error);
+        // Continue with current codec
       }
       
       // Perform compression
       let result: CompressionResult;
-      if (isAdvanced) {
-        result = await this.compressFileWithAdvancedSettings(file, presetKey, preset, keepAudio, outputDirectory, advancedSettings, taskKey, fileIndex);
-      } else {
-        result = await compressFileWithPreset(file, presetKey, preset, keepAudio, outputDirectory, taskKey, this.mainWindow, advancedSettings, this.batchProgressManager);
+      try {
+        if (isAdvanced) {
+          result = await this.compressFileWithAdvancedSettings(file, presetKey, preset, keepAudio, outputDirectory, advancedSettings, taskKey, fileIndex);
+        } else {
+          result = await compressFileWithPreset(file, presetKey, preset, keepAudio, outputDirectory, taskKey, this.mainWindow, advancedSettings, this.batchProgressManager);
+        }
+      } catch (compressionError) {
+        console.error(`Compression failed for ${fileName}:`, compressionError);
+        throw compressionError;
       }
       
       // Mark task as completed
-      this.batchProgressManager.markTaskCompleted(taskKey, result.outputPath);
+      try {
+        this.batchProgressManager.markTaskCompleted(taskKey, result.outputPath);
+      } catch (error) {
+        console.warn(`Failed to mark task completed: ${error}`);
+      }
       
+      console.log(`Successfully completed compression: ${fileName}`);
       return result;
       
     } catch (error) {
@@ -274,26 +451,43 @@ export class CompressionManager {
       
       // Handle different types of errors
       let compressionError;
-      if (error instanceof Error) {
-        if (error.message.includes('cancelled') || this.isCancelled) {
-          compressionError = CompressionErrorHandler.handleCancellationError({ fileName, presetKey });
-          this.batchProgressManager.markTaskCancelled(taskKey);
-        } else if (error.message.includes('ffmpeg')) {
-          compressionError = CompressionErrorHandler.handleFFmpegError(error as any, { 
-            fileName, 
-            presetKey, 
-            codec: preset.settings.videoCodec 
-          });
+      try {
+        if (error instanceof Error) {
+          if (error.message.includes('cancelled') || this.isCancelled) {
+            compressionError = CompressionErrorHandler.handleCancellationError({ fileName, presetKey });
+            try {
+              this.batchProgressManager.markTaskCancelled(taskKey);
+            } catch (cancelError) {
+              console.warn(`Failed to mark task cancelled: ${cancelError}`);
+            }
+          } else if (error.message.includes('ffmpeg')) {
+            compressionError = CompressionErrorHandler.handleFFmpegError(error as any, { 
+              fileName, 
+              presetKey, 
+              codec: preset.settings.videoCodec 
+            });
+          } else {
+            compressionError = CompressionErrorHandler.handleSystemError(error, { fileName, presetKey });
+          }
         } else {
-          compressionError = CompressionErrorHandler.handleSystemError(error, { fileName, presetKey });
+          compressionError = CompressionErrorHandler.handleUnknownError(error as Error, { fileName, presetKey });
         }
-      } else {
-        compressionError = CompressionErrorHandler.handleUnknownError(error as Error, { fileName, presetKey });
+      } catch (errorHandlerError) {
+        console.error('Error in error handler:', errorHandlerError);
+        compressionError = {
+          type: 'unknown' as const,
+          message: `Compression failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          recoverable: true
+        };
       }
       
       // Log error and mark task as failed
-      CompressionErrorHandler.logError(compressionError, { fileName, presetKey, codec: preset.settings.videoCodec });
-      this.batchProgressManager.markTaskFailed(taskKey, compressionError.message);
+      try {
+        CompressionErrorHandler.logError(compressionError, { fileName, presetKey, codec: preset.settings.videoCodec });
+        this.batchProgressManager.markTaskFailed(taskKey, compressionError.message);
+      } catch (error) {
+        console.warn(`Failed to log error or mark task failed: ${error}`);
+      }
       
       const errorResult: CompressionResult = { 
         file: fileName, 
@@ -305,8 +499,14 @@ export class CompressionManager {
       return errorResult;
     } finally {
       // Cleanup task from active compressions
-      this.cleanupTask(taskKey);
-      this.runningCompressions--;
+      try {
+        this.cleanupTask(taskKey);
+      } catch (error) {
+        console.warn(`Failed to cleanup task: ${error}`);
+      }
+      
+      // Decrement running compressions with bounds checking
+      this.runningCompressions = Math.max(0, this.runningCompressions - 1);
       console.log(`Completed compression ${this.runningCompressions}/${this.maxConcurrentCompressions}: ${fileName}`);
     }
   }
@@ -368,7 +568,34 @@ export class CompressionManager {
   private cleanupTask(taskKey: string): void {
     // All strategies now use the same map from the base class
     BaseCompressionStrategy.getActiveCompressions().delete(taskKey);
-    this.activeCompressions.delete(taskKey);
+    this.memoryManager.removeCompression(taskKey);
+  }
+
+  /**
+   * Start memory monitoring during compression
+   */
+  private startMemoryMonitoring(): void {
+    if (this.memoryMonitorInterval) {
+      clearInterval(this.memoryMonitorInterval);
+    }
+    
+    this.memoryMonitorInterval = setInterval(() => {
+      try {
+        this.memoryManager.checkForLeaks();
+      } catch (error) {
+        console.warn('Error in memory monitoring:', error);
+      }
+    }, 10000); // Check every 10 seconds
+  }
+
+  /**
+   * Stop memory monitoring
+   */
+  private stopMemoryMonitoring(): void {
+    if (this.memoryMonitorInterval) {
+      clearInterval(this.memoryMonitorInterval);
+      this.memoryMonitorInterval = null;
+    }
   }
 
   // Cancel all active compressions with proper cleanup
@@ -394,9 +621,9 @@ export class CompressionManager {
       }
     }
     
-    // Clear all maps
+    // Clear all maps using memory manager
     activeCompressions.clear();
-    this.activeCompressions.clear();
+    this.memoryManager.cleanupCompression();
     
     // Send cancellation event to UI
     sendCompressionEvent('compression-cancelled', {
@@ -431,5 +658,13 @@ export class CompressionManager {
       max: this.maxConcurrentCompressions,
       available: this.maxConcurrentCompressions - this.runningCompressions
     };
+  }
+
+  /**
+   * Check for memory leaks and log warnings
+   */
+  checkForMemoryLeaks(): void {
+    this.memoryManager.checkForLeaks();
+    MemoryUtils.logMemoryUsage('Memory leak check');
   }
 }

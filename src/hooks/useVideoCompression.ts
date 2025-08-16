@@ -44,82 +44,104 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
 
   // Helper function to mark task as complete
   const markTaskComplete = useCallback((taskKey: string, outputPath?: string, error?: string): void => {
-    const task = compressionTasksRef.current.get(taskKey);
-    if (task) {
-      task.status = error ? 'error' : 'completed';
-      task.progress = 100;
-      task.outputPath = outputPath;
-      task.error = error;
-      completedTasksRef.current++;
-      
-      // Remove from progress state since task is complete
-      setCompressionProgress(prev => {
-        const newProgress = { ...prev };
-        delete newProgress[taskKey];
-        return newProgress;
-      });
-      
-      // Add to output paths if successful
-      if (outputPath) {
-        setOutputPaths(prev => [...prev, outputPath]);
-      }
-      
-      // Check if all tasks are complete
-      if (checkAllTasksComplete()) {
-        setIsCompressing(false);
-        setCompressionComplete(true);
+    try {
+      const task = compressionTasksRef.current.get(taskKey);
+      if (task) {
+        task.status = error ? 'error' : 'completed';
+        task.progress = 100;
+        task.outputPath = outputPath;
+        task.error = error;
+        completedTasksRef.current++;
         
-        // Check for any errors
-        const hasErrors = Array.from(compressionTasksRef.current.values()).some(task => task.status === 'error');
-        if (hasErrors) {
-          const errorMessages = Array.from(compressionTasksRef.current.values())
-            .filter(task => task.error)
-            .map(task => `${task.file} (${task.preset}): ${task.error}`)
-            .join(', ');
-          setError(`Some compressions failed: ${errorMessages}`);
+        // Remove from progress state since task is complete
+        setCompressionProgress(prev => {
+          const newProgress = { ...prev };
+          delete newProgress[taskKey];
+          return newProgress;
+        });
+        
+        // Add to output paths if successful
+        if (outputPath) {
+          setOutputPaths(prev => [...prev, outputPath]);
         }
+        
+        // Check if all tasks are complete
+        if (checkAllTasksComplete()) {
+          setIsCompressing(false);
+          setCompressionComplete(true);
+          
+          // Check for any errors
+          const hasErrors = Array.from(compressionTasksRef.current.values()).some(task => task.status === 'error');
+          if (hasErrors) {
+            const errorMessages = Array.from(compressionTasksRef.current.values())
+              .filter(task => task.error)
+              .map(task => `${task.file} (${task.preset}): ${task.error}`)
+              .join(', ');
+            setError(`Some compressions failed: ${errorMessages}`);
+          }
+        }
+      } else {
+        console.warn(`Task not found for completion: ${taskKey}`);
       }
+    } catch (error) {
+      console.error('Error marking task complete:', error);
     }
   }, [checkAllTasksComplete]);
 
   // Listen for compression events
   useEffect(() => {
     const handleCompressionProgress = (data: any) => {
-      console.log('Received compression progress:', data);
-      const { file, preset, percent } = data;
-      if (!file || !preset || typeof percent !== 'number') {
-        console.warn('Invalid compression progress data:', data);
-        return;
-      }
+      try {
+        console.log('Received compression progress:', data);
+        const { file, preset, percent } = data;
+        if (!file || !preset || typeof percent !== 'number') {
+          console.warn('Invalid compression progress data:', data);
+          return;
+        }
 
-      const taskKey = getTaskKey(file, preset);
-      console.log(`Setting progress for ${taskKey}: ${percent}%`);
-      setCompressionProgress(prev => ({
-        ...prev,
-        [taskKey]: Math.max(0, Math.min(100, percent)) // Removed Math.round for fluid progress
-      }));
+        const taskKey = getTaskKey(file, preset);
+        console.log(`Setting progress for ${taskKey}: ${percent}%`);
+        setCompressionProgress(prev => ({
+          ...prev,
+          [taskKey]: Math.max(0, Math.min(100, percent)) // Removed Math.round for fluid progress
+        }));
+      } catch (error) {
+        console.error('Error handling compression progress:', error);
+      }
     };
 
     const handleCompressionComplete = (data: any) => {
-      const { file, preset } = data;
-      if (!file || !preset) {
-        console.warn('Invalid compression complete data:', data);
-        return;
-      }
+      try {
+        const { file, preset } = data;
+        if (!file || !preset) {
+          console.warn('Invalid compression complete data:', data);
+          return;
+        }
 
-      const taskKey = getTaskKey(file, preset);
-      markTaskComplete(taskKey);
+        const taskKey = getTaskKey(file, preset);
+        markTaskComplete(taskKey);
+      } catch (error) {
+        console.error('Error handling compression complete:', error);
+      }
     };
 
     // Add event listeners
     if (window.electronAPI) {
-      window.electronAPI.onCompressionProgress(handleCompressionProgress);
-      window.electronAPI.onCompressionComplete(handleCompressionComplete);
+      try {
+        window.electronAPI.onCompressionProgress(handleCompressionProgress);
+        window.electronAPI.onCompressionComplete(handleCompressionComplete);
+      } catch (error) {
+        console.error('Error setting up compression event listeners:', error);
+      }
 
       // Cleanup
       return () => {
-        window.electronAPI.removeAllListeners('compression-progress');
-        window.electronAPI.removeAllListeners('compression-complete');
+        try {
+          window.electronAPI.removeAllListeners('compression-progress');
+          window.electronAPI.removeAllListeners('compression-complete');
+        } catch (error) {
+          console.error('Error cleaning up compression event listeners:', error);
+        }
       };
     }
     

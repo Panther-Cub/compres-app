@@ -127,13 +127,33 @@ export class HardwareDetection {
   static async getRecommendedConcurrency(): Promise<number> {
     const capabilities = await this.detectCapabilities();
     const cpuCount = os.cpus().length;
+    const totalMemoryGB = os.totalmem() / (1024 * 1024 * 1024);
     
     if (capabilities.hasVideoToolbox) {
       // Hardware acceleration can handle more concurrent tasks
-      return Math.max(2, Math.min(6, cpuCount));
+      // But we still need to be conservative to prevent system overload
+      const baseLimit = Math.max(2, Math.min(4, cpuCount - 1));
+      
+      // Adjust based on available memory (hardware encoding still uses some RAM)
+      if (totalMemoryGB >= 16) {
+        return Math.min(6, baseLimit + 1);
+      } else if (totalMemoryGB >= 8) {
+        return baseLimit;
+      } else {
+        return Math.max(2, baseLimit - 1);
+      }
     } else {
-      // Software encoding is more CPU intensive
-      return Math.max(1, Math.min(3, Math.floor(cpuCount / 2)));
+      // Software encoding is more CPU intensive - be more conservative
+      const baseLimit = Math.max(1, Math.min(2, Math.floor(cpuCount / 2)));
+      
+      // Adjust based on available memory
+      if (totalMemoryGB >= 16) {
+        return Math.min(3, baseLimit + 1);
+      } else if (totalMemoryGB >= 8) {
+        return baseLimit;
+      } else {
+        return Math.max(1, baseLimit - 1);
+      }
     }
   }
 

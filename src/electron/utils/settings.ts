@@ -97,19 +97,26 @@ export class Settings {
   /**
    * Get startup settings
    */
-  static getStartupSettings(): { openAtLogin: boolean; defaultWindow: string } {
+  static getStartupSettings(): { openAtLogin: boolean; defaultWindow: string; performanceSettings?: { maxConcurrentCompressions: number } } {
     return {
       openAtLogin: this.getSetting('openAtLogin', APP_CONSTANTS.DEFAULT_OPEN_AT_LOGIN),
-      defaultWindow: this.getSetting('defaultWindow', APP_CONSTANTS.DEFAULT_WINDOW)
+      defaultWindow: this.getSetting('defaultWindow', APP_CONSTANTS.DEFAULT_WINDOW),
+      performanceSettings: {
+        maxConcurrentCompressions: this.getSetting('maxConcurrentCompressions', 2)
+      }
     };
   }
 
   /**
    * Save startup settings
    */
-  static saveStartupSettings(settings: { openAtLogin: boolean; defaultWindow: string }): void {
+  static saveStartupSettings(settings: { openAtLogin: boolean; defaultWindow: string; performanceSettings?: { maxConcurrentCompressions: number } }): void {
     this.setSetting('openAtLogin', settings.openAtLogin);
     this.setSetting('defaultWindow', settings.defaultWindow);
+    
+    if (settings.performanceSettings?.maxConcurrentCompressions) {
+      this.setSetting('maxConcurrentCompressions', settings.performanceSettings.maxConcurrentCompressions);
+    }
   }
 
   /**

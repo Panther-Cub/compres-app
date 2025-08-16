@@ -49,8 +49,8 @@ export interface ElectronAPI {
   showMainWindow: () => Promise<{ success: boolean }>;
   
   // Settings management
-  getStartupSettings: () => Promise<{ openAtLogin: boolean; defaultWindow: string }>;
-  saveStartupSettings: (settings: { openAtLogin: boolean; defaultWindow: string }) => Promise<{ success: boolean }>;
+  getStartupSettings: () => Promise<{ openAtLogin: boolean; defaultWindow: string; performanceSettings?: { maxConcurrentCompressions: number } }>;
+  saveStartupSettings: (settings: { openAtLogin: boolean; defaultWindow: string; performanceSettings?: { maxConcurrentCompressions: number } }) => Promise<{ success: boolean }>;
   getDefaultWindow: () => Promise<string>;
   
   // App information

@@ -15,7 +15,8 @@ export async function compressFileWithPreset(
   advancedSettings?: any,
   batchProgressManager?: any
 ): Promise<CompressionResult> {
-  const fileName = getFileName(file);
+  // Extract fileName from taskKey to ensure consistency
+  const fileName = taskKey.split('::')[0];
   const outputPath = buildOutputPath(file, presetKey, outputDirectory, preset.settings.videoCodec, keepAudio);
   
   const context: CompressionContext = {
