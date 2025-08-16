@@ -1,14 +1,14 @@
 // Export all compression functionality
-export { videoPresets } from './presets';
-export { 
-  compressVideos, 
-  compressVideosAdvanced, 
-  cancelCompression 
-} from './compressor';
 export { CompressionManager } from './manager';
+export { videoPresets } from './presets';
+export { addCustomPreset, removeCustomPreset, getAllPresets, isCustomPreset } from './presets';
 export { HardwareDetection } from './hardware-detection';
 export { BatchProgressManager } from './batch-progress-manager';
 export { CompressionErrorHandler } from './error-handler';
+export { MemoryManager, MemoryUtils } from './memory-manager';
+export { ValidationUtils } from './validation';
+export { sendCompressionEvent, createTaskKey, getFileName, buildOutputPath, ensureOutputDirectory } from './utils';
+export { compressFileWithPreset } from './strategies';
 export * from './types';
 export * from './utils';
 export * from './strategies';

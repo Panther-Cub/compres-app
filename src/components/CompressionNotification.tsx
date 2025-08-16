@@ -1,111 +1,156 @@
 import React from 'react';
-import { Check, AlertCircle } from 'lucide-react';
+import { AlertTriangle, X, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { macAnimations } from '../lib/animations';
-import type { CompressionNotificationProps } from '../types';
+import { Button } from './ui';
 
-const CompressionNotification: React.FC<CompressionNotificationProps> = ({ 
-  isVisible, 
-  isCompressing, 
-  compressionComplete, 
-  error, 
-  totalProgress,
-  onShowProgress 
+interface CompressionNotificationProps {
+  type: 'error' | 'warning' | 'info' | 'success';
+  title: string;
+  message: string;
+  isVisible: boolean;
+  onClose: () => void;
+  onConfirm?: () => void;
+  showConfirm?: boolean;
+  confirmText?: string;
+  cancelText?: string;
+  totalTasks?: number;
+  estimatedTimeMinutes?: number;
+  maxConcurrent?: number;
+}
+
+const CompressionNotification: React.FC<CompressionNotificationProps> = ({
+  type,
+  title,
+  message,
+  isVisible,
+  onClose,
+  onConfirm,
+  showConfirm = false,
+  confirmText = 'Continue',
+  cancelText = 'Cancel',
+  totalTasks,
+  estimatedTimeMinutes,
+  maxConcurrent
 }) => {
+  const getIcon = () => {
+    switch (type) {
+      case 'error':
+        return <AlertTriangle className="w-5 h-5 text-red-500" />;
+      case 'warning':
+        return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
+      case 'info':
+        return <Info className="w-5 h-5 text-blue-500" />;
+      case 'success':
+        return <Info className="w-5 h-5 text-green-500" />;
+      default:
+        return <Info className="w-5 h-5 text-blue-500" />;
+    }
+  };
+
+  const getBgColor = () => {
+    switch (type) {
+      case 'error':
+        return 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800';
+      case 'warning':
+        return 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800';
+      case 'info':
+        return 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800';
+      case 'success':
+        return 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800';
+      default:
+        return 'bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800';
+    }
+  };
+
   return (
     <AnimatePresence>
       {isVisible && (
-        <motion.div 
-          className="fixed bottom-4 right-4 w-80 p-4 bg-background border border-border/20 rounded-lg z-50"
-          variants={macAnimations.slideUp}
-          initial="initial"
-          animate="animate"
-          exit="exit"
+        <motion.div
+          className="fixed top-4 right-4 z-50 max-w-md"
+          initial={{ opacity: 0, x: 300, scale: 0.9 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          exit={{ opacity: 0, x: 300, scale: 0.9 }}
+          transition={{ duration: 0.3, ease: 'easeOut' }}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AnimatePresence mode="wait">
-                {isCompressing && (
-                  <motion.div
-                    key="spinner"
-                    initial={{ scale: 0, rotate: 0 }}
-                    animate={{ scale: 1, rotate: 360 }}
-                    exit={{ scale: 0, rotate: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  </motion.div>
-                )}
-                {compressionComplete && (
-                  <motion.div
-                    key="check"
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    exit={{ scale: 0, rotate: 180 }}
-                    transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  >
-                    <Check className="w-4 h-4 text-green-500" />
-                  </motion.div>
-                )}
-                {error && (
-                  <motion.div
-                    key="error"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <AlertCircle className="w-4 h-4 text-destructive" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              
-              <div className="flex-1">
-                <motion.p 
-                  className="text-sm font-medium"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  {isCompressing ? 'Compressing videos...' : 
-                   compressionComplete ? 'Compression complete!' :
-                   error ? 'Compression failed' : ''}
-                </motion.p>
-                <AnimatePresence>
-                  {isCompressing && (
-                    <motion.p 
-                      className="text-xs text-muted-foreground"
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      {totalProgress}% complete
-                    </motion.p>
-                  )}
-                  {error && (
-                    <motion.p 
-                      className="text-xs text-destructive"
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      {error}
-                    </motion.p>
-                  )}
-                </AnimatePresence>
+          <div className={`${getBgColor()} border rounded-lg shadow-lg p-4`}>
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                {getIcon()}
               </div>
+              
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-medium text-foreground mb-1">
+                  {title}
+                </h3>
+                
+                <p className="text-sm text-muted-foreground mb-3">
+                  {message}
+                </p>
+
+                {/* Task count details for warnings */}
+                {type === 'warning' && totalTasks && estimatedTimeMinutes && maxConcurrent && (
+                  <div className="bg-white/50 dark:bg-black/20 rounded-md p-3 mb-3 text-xs">
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total Tasks:</span>
+                        <span className="font-medium">{totalTasks}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Concurrent:</span>
+                        <span className="font-medium">{maxConcurrent}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Est. Time:</span>
+                        <span className="font-medium">~{estimatedTimeMinutes} minutes</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action buttons */}
+                <div className="flex gap-2">
+                  {showConfirm && onConfirm && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onClose}
+                        className="text-xs"
+                      >
+                        {cancelText}
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={onConfirm}
+                        className="text-xs"
+                      >
+                        {confirmText}
+                      </Button>
+                    </>
+                  )}
+                  
+                  {!showConfirm && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={onClose}
+                      className="text-xs"
+                    >
+                      Dismiss
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {!showConfirm && (
+                <button
+                  onClick={onClose}
+                  className="flex-shrink-0 p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-md transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
-            
-            <motion.button
-              onClick={onShowProgress}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {isCompressing ? 'Show progress' : 'View details'}
-            </motion.button>
           </div>
         </motion.div>
       )}

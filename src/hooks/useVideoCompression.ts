@@ -90,6 +90,18 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
 
   // Listen for compression events
   useEffect(() => {
+    // Initialize compression manager on mount
+    const initializeManager = async () => {
+      try {
+        await window.electronAPI.initializeCompressionManager();
+        console.log('Compression manager initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize compression manager:', error);
+      }
+    };
+    
+    initializeManager();
+    
     const handleCompressionProgress = (data: any) => {
       try {
         console.log('Received compression progress:', data);

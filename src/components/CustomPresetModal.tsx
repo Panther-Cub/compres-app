@@ -17,7 +17,12 @@ const CustomPresetModal: React.FC<CustomPresetModalProps> = ({
   const handleSave = (): void => {
     if (!presetName.trim()) return;
     
+    // Generate a clean preset ID based on the name (no timestamp)
+    const cleanName = presetName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    const presetId = `custom-${cleanName}`;
+    
     const customPreset = {
+      id: presetId,
       name: presetName.trim(),
       description: presetDescription.trim() || 'Custom preset with advanced settings',
       settings: {
@@ -48,126 +53,95 @@ const CustomPresetModal: React.FC<CustomPresetModalProps> = ({
 
   return (
     <motion.div 
-      className="fixed inset-0 glass-overlay z-50 flex items-center justify-center p-4"
+      className={`fixed inset-0 z-50 flex items-center justify-center ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`}
       variants={overlayVariants}
       initial="hidden"
-      animate="visible"
-      exit="hidden"
+      animate={isOpen ? 'visible' : 'hidden'}
     >
-          <motion.div 
-            className="glass-modal rounded-lg shadow-xl max-w-md w-full p-6 space-y-4"
-            variants={macAnimations.modal}
-            initial="initial"
-            animate="animate"
-            exit="exit"
+      <motion.div 
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      <motion.div 
+        className="relative w-full max-w-md mx-4 bg-background border border-border rounded-lg shadow-lg"
+        variants={macAnimations.modal}
+        initial="hidden"
+        animate={isOpen ? 'visible' : 'hidden'}
+      >
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <h2 className="text-lg font-semibold">Save Custom Preset</h2>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-muted rounded-md transition-colors"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium">Save Custom Preset</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onClose}
-                className="h-8 w-8 p-0"
-              >
-                <X className="w-4 h-4" />
-              </Button>
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        
+        <div className="p-4 space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="preset-name" className="text-sm font-medium">
+              Preset Name *
+            </label>
+            <input
+              id="preset-name"
+              type="text"
+              value={presetName}
+              onChange={(e) => setPresetName(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Enter preset name..."
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              autoFocus
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="preset-description" className="text-sm font-medium">
+              Description
+            </label>
+            <textarea
+              id="preset-description"
+              value={presetDescription}
+              onChange={(e) => setPresetDescription(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Enter description (optional)..."
+              rows={3}
+              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+            />
+          </div>
+          
+          <div className="bg-muted/50 rounded-lg p-3">
+            <h3 className="text-sm font-medium mb-2">Current Settings</h3>
+            <div className="text-xs space-y-1 text-muted-foreground">
+              <div>Video Bitrate: {advancedSettings.videoBitrate}</div>
+              <div>Audio Bitrate: {advancedSettings.audioBitrate}</div>
+              <div>Resolution: {advancedSettings.resolution}</div>
+              <div>FPS: {advancedSettings.fps}</div>
+              <div>CRF: {advancedSettings.crf}</div>
             </div>
-
-            {/* Content */}
-            <motion.div 
-              className="space-y-4"
-              variants={macAnimations.slideUp}
-            >
-              <div className="space-y-2">
-                <label htmlFor="preset-name" className="text-sm font-medium">
-                  Preset Name *
-                </label>
-                <input
-                  id="preset-name"
-                  type="text"
-                  value={presetName}
-                  onChange={(e) => setPresetName(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder="e.g., My Web Optimized"
-                  className="w-full px-3 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  autoFocus
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="preset-description" className="text-sm font-medium">
-                  Description
-                </label>
-                <textarea
-                  id="preset-description"
-                  value={presetDescription}
-                  onChange={(e) => setPresetDescription(e.target.value)}
-                  onKeyDown={handleKeyPress}
-                  placeholder="Describe what this preset is optimized for..."
-                  rows={3}
-                  className="w-full px-3 py-2 bg-background border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
-                />
-              </div>
-
-              {/* Settings Preview */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Settings Preview</label>
-                <div className="bg-muted/20 rounded-md p-3 space-y-1 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Video Bitrate:</span>
-                    <span>{advancedSettings.videoBitrate}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Audio Bitrate:</span>
-                    <span>{advancedSettings.audioBitrate}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Resolution:</span>
-                    <span>{advancedSettings.resolution}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">FPS:</span>
-                    <span>{advancedSettings.fps}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">CRF:</span>
-                    <span>{advancedSettings.crf}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex gap-2 pt-2">
-                <motion.div 
-                  className="flex-1"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button
-                    onClick={handleSave}
-                    disabled={!presetName.trim()}
-                    className="w-full"
-                    size="sm"
-                  >
-                    <Save className="w-3 h-3 mr-2" />
-                    Save Preset
-                  </Button>
-                </motion.div>
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button
-                    variant="outline"
-                    onClick={onClose}
-                    className="text-sm"
-                    size="sm"
-                  >
-                    Cancel
-                  </Button>
-                </motion.div>
-              </div>
-            </motion.div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-end gap-2 p-4 border-t border-border">
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            className="text-sm"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            disabled={!presetName.trim()}
+            className="text-sm"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Save Preset
+          </Button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

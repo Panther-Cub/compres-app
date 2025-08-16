@@ -5,10 +5,11 @@ import os from 'os';
 import ffmpeg from 'fluent-ffmpeg';
 import { 
   videoPresets, 
-  compressVideos, 
-  compressVideosAdvanced, 
-  cancelCompression,
-  CompressionManager
+  CompressionManager,
+  addCustomPreset,
+  removeCustomPreset,
+  getAllPresets,
+  isCustomPreset
 } from './compression';
 import { getDefaultOutputDirectory } from './compression/utils';
 import { 
@@ -66,6 +67,45 @@ export function setupIpcHandlers(): void {
     }
     
     return await compressionManager.getSystemRecommendations();
+  });
+
+  // Custom preset management
+  ipcMain.handle('add-custom-preset', async (event, presetId: string, preset: any) => {
+    try {
+      addCustomPreset(presetId, preset);
+      return { success: true, presetId };
+    } catch (error) {
+      console.error('Error adding custom preset:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('remove-custom-preset', async (event, presetId: string) => {
+    try {
+      removeCustomPreset(presetId);
+      return { success: true, presetId };
+    } catch (error) {
+      console.error('Error removing custom preset:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('get-all-presets', async () => {
+    try {
+      return getAllPresets();
+    } catch (error) {
+      console.error('Error getting all presets:', error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle('is-custom-preset', async (event, presetId: string) => {
+    try {
+      return isCustomPreset(presetId);
+    } catch (error) {
+      console.error('Error checking if preset is custom:', error);
+      throw error;
+    }
   });
 
   // App information
@@ -309,36 +349,45 @@ export function setupIpcHandlers(): void {
     }
   });
 
-  ipcMain.handle('compress-videos', async (event, { files, presetConfigs, outputDirectory, advancedSettings }: {
-    files: string[];
-    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
-    outputDirectory: string;
-    advancedSettings?: any;
-  }) => {
-    console.log('Received compress-videos request:', { files, presetConfigs, outputDirectory, advancedSettings });
-    const mainWindow = getMainWindow();
-    if (!mainWindow) {
-      throw new Error(ERROR_MESSAGES.WINDOW.NOT_AVAILABLE);
+  // Compression operations
+  ipcMain.handle('compress-videos', async (event, data: any) => {
+    if (!compressionManager) {
+      throw new Error('Compression manager not initialized');
     }
-    return await compressVideos(files, presetConfigs, outputDirectory, mainWindow, advancedSettings);
-  });
-
-  ipcMain.handle('compress-videos-advanced', async (event, { files, presetConfigs, outputDirectory, advancedSettings }: {
-    files: string[];
-    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
-    outputDirectory: string;
-    advancedSettings: any;
-  }) => {
-    console.log('Received compress-videos-advanced request:', { files, presetConfigs, outputDirectory, advancedSettings });
-    const mainWindow = getMainWindow();
-    if (!mainWindow) {
-      throw new Error(ERROR_MESSAGES.WINDOW.NOT_AVAILABLE);
+    
+    try {
+      const { files, presetConfigs, outputDirectory, advancedSettings } = data;
+      console.log('Received compress-videos request:', data);
+      
+      if (advancedSettings) {
+        return await compressionManager.compressVideosAdvanced(files, presetConfigs, outputDirectory, advancedSettings);
+      } else {
+        return await compressionManager.compressVideos(files, presetConfigs, outputDirectory);
+      }
+    } catch (error) {
+      console.error('Compression error:', error);
+      throw error;
     }
-    return await compressVideosAdvanced(files, presetConfigs, outputDirectory, mainWindow, advancedSettings);
   });
 
   ipcMain.handle('cancel-compression', async () => {
-    return cancelCompression();
+    if (!compressionManager) {
+      throw new Error('Compression manager not initialized');
+    }
+    
+    return compressionManager.cancelCompression();
+  });
+
+  ipcMain.handle('get-compression-status', async () => {
+    if (!compressionManager) {
+      throw new Error('Compression manager not initialized');
+    }
+    
+    return {
+      isCompressing: compressionManager.isCompressing(),
+      concurrencyStatus: compressionManager.getConcurrencyStatus(),
+      batchProgress: compressionManager.getBatchProgress()
+    };
   });
 
   ipcMain.handle('batch-rename-files', async (event, { files, newNames }: {

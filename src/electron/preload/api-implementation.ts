@@ -9,6 +9,7 @@ export function createElectronAPI(): any {
     batchRenameFiles: (data: any) => ipcRenderer.invoke('batch-rename-files', data),
     
     // Video compression - FIXED: Updated to match backend signatures
+    initializeCompressionManager: () => ipcRenderer.invoke('initialize-compression-manager'),
     compressVideos: (data: any) => ipcRenderer.invoke('compress-videos', data),
     compressVideosAdvanced: (data: any) => ipcRenderer.invoke('compress-videos-advanced', data),
     getPresets: () => ipcRenderer.invoke('get-presets'),

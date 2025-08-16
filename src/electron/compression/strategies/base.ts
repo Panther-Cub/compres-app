@@ -152,6 +152,7 @@ export abstract class BaseCompressionStrategy {
     }
     
     sendCompressionEvent('compression-started', {
+      type: 'compression-started',
       file: fileName,
       preset: presetKey,
       outputPath
@@ -233,11 +234,13 @@ export abstract class BaseCompressionStrategy {
       }
       
       try {
-        sendCompressionEvent('compression-complete', {
-          file: fileName,
-          preset: presetKey,
-          outputPath
-        }, mainWindow);
+            sendCompressionEvent('compression-complete', {
+      type: 'compression-complete',
+      file: fileName,
+      preset: presetKey,
+      outputPath,
+      success: true
+    }, mainWindow);
       } catch (completeError) {
         console.warn('Error sending completion event:', completeError);
       }

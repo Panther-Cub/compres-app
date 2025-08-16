@@ -253,6 +253,35 @@ export class CompressionManager {
       throw new Error(error);
     }
     
+    // Calculate total tasks and validate
+    const totalTasks = files.length * presetConfigs.length;
+    const estimatedTimeMinutes = Math.ceil(totalTasks / this.maxConcurrentCompressions) * 2; // Rough estimate: 2 minutes per task
+    
+    console.log(`Task count validation: ${files.length} files × ${presetConfigs.length} presets = ${totalTasks} total tasks`);
+    console.log(`Estimated completion time: ~${estimatedTimeMinutes} minutes (with ${this.maxConcurrentCompressions} concurrent)`);
+    
+    // Warn about large task counts
+    if (totalTasks > 20) {
+      const warning = `Warning: You're about to create ${totalTasks} compression tasks. This may take a very long time (~${estimatedTimeMinutes} minutes). Consider reducing the number of files or presets.`;
+      console.warn(warning);
+      
+      // Send warning to UI
+      sendCompressionEvent('compression-warning', {
+        type: 'compression-warning',
+        message: warning,
+        totalTasks,
+        estimatedTimeMinutes,
+        maxConcurrent: this.maxConcurrentCompressions
+      }, this.mainWindow);
+    }
+    
+    // Hard limit to prevent system overload
+    if (totalTasks > 50) {
+      const error = `Too many compression tasks (${totalTasks}). Maximum allowed is 50. Please select fewer files or presets.`;
+      console.error(error);
+      throw new Error(error);
+    }
+    
     // Initialize hardware optimization
     await this.initializeHardwareOptimization();
     
@@ -264,17 +293,8 @@ export class CompressionManager {
     console.log(`Max concurrent compressions: ${this.maxConcurrentCompressions}`);
     console.log(`Max videos per batch: ${this.maxVideosPerBatch}`);
     
-    // Log initial memory usage
+    // Log memory usage before compression
     MemoryUtils.logMemoryUsage('Before compression batch');
-    
-    // Validate and ensure output directory exists
-    try {
-      ensureOutputDirectory(outputDirectory);
-    } catch (error) {
-      const compressionError = CompressionErrorHandler.handleValidationError(error as Error, {});
-      CompressionErrorHandler.logError(compressionError, {});
-      throw new Error(compressionError.message);
-    }
     
     // Clean up any existing batch progress before initializing new one
     try {
@@ -291,7 +311,7 @@ export class CompressionManager {
     // Start memory monitoring
     this.startMemoryMonitoring();
     
-    // Track file indices to handle duplicate filenames
+    // Track file indices for duplicate filename handling
     const fileIndices = new Map<string, number>();
     
     // Create compression tasks (not promises yet)
@@ -319,6 +339,7 @@ export class CompressionManager {
         const outputPath = buildOutputPath(file, presetConfig.presetId, outputDirectory, optimizedPreset.settings.videoCodec, presetConfig.keepAudio, currentIndex);
         
         sendCompressionEvent('compression-started', {
+          type: 'compression-started',
           file: fileName,
           preset: presetConfig.presetId,
           outputPath

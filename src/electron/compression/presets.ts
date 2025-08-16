@@ -77,13 +77,13 @@ export const videoPresets: Record<string, VideoPreset> = {
     description: 'Modern WebM format with VP9 for better compression',
     settings: {
       videoCodec: 'libvpx-vp9',
-      videoBitrate: '1200k',
+      videoBitrate: '800k',
       audioCodec: 'libopus',
       audioBitrate: '64k',
       resolution: '1280x720',
       fps: 30,
       crf: 30,
-      preset: 'good'
+      preset: 'medium'
     }
   },
   'hevc-efficient': {
@@ -91,7 +91,7 @@ export const videoPresets: Record<string, VideoPreset> = {
     description: 'H.265/HEVC for maximum compression efficiency',
     settings: {
       videoCodec: 'libx265',
-      videoBitrate: '800k',
+      videoBitrate: '600k',
       audioCodec: 'aac',
       audioBitrate: '64k',
       resolution: '1280x720',
@@ -101,59 +101,70 @@ export const videoPresets: Record<string, VideoPreset> = {
     }
   },
   'thumbnail-preview': {
-    name: 'Thumbnail',
+    name: 'Thumbnail Preview',
     description: 'Small file size for thumbnails and previews',
     settings: {
       videoCodec: 'libx264',
-      videoBitrate: '300k',
+      videoBitrate: '200k',
       audioCodec: 'aac',
-      audioBitrate: '48k',
+      audioBitrate: '32k',
       resolution: '640x360',
-      fps: 24,
-      crf: 32,
+      fps: 15,
+      crf: 35,
       preset: 'ultrafast'
     }
   },
   'ultra-compressed': {
     name: 'Ultra Compressed',
-    description: 'Maximum compression for minimal file size',
+    description: 'Maximum compression for very small file sizes',
     settings: {
       videoCodec: 'libx264',
-      videoBitrate: '150k',
+      videoBitrate: '400k',
       audioCodec: 'aac',
-      audioBitrate: '32k',
-      resolution: '480x270',
+      audioBitrate: '48k',
+      resolution: '1280x720',
       fps: 24,
       crf: 35,
-      preset: 'ultrafast'
-    }
-  },
-  'mac-4k-ready': {
-    name: 'Mac 4K Ready',
-    description: '4K optimized with hardware acceleration for high-resolution content',
-    settings: {
-      videoCodec: 'hevc_videotoolbox',
-      videoBitrate: '4000k',
-      audioCodec: 'aac',
-      audioBitrate: '128k',
-      resolution: '3840x2160',
-      fps: 30,
-      crf: 25,
-      preset: 'medium'
-    }
-  },
-  'mac-mobile-optimized': {
-    name: 'Mac Mobile Optimized',
-    description: 'Optimized for mobile devices with hardware acceleration',
-    settings: {
-      videoCodec: 'h264_videotoolbox',
-      videoBitrate: '800k',
-      audioCodec: 'aac',
-      audioBitrate: '64k',
-      resolution: '1280x720',
-      fps: 30,
-      crf: 28,
-      preset: 'fast'
+      preset: 'slow'
     }
   }
+};
+
+// In-memory custom presets storage (will be replaced with file-based storage in main process)
+const customPresets: Record<string, VideoPreset> = {};
+
+// Function to add a custom preset (in-memory only for now)
+export const addCustomPreset = (presetId: string, preset: VideoPreset): void => {
+  // Ensure preset ID starts with 'custom-' to avoid conflicts with built-in presets
+  const safePresetId = presetId.startsWith('custom-') ? presetId : `custom-${presetId}`;
+  
+  // Check if this would conflict with a built-in preset (excluding custom presets)
+  if (videoPresets[safePresetId] && !safePresetId.startsWith('custom-')) {
+    throw new Error(`Cannot create custom preset with ID '${safePresetId}' as it conflicts with a built-in preset`);
+  }
+  
+  videoPresets[safePresetId] = preset;
+  customPresets[safePresetId] = preset;
+  
+  console.log(`Custom preset added: ${safePresetId}`);
+};
+
+// Function to remove a custom preset
+export const removeCustomPreset = (presetId: string): void => {
+  if (videoPresets[presetId] && presetId.startsWith('custom-')) {
+    delete videoPresets[presetId];
+    delete customPresets[presetId];
+    
+    console.log(`Custom preset removed: ${presetId}`);
+  }
+};
+
+// Function to get all presets (built-in + custom)
+export const getAllPresets = (): Record<string, VideoPreset> => {
+  return { ...videoPresets };
+};
+
+// Function to check if a preset is custom
+export const isCustomPreset = (presetId: string): boolean => {
+  return presetId.startsWith('custom-');
 };

@@ -12,6 +12,7 @@ export interface ElectronAPI {
   }>>;
   
   // Video compression - FIXED API signatures
+  initializeCompressionManager: () => Promise<{ success: boolean }>;
   compressVideos: (data: {
     files: string[];
     presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
@@ -25,6 +26,10 @@ export interface ElectronAPI {
     advancedSettings: any;
   }) => Promise<any[]>;
   getPresets: () => Promise<Record<string, any>>;
+  getAllPresets: () => Promise<Record<string, any>>;
+  addCustomPreset: (presetId: string, preset: any) => Promise<{ success: boolean; presetId: string }>;
+  removeCustomPreset: (presetId: string) => Promise<{ success: boolean; presetId: string }>;
+  isCustomPreset: (presetId: string) => Promise<boolean>;
   getFileInfo: (filePath: string) => Promise<{
     duration: number;
     size: number;

@@ -71,13 +71,48 @@ export interface CompressionCancelledEvent {
   killedProcesses: number;
 }
 
+export interface CompressionStartedEvent {
+  type: 'compression-started';
+  file: string;
+  preset: string;
+  outputPath: string;
+}
+
+export interface CompressionProgressEvent {
+  type: 'compression-progress';
+  file: string;
+  preset: string;
+  percent: number;
+  timemark: string;
+}
+
+export interface CompressionCompleteEvent {
+  type: 'compression-complete';
+  file: string;
+  preset: string;
+  outputPath?: string;
+  success: boolean;
+  error?: string;
+}
+
+export interface CompressionErrorEvent {
+  type: 'compression-error';
+  file: string;
+  preset: string;
+  error: string;
+}
+
 // Union type for all compression events
 export type CompressionEventData = 
-  | CompressionEvent 
+  | CompressionStartedEvent
+  | CompressionProgressEvent
+  | CompressionCompleteEvent
+  | CompressionErrorEvent
   | CompressionProgress 
   | HardwareDetectionEvent 
   | BatchProgressEvent 
-  | CompressionCancelledEvent;
+  | CompressionCancelledEvent
+  | CompressionWarningEvent;
 
 export interface AdvancedCompressionSettings {
   crf?: number;
@@ -110,4 +145,12 @@ export interface FFmpegProgress {
 
 export interface FFmpegError {
   message: string;
+}
+
+export interface CompressionWarningEvent {
+  type: 'compression-warning';
+  message: string;
+  totalTasks: number;
+  estimatedTimeMinutes: number;
+  maxConcurrent: number;
 }

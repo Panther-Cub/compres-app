@@ -500,12 +500,11 @@ function App() {
         </AnimatePresence>
 
         <CompressionNotification
-          isVisible={(isCompressing || compressionComplete) && !showProgressOverlay}
-          isCompressing={isCompressing}
-          compressionComplete={compressionComplete}
-          error={error}
-          totalProgress={totalProgress}
-          onShowProgress={() => setShowProgressOverlay(true)}
+          type={error ? 'error' : compressionComplete ? 'success' : 'info'}
+          title={error ? 'Compression Failed' : compressionComplete ? 'Compression Complete' : 'Compressing Videos'}
+          message={error || (compressionComplete ? 'All videos have been compressed successfully!' : 'Compression in progress...')}
+          isVisible={(isCompressing || compressionComplete || !!error) && !showProgressOverlay}
+          onClose={() => {}}
         />
 
         {/* Bottom Right Controls - Removed, moved to header */}

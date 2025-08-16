@@ -7,6 +7,7 @@ import { macAnimations, drawerVariants } from '../lib/animations';
 import VideoList from './VideoList';
 import SettingsDrawer from './SettingsDrawer';
 import BatchRenameModal from './BatchRenameModal';
+import CompressionNotification from './CompressionNotification';
 import { formatFileSize, formatDuration } from '../utils/formatters';
 import type { VideoWorkspaceProps } from '../types';
 
@@ -207,6 +208,8 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
           />
         )}
       </AnimatePresence>
+
+
     </motion.div>
   );
 };

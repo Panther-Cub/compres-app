@@ -250,7 +250,7 @@ export interface UseSettingsReturn {
   toggleAdvanced: () => void;
   handleAdvancedSettingsChange: (settings: AdvancedSettings) => void;
   handleSaveCustomPreset: () => void;
-  handleCustomPresetSave: () => void;
+  handleCustomPresetSave: (customPreset: any) => Promise<void>;
   setShowCustomPresetModal: (show: boolean) => void;
   // New persistent settings methods
   defaultPresets: string[];

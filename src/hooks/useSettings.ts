@@ -144,7 +144,7 @@ export const useSettings = (): UseSettingsReturn => {
       console.warn('Electron API not available');
       return;
     }
-    const presetsData = await window.electronAPI.getPresets();
+    const presetsData = await window.electronAPI.getAllPresets();
           setPresets(presetsData);
         } catch (err) {
           console.error('Error loading presets:', err);
@@ -258,8 +258,22 @@ export const useSettings = (): UseSettingsReturn => {
     setShowCustomPresetModal(true);
   }, []);
 
-  const handleCustomPresetSave = useCallback((): void => {
-    // This will be handled by the modal component
+  const handleCustomPresetSave = useCallback(async (customPreset: any): Promise<void> => {
+    try {
+      if (window.electronAPI) {
+        // Save the custom preset via the API
+        await window.electronAPI.addCustomPreset(customPreset.id, customPreset);
+        
+        // Reload all presets to include the new custom preset
+        const updatedPresets = await window.electronAPI.getAllPresets();
+        setPresets(updatedPresets);
+        
+        console.log('Custom preset saved successfully:', customPreset.id);
+      }
+    } catch (error) {
+      console.error('Error saving custom preset:', error);
+    }
+    
     setShowCustomPresetModal(false);
   }, []);
 
