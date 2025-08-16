@@ -106,7 +106,25 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     const handleCompressionProgress = (data: CompressionProgressData) => {
       try {
         console.log('Received compression progress:', data);
-        const { file, preset, progress } = data;
+        
+        // Handle both old and new data structures
+        let file: string, preset: string, progress: number;
+        
+        if (data.taskKey && typeof data.progress === 'number') {
+          // New structure: { taskKey, progress, file, preset }
+          file = data.file;
+          preset = data.preset;
+          progress = data.progress;
+        } else if (data.file && data.preset && typeof data.percent === 'number') {
+          // Old structure: { file, preset, percent }
+          file = data.file;
+          preset = data.preset;
+          progress = data.percent;
+        } else {
+          console.warn('Invalid compression progress data:', data);
+          return;
+        }
+
         if (!file || !preset || typeof progress !== 'number') {
           console.warn('Invalid compression progress data:', data);
           return;
@@ -125,14 +143,15 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
 
     const handleCompressionComplete = (data: CompressionCompleteData) => {
       try {
-        const { file, preset } = data;
+        const { file, preset, taskKey } = data;
         if (!file || !preset) {
           console.warn('Invalid compression complete data:', data);
           return;
         }
 
-        const taskKey = getTaskKey(file, preset);
-        markTaskComplete(taskKey);
+        // Use provided taskKey or generate one
+        const finalTaskKey = taskKey || getTaskKey(file, preset);
+        markTaskComplete(finalTaskKey);
       } catch (error) {
         console.error('Error handling compression complete:', error);
       }

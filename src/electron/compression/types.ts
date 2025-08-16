@@ -74,6 +74,7 @@ export interface CompressionCancelledEvent {
 
 export interface CompressionStartedEvent {
   type: 'compression-started';
+  taskKey?: string;
   file: string;
   preset: string;
   outputPath: string;
@@ -81,14 +82,17 @@ export interface CompressionStartedEvent {
 
 export interface CompressionProgressEvent {
   type: 'compression-progress';
+  taskKey?: string;
   file: string;
   preset: string;
-  percent: number;
+  percent?: number;
+  progress?: number;
   timemark: string;
 }
 
 export interface CompressionCompleteEvent {
   type: 'compression-complete';
+  taskKey?: string;
   file: string;
   preset: string;
   outputPath?: string;

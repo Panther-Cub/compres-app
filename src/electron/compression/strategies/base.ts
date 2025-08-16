@@ -153,6 +153,7 @@ export abstract class BaseCompressionStrategy {
     
     sendCompressionEvent('compression-started', {
       type: 'compression-started',
+      taskKey: taskKey,
       file: fileName,
       preset: presetKey,
       outputPath
@@ -185,9 +186,11 @@ export abstract class BaseCompressionStrategy {
         // Send progress event with proper task key
         try {
           sendCompressionEvent('compression-progress', {
+            type: 'compression-progress',
+            taskKey: this.context.taskKey,
             file: this.context.fileName,
             preset: this.context.presetKey,
-            percent: adjustedPercent,
+            progress: adjustedPercent,
             timemark: progress.timemark
           }, this.context.mainWindow);
         } catch (error) {
@@ -224,9 +227,11 @@ export abstract class BaseCompressionStrategy {
       // Send final 100% progress before completion
       try {
         sendCompressionEvent('compression-progress', {
+          type: 'compression-progress',
+          taskKey: taskKey,
           file: fileName,
           preset: presetKey,
-          percent: 100,
+          progress: 100,
           timemark: '00:00:00'
         }, mainWindow);
       } catch (progressError) {
@@ -234,13 +239,14 @@ export abstract class BaseCompressionStrategy {
       }
       
       try {
-            sendCompressionEvent('compression-complete', {
-      type: 'compression-complete',
-      file: fileName,
-      preset: presetKey,
-      outputPath,
-      success: true
-    }, mainWindow);
+        sendCompressionEvent('compression-complete', {
+          type: 'compression-complete',
+          taskKey: taskKey,
+          file: fileName,
+          preset: presetKey,
+          outputPath,
+          success: true
+        }, mainWindow);
       } catch (completeError) {
         console.warn('Error sending completion event:', completeError);
       }

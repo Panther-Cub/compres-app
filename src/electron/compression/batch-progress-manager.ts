@@ -204,9 +204,11 @@ export class BatchProgressManager {
     // Send individual task progress with more precision
     try {
       sendCompressionEvent('compression-progress', {
+        type: 'compression-progress',
+        taskKey: task.taskKey,
         file: task.fileName,
         preset: task.presetKey,
-        percent: task.progress,
+        progress: task.progress,
         timemark: this.formatTime(task.progress)
       }, this.mainWindow);
     } catch (error) {

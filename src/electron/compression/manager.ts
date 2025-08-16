@@ -355,6 +355,7 @@ export class CompressionManager {
         
         sendCompressionEvent('compression-started', {
           type: 'compression-started',
+          taskKey: taskKey,
           file: fileName,
           preset: presetConfig.presetId,
           outputPath

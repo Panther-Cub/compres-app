@@ -128,14 +128,18 @@ export interface CompressionEventData {
 }
 
 export interface CompressionProgressData {
-  taskKey: string;
-  progress: number;
+  // New structure
+  taskKey?: string;
+  progress?: number;
   file: string;
   preset: string;
+  // Old structure (for backward compatibility)
+  percent?: number;
 }
 
 export interface CompressionCompleteData {
-  taskKey: string;
+  // New structure
+  taskKey?: string;
   success: boolean;
   file: string;
   preset: string;
