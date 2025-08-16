@@ -213,59 +213,57 @@ const DefaultsDrawer: React.FC<DefaultsDrawerProps> = ({
                             return (
                               <motion.div
                                 key={key}
-                                className={`p-3 rounded-lg border ${
-                                  isDefault ? 'border-primary/20 bg-primary/5' : 'border-border hover:border-border/60'
+                                className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                                  isDefault ? 'border-primary/20 bg-primary/5 hover:bg-primary/10' : 'border-border hover:border-border/60 hover:bg-muted/20'
                                 }`}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -20 }}
                                 transition={{ delay: index * 0.05, duration: 0.2 }}
+                                onClick={() => handleDefaultPresetToggle(key)}
                               >
                                 <div className="flex items-start justify-between">
                                   <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">
                                       <h4 className="text-sm font-medium">{preset.name}</h4>
-                                      <AnimatePresence>
-                                        {isDefault && (
-                                          <motion.button
-                                            initial={{ scale: 0, opacity: 0 }}
-                                            animate={{ scale: 1, opacity: 1 }}
-                                            exit={{ scale: 0, opacity: 0 }}
-                                            whileHover={{ scale: 1.02 }}
-                                            whileTap={{ scale: 0.95 }}
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              const currentSettings = defaultPresetSettings[key] || { keepAudio: true };
-                                              setDefaultPresetSettings({
-                                                ...defaultPresetSettings,
-                                                [key]: { ...currentSettings, keepAudio: !currentSettings.keepAudio }
-                                              });
-                                            }}
-                                            className={`px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
-                                              defaultSettings?.keepAudio 
-                                                ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30' 
-                                                : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30'
-                                            }`}
-                                          >
-                                            {defaultSettings?.keepAudio ? 'AUDIO' : 'MUTED'}
-                                          </motion.button>
-                                        )}
-                                      </AnimatePresence>
+                                      <div className="h-6 flex items-center">
+                                        <AnimatePresence>
+                                          {isDefault && (
+                                            <motion.button
+                                              initial={{ scale: 0, opacity: 0 }}
+                                              animate={{ scale: 1, opacity: 1 }}
+                                              exit={{ scale: 0, opacity: 0 }}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                const currentSettings = defaultPresetSettings[key] || { keepAudio: true };
+                                                setDefaultPresetSettings({
+                                                  ...defaultPresetSettings,
+                                                  [key]: { ...currentSettings, keepAudio: !currentSettings.keepAudio }
+                                                });
+                                              }}
+                                              className={`px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors ${
+                                                defaultSettings?.keepAudio 
+                                                  ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30' 
+                                                  : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30'
+                                              }`}
+                                            >
+                                              {defaultSettings?.keepAudio ? 'AUDIO' : 'MUTED'}
+                                            </motion.button>
+                                          )}
+                                        </AnimatePresence>
+                                      </div>
                                     </div>
                                     <p className="text-sm text-muted-foreground leading-relaxed">
                                       {preset.description}
                                     </p>
                                   </div>
                                   <div className="flex items-center gap-2 ml-3">
-                                    <motion.div 
-                                      className={`w-3 h-3 rounded-full border-2 cursor-pointer transition-colors ${
+                                    <div 
+                                      className={`w-3 h-3 rounded-full border-2 transition-colors ${
                                         isDefault
                                           ? 'bg-foreground border-foreground'
                                           : 'border-border'
                                       }`}
-                                      onClick={() => handleDefaultPresetToggle(key)}
-                                      whileHover={{ scale: 1.02 }}
-                                      whileTap={{ scale: 0.95 }}
                                     />
                                   </div>
                                 </div>
@@ -290,21 +288,19 @@ const DefaultsDrawer: React.FC<DefaultsDrawerProps> = ({
                 <p className="text-xs text-muted-foreground">Set the default folder where compressed videos will be saved.</p>
                 
                 <div className="space-y-3">
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onSetDefaultOutputDirectory(defaultOutputDirectory || '')}
-                      className="w-full justify-start text-sm"
-                    >
-                      <Star className="w-3 h-3 mr-2" />
-                      {defaultOutputDirectory ? (
-                        defaultOutputDirectory.includes('Compressed Videos') ? 
-                          'Compressed Videos (Desktop)' : 
-                          defaultOutputDirectory.split('/').pop()
-                      ) : 'Set default folder'}
-                    </Button>
-                  </motion.div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onSetDefaultOutputDirectory(defaultOutputDirectory || '')}
+                    className="w-full justify-start text-sm"
+                  >
+                    <Star className="w-3 h-3 mr-2" />
+                    {defaultOutputDirectory ? (
+                      defaultOutputDirectory.includes('Compressed Videos') ? 
+                        'Compressed Videos (Desktop)' : 
+                        defaultOutputDirectory.split('/').pop()
+                    ) : 'Set default folder'}
+                  </Button>
                   
                   <AnimatePresence>
                     {defaultOutputDirectory && (

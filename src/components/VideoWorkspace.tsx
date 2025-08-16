@@ -52,17 +52,15 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
           variants={macAnimations.slideUp}
         >
           <div className="flex items-center gap-4">
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={onReset}
-                className="non-draggable text-sm"
-              >
-                <ArrowLeft className="w-3 h-3 mr-2" />
-                Back
-              </Button>
-            </motion.div>
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={onReset}
+              className="non-draggable text-sm"
+            >
+              <ArrowLeft className="w-3 h-3 mr-2" />
+              Back
+            </Button>
             <div className="h-4 w-px bg-border/30"></div>
             <span className="text-sm text-muted-foreground/70">
               {selectedFiles.length} video{selectedFiles.length > 1 ? 's' : ''} selected
@@ -70,29 +68,25 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
           </div>
           
           <div className="flex items-center gap-2">
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onAddMoreVideos}
+              className="non-draggable text-sm"
+            >
+              <Plus className="w-3 h-3 mr-2" />
+              Add More Videos
+            </Button>
+            {selectedFiles.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={onAddMoreVideos}
+                onClick={() => setShowBatchRename(true)}
                 className="non-draggable text-sm"
               >
-                <Plus className="w-3 h-3 mr-2" />
-                Add More Videos
+                <Edit3 className="w-3 h-3 mr-2" />
+                Rename Files
               </Button>
-            </motion.div>
-            {selectedFiles.length > 0 && (
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowBatchRename(true)}
-                  className="non-draggable text-sm"
-                >
-                  <Edit3 className="w-3 h-3 mr-2" />
-                  Rename Files
-                </Button>
-              </motion.div>
             )}
           </div>
         </motion.div>
@@ -120,11 +114,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
           variants={macAnimations.slideUp}
         >
           <div className="flex gap-3">
-            <motion.div 
-              className="flex-1"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
+            <div className="flex-1">
               <Button 
                 onClick={onCompress}
                 disabled={isCompressing || selectedFiles.length === 0 || selectedPresets.length === 0 || !settings.outputDirectory}
@@ -138,18 +128,16 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
                    `Compress ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''} to Desktop` :
                    `Compress ${selectedFiles.length} video${selectedFiles.length > 1 ? 's' : ''}`}
               </Button>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button 
-                variant="outline"
-                onClick={onToggleDrawer}
-                className="mac-button non-draggable text-sm"
-                size="sm"
-              >
-                <Settings className="w-3 h-3 mr-2" />
-                {drawerOpen ? 'Hide' : 'Show'} Settings
-              </Button>
-            </motion.div>
+            </div>
+            <Button 
+              variant="outline"
+              onClick={onToggleDrawer}
+              className="mac-button non-draggable text-sm"
+              size="sm"
+            >
+              <Settings className="w-3 h-3 mr-2" />
+              {drawerOpen ? 'Hide' : 'Show'} Settings
+            </Button>
           </div>
         </motion.div>
       </motion.div>

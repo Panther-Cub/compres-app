@@ -28,13 +28,11 @@ export const macAnimations = {
 
   // Hover animations for interactive elements
   hover: {
-    scale: 1.02,
     transition: { duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }
   },
 
   // Tap animation for buttons
   tap: {
-    scale: 0.98,
     transition: { duration: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }
   },
 
@@ -82,7 +80,6 @@ export const macAnimations = {
   dropZone: {
     initial: { scale: 1 },
     animate: { scale: 1 },
-    whileHover: { scale: 1.02 },
     whileDrag: { scale: 0.98 },
     transition: { duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }
   },

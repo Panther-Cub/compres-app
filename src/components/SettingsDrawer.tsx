@@ -5,6 +5,7 @@ import { Button } from './ui';
 import { PresetRecommendations } from './PresetRecommendations';
 import AdvancedSettings from './AdvancedSettings';
 import DefaultsDrawer from './DefaultsDrawer';
+import { useStartupSettings } from '../hooks/useStartupSettings';
 import type { SettingsDrawerProps } from '../types';
 
 type TabType = 'presets' | 'output' | 'advanced';
@@ -52,9 +53,13 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   const [activeCategory, setActiveCategory] = useState<string>('web');
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     activePresets: false,
-    webPresets: false
+    webPresets: false,
+    recommendations: false
   });
   const isUsingDefault = outputDirectory === defaultOutputDirectory;
+  
+  // Get startup settings to check if recommended presets should be shown
+  const { settings: startupSettings } = useStartupSettings();
 
   const handlePresetAudioToggle = (presetId: string) => {
     const currentSettings = presetSettings[presetId] || { keepAudio: true };
@@ -135,11 +140,15 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
               {/* Presets Tab - Categorized Presets */}
               {activeTab === 'presets' && (
                 <div className="space-y-4">
-                  {/* Preset Recommendations */}
-                  <PresetRecommendations
-                    selectedPresets={selectedPresets}
-                    onPresetSelect={onPresetToggle}
-                  />
+                                {/* Preset Recommendations */}
+              {startupSettings.showRecommendedPresets && (
+                <PresetRecommendations
+                  selectedPresets={selectedPresets}
+                  onPresetSelect={onPresetToggle}
+                  isCollapsed={collapsedSections.recommendations}
+                  onToggleCollapsed={() => toggleSection('recommendations')}
+                />
+              )}
 
                   {/* Category Tabs */}
                   <div className="space-y-3">
@@ -246,33 +255,33 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                         key={key}
                                         className={`p-3 rounded-lg border cursor-pointer transition-all ${
                                           isSelected 
-                                            ? 'border-primary/20 bg-primary/5' 
-                                            : 'border-border hover:border-border/60 bg-background'
+                                            ? 'border-primary/20 bg-primary/5 hover:bg-primary/10' 
+                                            : 'border-border hover:border-border/60 bg-background hover:bg-muted/20'
                                         }`}
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
                                         onClick={() => onPresetToggle(key)}
                                       >
                                         <div className="flex items-start justify-between">
                                           <div className="flex-1">
                                             <div className="flex items-center gap-2 mb-1">
                                               <h5 className="text-sm font-medium">{preset.name}</h5>
-                                              {isSelected && (
-                                                <button
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handlePresetAudioToggle(key);
-                                                  }}
-                                                  className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                                                    audioSettings.keepAudio 
-                                                      ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40' 
-                                                      : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
-                                                  }`}
-                                                  title={audioSettings.keepAudio ? 'Audio enabled - click to disable' : 'Audio disabled - click to enable'}
-                                                >
-                                                  {audioSettings.keepAudio ? 'AUDIO' : 'MUTED'}
-                                                </button>
-                                              )}
+                                              <div className="h-6 flex items-center">
+                                                {isSelected && (
+                                                  <button
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      handlePresetAudioToggle(key);
+                                                    }}
+                                                    className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                                                      audioSettings.keepAudio 
+                                                        ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40' 
+                                                        : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
+                                                    }`}
+                                                    title={audioSettings.keepAudio ? 'Audio enabled - click to disable' : 'Audio disabled - click to enable'}
+                                                  >
+                                                    {audioSettings.keepAudio ? 'AUDIO' : 'MUTED'}
+                                                  </button>
+                                                )}
+                                              </div>
                                             </div>
                                             <p className="text-sm text-muted-foreground leading-relaxed">
                                               {preset.description}
@@ -343,28 +352,28 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               return (
                                 <motion.div
                                   key={key}
-                                  className="p-3 rounded-lg border border-primary/20 bg-primary/5"
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
+                                  className="p-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer"
                                 >
                                     <div className="flex items-start justify-between">
                                       <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1">
                                           <h4 className="text-sm font-medium">{preset.name}</h4>
-                                          <button
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                              handlePresetAudioToggle(key);
-                                            }}
-                                            className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
-                                              audioSettings.keepAudio 
-                                                ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40' 
-                                                : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
-                                            }`}
-                                            title={audioSettings.keepAudio ? 'Audio enabled - click to disable' : 'Audio disabled - click to enable'}
-                                          >
-                                            {audioSettings.keepAudio ? 'AUDIO' : 'MUTED'}
-                                          </button>
+                                          <div className="h-6 flex items-center">
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handlePresetAudioToggle(key);
+                                              }}
+                                              className={`px-2 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${
+                                                audioSettings.keepAudio 
+                                                  ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40' 
+                                                  : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
+                                              }`}
+                                              title={audioSettings.keepAudio ? 'Audio enabled - click to disable' : 'Audio disabled - click to enable'}
+                                            >
+                                              {audioSettings.keepAudio ? 'AUDIO' : 'MUTED'}
+                                            </button>
+                                          </div>
                                         </div>
                                         <p className="text-sm text-muted-foreground leading-relaxed">
                                           {preset.description}
@@ -376,7 +385,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                             e.stopPropagation();
                                             handleRemovePreset(key);
                                           }}
-                                          className="p-1 hover:bg-muted rounded transition-colors"
+                                          className="p-1 hover:bg-muted rounded transition-colors cursor-pointer"
                                           title="Remove from active presets"
                                         >
                                           <X className="w-3 h-3 text-muted-foreground" />

@@ -19,14 +19,13 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, onToggle }) => {
   };
 
   return (
-    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={onToggle}
-        className="non-draggable text-xs"
-        title={`Theme: ${theme} (click to cycle)`}
-      >
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={onToggle}
+      className="non-draggable text-xs"
+      title={`Theme: ${theme} (click to cycle)`}
+    >
         <AnimatePresence mode="wait">
           <motion.div
             key={theme}
@@ -39,7 +38,6 @@ const ThemeToggle: React.FC<ThemeToggleProps> = ({ theme, onToggle }) => {
           </motion.div>
         </AnimatePresence>
       </Button>
-    </motion.div>
   );
 };
 

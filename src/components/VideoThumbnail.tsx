@@ -96,7 +96,6 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
       className={`relative group ${sizeClasses[size]} ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      whileTap={{ scale: 0.98 }}
     >
       {thumbnailDataUrl ? (
         <div className="relative w-full h-full rounded-lg overflow-hidden bg-muted/20 cursor-pointer" onClick={handlePlay}>

@@ -23,7 +23,8 @@ interface SettingsWindowProps {
 const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
   const [startupSettings, setStartupSettings] = useState({
     openAtLogin: false,
-    defaultWindow: 'overlay' as 'overlay' | 'main'
+    defaultWindow: 'overlay' as 'overlay' | 'main',
+    showRecommendedPresets: true
   });
   const [performanceSettings, setPerformanceSettings] = useState({
     maxConcurrentCompressions: 2
@@ -43,7 +44,8 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
         const settings = await window.electronAPI.getStartupSettings();
         setStartupSettings({
           openAtLogin: settings.openAtLogin,
-          defaultWindow: settings.defaultWindow as 'overlay' | 'main'
+          defaultWindow: settings.defaultWindow as 'overlay' | 'main',
+          showRecommendedPresets: settings.showRecommendedPresets ?? true
         });
         
         // Load performance settings if available
@@ -95,6 +97,10 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
       [key]: value
     }));
     setHasChanges(true);
+  };
+
+  const handleRecommendedPresetsToggle = (checked: boolean) => {
+    handleSettingChange('showRecommendedPresets', checked);
   };
 
 
@@ -178,6 +184,34 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
                 <p className="text-xs text-muted-foreground">
                   Higher values compress more videos simultaneously but use more system resources
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Interface Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <Settings className="w-4 h-4" />
+                Interface Settings
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Customize the app interface and user experience
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="recommended-presets-toggle" className="text-sm">Show Recommended Presets</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Display AI-powered preset recommendations in the settings sidebar
+                  </p>
+                </div>
+                <Switch
+                  id="recommended-presets-toggle"
+                  checked={startupSettings.showRecommendedPresets}
+                  onCheckedChange={handleRecommendedPresetsToggle}
+                />
               </div>
             </CardContent>
           </Card>

@@ -90,32 +90,38 @@ export class Settings {
       defaultWindow: APP_CONSTANTS.DEFAULT_WINDOW,
       autoUpdateEnabled: true,
       lastUpdateVersion: null,
-      lastAppVersion: null
+      lastAppVersion: null,
+      showRecommendedPresets: true
     };
   }
 
   /**
    * Get startup settings
    */
-  static getStartupSettings(): { openAtLogin: boolean; defaultWindow: string; performanceSettings?: { maxConcurrentCompressions: number } } {
+  static getStartupSettings(): { openAtLogin: boolean; defaultWindow: string; performanceSettings?: { maxConcurrentCompressions: number }; showRecommendedPresets: boolean } {
     return {
       openAtLogin: this.getSetting('openAtLogin', APP_CONSTANTS.DEFAULT_OPEN_AT_LOGIN),
       defaultWindow: this.getSetting('defaultWindow', APP_CONSTANTS.DEFAULT_WINDOW),
       performanceSettings: {
         maxConcurrentCompressions: this.getSetting('maxConcurrentCompressions', 2)
-      }
+      },
+      showRecommendedPresets: this.getSetting('showRecommendedPresets', true)
     };
   }
 
   /**
    * Save startup settings
    */
-  static saveStartupSettings(settings: { openAtLogin: boolean; defaultWindow: string; performanceSettings?: { maxConcurrentCompressions: number } }): void {
+  static saveStartupSettings(settings: { openAtLogin: boolean; defaultWindow: string; performanceSettings?: { maxConcurrentCompressions: number }; showRecommendedPresets?: boolean }): void {
     this.setSetting('openAtLogin', settings.openAtLogin);
     this.setSetting('defaultWindow', settings.defaultWindow);
     
     if (settings.performanceSettings?.maxConcurrentCompressions) {
       this.setSetting('maxConcurrentCompressions', settings.performanceSettings.maxConcurrentCompressions);
+    }
+    
+    if (settings.showRecommendedPresets !== undefined) {
+      this.setSetting('showRecommendedPresets', settings.showRecommendedPresets);
     }
   }
 

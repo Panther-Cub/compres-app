@@ -413,10 +413,6 @@
   @apply transition-all duration-75 ease-out;
 }
 
-.action-button:hover {
-  transform: scale(1.02);
-}
-
 /* Drawer styling */
 .drawer {
   /* Removed shadow for seamless integration */
@@ -591,7 +587,6 @@
 }
 
 .slider::-webkit-slider-thumb:hover {
-  transform: scale(1.05);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 

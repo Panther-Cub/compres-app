@@ -126,19 +126,14 @@ const VideoList: React.FC<VideoListProps> = ({
                               )}
                             </div>
                           </div>
-                                                      <motion.div
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onRemoveFile(file)}
-                              className="non-draggable opacity-60 hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
-                            >
-                              <X className="w-3 h-3" />
-                            </Button>
-                          </motion.div>
+                                                                                <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onRemoveFile(file)}
+                            className="non-draggable opacity-60 hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <X className="w-3 h-3" />
+                          </Button>
                         </div>
                         {/* Action buttons */}
                         <div className="flex justify-center gap-2">

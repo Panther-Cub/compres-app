@@ -47,54 +47,43 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         >
           {selectedFilesCount > 0 ? `${selectedFilesCount} file${selectedFilesCount > 1 ? 's' : ''}` : 'Drop videos'}
         </motion.span>
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onShowDefaults}
+          className="non-draggable text-[0.625rem]"
+        >
+          <Star className="w-3 h-3" />
+        </Button>
+        {onToggleOverlay && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={onShowDefaults}
+            onClick={onToggleOverlay}
             className="non-draggable text-[0.625rem]"
+            title="Show overlay"
           >
-            <Star className="w-3 h-3" />
+            <Monitor className="w-3 h-3" />
           </Button>
-        </motion.div>
-        {onToggleOverlay && (
-          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggleOverlay}
-              className="non-draggable text-[0.625rem]"
-              title="Show overlay"
-            >
-              <Monitor className="w-3 h-3" />
-            </Button>
-          </motion.div>
         )}
         <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onShowAbout}
-            className="non-draggable text-[0.625rem]"
-          >
-            <Info className="w-3 h-3" />
-          </Button>
-        </motion.div>
-        <motion.div 
-          whileHover={{ scale: 1.02 }} 
-          whileTap={{ scale: 0.95 }}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onShowAbout}
+          className="non-draggable text-[0.625rem]"
         >
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBuyCoffee}
-            className="non-draggable text-[0.625rem]"
-          >
-            <Coffee className="w-3 h-3 mr-1" />
-            Buy Coffee
-          </Button>
-        </motion.div>
+          <Info className="w-3 h-3" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBuyCoffee}
+          className="non-draggable text-[0.625rem]"
+        >
+          <Coffee className="w-3 h-3 mr-1" />
+          Buy Coffee
+        </Button>
       </motion.div>
     </motion.header>
   );
