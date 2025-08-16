@@ -25,16 +25,13 @@ const CustomPresetModal: React.FC<CustomPresetModalProps> = ({
       id: presetId,
       name: presetName.trim(),
       description: presetDescription.trim() || 'Custom preset with advanced settings',
-      settings: {
-        videoCodec: 'libx264',
-        videoBitrate: advancedSettings.videoBitrate,
-        audioCodec: 'aac',
-        audioBitrate: advancedSettings.audioBitrate,
-        resolution: advancedSettings.resolution,
-        fps: advancedSettings.fps,
-        crf: advancedSettings.crf,
-        preset: 'medium'
-      }
+      category: 'custom' as const,
+      crf: advancedSettings.crf,
+      videoBitrate: advancedSettings.videoBitrate,
+      audioBitrate: advancedSettings.audioBitrate,
+      fps: advancedSettings.fps,
+      resolution: advancedSettings.resolution,
+      keepAudio: true
     };
     
     onSave(customPreset);

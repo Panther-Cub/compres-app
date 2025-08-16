@@ -158,7 +158,7 @@ export interface AboutModalProps {
 export interface CustomPresetModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (preset: any) => void;
+  onSave: (preset: Preset) => void;
   advancedSettings: AdvancedSettings;
 }
 
@@ -254,7 +254,7 @@ export interface UseSettingsReturn {
   toggleAdvanced: () => void;
   handleAdvancedSettingsChange: (settings: AdvancedSettings) => void;
   handleSaveCustomPreset: () => void;
-  handleCustomPresetSave: (customPreset: any) => Promise<void>;
+  handleCustomPresetSave: (customPreset: Preset) => Promise<void>;
   handleCustomPresetRemove: (presetId: string) => Promise<void>;
   setShowCustomPresetModal: (show: boolean) => void;
   handleReorderPresets: (newOrder: string[]) => void;

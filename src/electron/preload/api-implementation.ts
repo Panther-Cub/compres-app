@@ -1,6 +1,7 @@
 import { ipcRenderer } from 'electron';
+import type { ElectronAPI } from './api-interface';
 
-export function createElectronAPI(): any {
+export function createElectronAPI(): ElectronAPI {
   return {
     // File selection
     selectFiles: () => ipcRenderer.invoke('select-files'),
@@ -13,6 +14,11 @@ export function createElectronAPI(): any {
     compressVideos: (data: any) => ipcRenderer.invoke('compress-videos', data),
     compressVideosAdvanced: (data: any) => ipcRenderer.invoke('compress-videos-advanced', data),
     getPresets: () => ipcRenderer.invoke('get-presets'),
+    getAllPresets: () => ipcRenderer.invoke('get-all-presets'),
+    getCustomPresets: () => ipcRenderer.invoke('get-custom-presets'),
+    addCustomPreset: (presetId: string, preset: any) => ipcRenderer.invoke('add-custom-preset', presetId, preset),
+    removeCustomPreset: (presetId: string) => ipcRenderer.invoke('remove-custom-preset', presetId),
+    isCustomPreset: (presetId: string) => ipcRenderer.invoke('is-custom-preset', presetId),
     getFileInfo: (filePath: string) => ipcRenderer.invoke('get-file-info', filePath),
     cancelCompression: () => ipcRenderer.invoke('cancel-compression'),
     

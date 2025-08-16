@@ -4,6 +4,7 @@ import type {
   FileInfo, 
   AdvancedSettings
 } from '../types';
+import type { CompressionProgressData, CompressionCompleteData } from '../electron/preload/api-interface';
 import { getFileName } from '../utils/formatters';
 
 interface CompressionTask {
@@ -102,27 +103,27 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     
     initializeManager();
     
-    const handleCompressionProgress = (data: any) => {
+    const handleCompressionProgress = (data: CompressionProgressData) => {
       try {
         console.log('Received compression progress:', data);
-        const { file, preset, percent } = data;
-        if (!file || !preset || typeof percent !== 'number') {
+        const { file, preset, progress } = data;
+        if (!file || !preset || typeof progress !== 'number') {
           console.warn('Invalid compression progress data:', data);
           return;
         }
 
         const taskKey = getTaskKey(file, preset);
-        console.log(`Setting progress for ${taskKey}: ${percent}%`);
+        console.log(`Setting progress for ${taskKey}: ${progress}%`);
         setCompressionProgress(prev => ({
           ...prev,
-          [taskKey]: Math.max(0, Math.min(100, percent)) // Removed Math.round for fluid progress
+          [taskKey]: Math.max(0, Math.min(100, progress)) // Removed Math.round for fluid progress
         }));
       } catch (error) {
         console.error('Error handling compression progress:', error);
       }
     };
 
-    const handleCompressionComplete = (data: any) => {
+    const handleCompressionComplete = (data: CompressionCompleteData) => {
       try {
         const { file, preset } = data;
         if (!file || !preset) {
@@ -275,7 +276,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     }
     
     // Validate that all files still exist before starting compression
-    const missingFiles: string[] = [];
+    // Note: File validation is handled by the backend
     for (const file of selectedFiles) {
       try {
         // In browser environment, we can't check file existence, so we'll rely on the backend validation

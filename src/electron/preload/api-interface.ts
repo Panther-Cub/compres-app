@@ -17,18 +17,18 @@ export interface ElectronAPI {
     files: string[];
     presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
     outputDirectory: string;
-    advancedSettings?: any;
-  }) => Promise<any[]>;
+    advancedSettings?: AdvancedSettings;
+  }) => Promise<CompressionResult[]>;
   compressVideosAdvanced: (data: {
     files: string[];
     presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
     outputDirectory: string;
-    advancedSettings: any;
-  }) => Promise<any[]>;
-  getPresets: () => Promise<Record<string, any>>;
-  getAllPresets: () => Promise<Record<string, any>>;
-  getCustomPresets: () => Promise<Record<string, any>>;
-  addCustomPreset: (presetId: string, preset: any) => Promise<{ success: boolean; presetId: string }>;
+    advancedSettings: AdvancedSettings;
+  }) => Promise<CompressionResult[]>;
+  getPresets: () => Promise<Record<string, Preset>>;
+  getAllPresets: () => Promise<Record<string, Preset>>;
+  getCustomPresets: () => Promise<Record<string, Preset>>;
+  addCustomPreset: (presetId: string, preset: Preset) => Promise<{ success: boolean; presetId: string }>;
   removeCustomPreset: (presetId: string) => Promise<{ success: boolean; presetId: string }>;
   isCustomPreset: (presetId: string) => Promise<boolean>;
   getFileInfo: (filePath: string) => Promise<{
@@ -63,9 +63,9 @@ export interface ElectronAPI {
   getAppVersion: () => Promise<string>;
   
   // Event listeners - FIXED: Added missing compression event handlers
-  onCompressionStarted: (callback: (data: any) => void) => void;
-  onCompressionProgress: (callback: (data: any) => void) => void;
-  onCompressionComplete: (callback: (data: any) => void) => void;
+  onCompressionStarted: (callback: (data: CompressionEventData) => void) => void;
+  onCompressionProgress: (callback: (data: CompressionProgressData) => void) => void;
+  onCompressionComplete: (callback: (data: CompressionCompleteData) => void) => void;
   onOverlayFilesDropped: (callback: (filePaths: string[]) => void) => void;
   
   // Menu events
@@ -77,12 +77,83 @@ export interface ElectronAPI {
   removeAllListeners: (channel: string) => void;
   
   // Update manager
-  checkForUpdates: () => Promise<{ success: boolean; error?: string; data?: any }>;
-  downloadUpdate: () => Promise<{ success: boolean; error?: string; data?: any }>;
+  checkForUpdates: () => Promise<{ success: boolean; error?: string; data?: UpdateData }>;
+  downloadUpdate: () => Promise<{ success: boolean; error?: string; data?: UpdateData }>;
   installUpdate: () => Promise<{ success: boolean; error?: string; message?: string }>;
   getUpdateStatus: () => Promise<{ status: string; progress?: number; version?: string; releaseNotes?: string; error?: string; currentVersion?: string }>;
   getUpdateSettings: () => Promise<{ autoUpdateEnabled: boolean; lastUpdateVersion: string | null; lastAppVersion: string | null }>;
   saveUpdateSettings: (settings: { autoUpdateEnabled: boolean; lastUpdateVersion?: string | null; lastAppVersion?: string | null }) => Promise<void>;
 
-  onUpdateStatus: (callback: (data: any) => void) => void;
+  onUpdateStatus: (callback: (data: UpdateStatusData) => void) => void;
+}
+
+// Type definitions for better type safety
+export interface AdvancedSettings {
+  crf: number;
+  videoBitrate: string;
+  audioBitrate: string;
+  fps: number;
+  resolution: string;
+  preserveAspectRatio: boolean;
+  twoPass: boolean;
+  fastStart: boolean;
+  optimizeForWeb: boolean;
+}
+
+export interface Preset {
+  id: string;
+  name: string;
+  description: string;
+  category?: 'web' | 'social' | 'mac' | 'custom';
+  crf: number;
+  videoBitrate: string;
+  audioBitrate: string;
+  fps: number;
+  resolution: string;
+  keepAudio: boolean;
+}
+
+export interface CompressionResult {
+  success: boolean;
+  file: string;
+  preset: string;
+  outputPath?: string;
+  error?: string;
+}
+
+export interface CompressionEventData {
+  file: string;
+  preset: string;
+  taskKey: string;
+}
+
+export interface CompressionProgressData {
+  taskKey: string;
+  progress: number;
+  file: string;
+  preset: string;
+}
+
+export interface CompressionCompleteData {
+  taskKey: string;
+  success: boolean;
+  file: string;
+  preset: string;
+  outputPath?: string;
+  error?: string;
+}
+
+export interface UpdateData {
+  version: string;
+  releaseNotes?: string;
+  downloadUrl?: string;
+}
+
+export interface UpdateStatusData {
+  status: 'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error';
+  progress?: number;
+  version?: string;
+  releaseNotes?: string;
+  error?: string;
+  currentVersion?: string;
 }

@@ -5,6 +5,7 @@ import { useVideoCompression } from './hooks/useVideoCompression';
 import { useSettings } from './hooks/useSettings';
 import { useTheme } from './hooks/useTheme';
 import { macAnimations, themeManager } from './lib';
+import type { UpdateStatusData } from './electron/preload/api-interface';
 import {
   AppHeader,
   VideoDropZone,
@@ -20,12 +21,11 @@ import {
 function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [showProgressOverlay, setShowProgressOverlay] = useState(true);
-  const [totalProgress, setTotalProgress] = useState(0);
   const [showDefaultsDrawer, setShowDefaultsDrawer] = useState(false);
   
   // Update notification state
   const [showUpdateNotification, setShowUpdateNotification] = useState(false);
-  const [updateInfo, setUpdateInfo] = useState<any>(null);
+  const [updateInfo, setUpdateInfo] = useState<UpdateStatusData | null>(null);
   
   const {
     selectedFiles,
@@ -150,17 +150,7 @@ function App() {
     }
   }, [handleFileSelect]);
 
-  // Update total progress when compression progress changes
-  useEffect(() => {
-    if (isCompressing) {
-      const progress = getTotalProgress();
-      setTotalProgress(progress);
-    } else if (compressionComplete) {
-      setTotalProgress(100);
-    } else {
-      setTotalProgress(0);
-    }
-  }, [compressionProgress, isCompressing, compressionComplete, getTotalProgress]);
+  // Note: Total progress is calculated by getTotalProgress() function in useVideoCompression hook
 
   // Handle menu events and overlay communication
   useEffect(() => {

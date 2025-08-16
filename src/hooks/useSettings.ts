@@ -299,7 +299,7 @@ export const useSettings = (): UseSettingsReturn => {
     setShowCustomPresetModal(true);
   }, []);
 
-  const handleCustomPresetSave = useCallback(async (customPreset: any): Promise<void> => {
+  const handleCustomPresetSave = useCallback(async (customPreset: Preset): Promise<void> => {
     try {
       if (window.electronAPI) {
         // Save the custom preset via the API
