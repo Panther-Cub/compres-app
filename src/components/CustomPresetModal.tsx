@@ -61,7 +61,7 @@ const CustomPresetModal: React.FC<CustomPresetModalProps> = ({
       />
       
       <motion.div 
-        className="relative w-full max-w-md mx-4 bg-background border border-border rounded-lg shadow-lg"
+        className="relative w-full max-w-md mx-4 bg-background border border-border rounded-xl shadow-lg"
         variants={macAnimations.modal}
         initial="hidden"
         animate={isOpen ? 'visible' : 'hidden'}
@@ -70,7 +70,7 @@ const CustomPresetModal: React.FC<CustomPresetModalProps> = ({
           <h2 className="text-lg font-semibold">Save Custom Preset</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-muted rounded-md transition-colors"
+            className="p-1 hover:bg-muted rounded-full transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -88,7 +88,7 @@ const CustomPresetModal: React.FC<CustomPresetModalProps> = ({
               onChange={(e) => setPresetName(e.target.value)}
               onKeyDown={handleKeyPress}
               placeholder="Enter preset name..."
-              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              className="w-full px-3 py-2 border border-border rounded-full bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               autoFocus
             />
           </div>
@@ -104,11 +104,11 @@ const CustomPresetModal: React.FC<CustomPresetModalProps> = ({
               onKeyDown={handleKeyPress}
               placeholder="Enter description (optional)..."
               rows={3}
-              className="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+              className="w-full px-3 py-2 border border-border rounded-full bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
             />
           </div>
           
-          <div className="bg-muted/50 rounded-lg p-3">
+          <div className="bg-muted/50 rounded-xl p-3">
             <h3 className="text-sm font-medium mb-2">Current Settings</h3>
             <div className="text-xs space-y-1 text-muted-foreground">
               <div>Video Bitrate: {advancedSettings.videoBitrate}</div>

@@ -47,7 +47,7 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <motion.div 
-                  className="w-8 h-8 bg-foreground/10 rounded-lg flex items-center justify-center"
+                  className="w-8 h-8 bg-foreground/10 rounded-full flex items-center justify-center"
                   whileHover={{ scale: 1.02 }}
                   transition={{ duration: 0.2 }}
                 >

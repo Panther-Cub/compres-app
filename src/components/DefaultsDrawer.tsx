@@ -305,7 +305,7 @@ const DefaultsDrawer: React.FC<DefaultsDrawerProps> = ({
                   <AnimatePresence>
                     {defaultOutputDirectory && (
                       <motion.div 
-                        className="space-y-2 p-3 bg-muted/30 rounded-lg"
+                        className="space-y-2 p-3 bg-muted/30 rounded-full"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}

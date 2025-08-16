@@ -98,7 +98,7 @@ const VideoList: React.FC<VideoListProps> = ({
                   return (
                     <motion.div
                       key={file}
-                      className="file-card p-3 rounded-lg group"
+                      className="file-card p-3 rounded-xl group"
                       variants={macAnimations.fileCard}
                       initial="initial"
                       animate="animate"
@@ -190,7 +190,7 @@ const VideoList: React.FC<VideoListProps> = ({
                   return (
                     <motion.div
                       key={file}
-                      className="file-card py-1 px-2 rounded-lg group"
+                      className="file-card py-1 px-2 rounded-xl group"
                       variants={macAnimations.listItem}
                       initial="initial"
                       animate="animate"

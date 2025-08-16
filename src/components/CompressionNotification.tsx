@@ -89,7 +89,7 @@ const CompressionNotification: React.FC<CompressionNotificationProps> = ({
 
                 {/* Task count details for warnings */}
                 {type === 'warning' && totalTasks && estimatedTimeMinutes && maxConcurrent && (
-                  <div className="bg-white/50 dark:bg-black/20 rounded-md p-3 mb-3 text-xs">
+                  <div className="bg-white/50 dark:bg-black/20 rounded-full p-3 mb-3 text-xs">
                     <div className="space-y-1">
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Total Tasks:</span>
@@ -145,7 +145,7 @@ const CompressionNotification: React.FC<CompressionNotificationProps> = ({
               {!showConfirm && (
                 <button
                   onClick={onClose}
-                  className="flex-shrink-0 p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-md transition-colors"
+                  className="flex-shrink-0 p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded-full transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>

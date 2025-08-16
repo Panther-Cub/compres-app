@@ -169,7 +169,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   <Tooltip key={tab.id} id={`${tab.id}-tab-tooltip`} content={tab.label}>
                     <button
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all ${
+                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-full text-xs font-medium transition-all ${
                         isActive
                           ? 'bg-primary text-primary-foreground'
                           : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
@@ -230,7 +230,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           <Tooltip key={categoryKey} id={`${categoryKey}-category-tooltip`} content={category.description}>
                             <button
                               onClick={() => setActiveCategory(categoryKey)}
-                              className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium transition-all ${
+                              className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-medium transition-all ${
                                 isActive
                                   ? 'bg-primary text-primary-foreground'
                                   : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
@@ -262,7 +262,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         <div key={categoryKey} className="space-y-2">
                           <button
                             onClick={() => isWebCategory ? toggleSection('webPresets') : undefined}
-                            className={`flex items-center gap-2 w-full text-left hover:bg-muted/50 rounded-md p-2 transition-colors ${
+                            className={`flex items-center gap-2 w-full text-left hover:bg-muted/50 rounded-full p-2 transition-colors ${
                               isWebCategory ? 'cursor-pointer' : 'cursor-default'
                             }`}
                           >
@@ -381,7 +381,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                     <div className="space-y-2 pt-4 border-t border-border/20">
                       <button
                         onClick={() => toggleSection('activePresets')}
-                        className="flex items-center gap-2 w-full text-left hover:bg-muted/50 rounded-md p-2 transition-colors"
+                        className="flex items-center gap-2 w-full text-left hover:bg-muted/50 rounded-full p-2 transition-colors"
                       >
                         {collapsedSections.activePresets ? (
                           <ChevronRight className="w-4 h-4 text-muted-foreground" />

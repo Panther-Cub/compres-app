@@ -28,7 +28,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         variants={macAnimations.slideUp}
       >
         <motion.div 
-          className="w-6 h-6 bg-foreground/10 rounded-md flex items-center justify-center"
+          className="w-6 h-6 bg-foreground/10 rounded-full flex items-center justify-center"
           whileHover={{ scale: 1.02 }}
           transition={{ duration: 0.2 }}
         >
