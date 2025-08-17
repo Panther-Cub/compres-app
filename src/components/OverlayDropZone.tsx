@@ -93,8 +93,7 @@ const OverlayDropZone: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Subtle background pattern */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background/5 via-transparent to-background/5" />
+      {/* Let native vibrancy handle the background */}
       
       {/* Toggle button to main window */}
       <motion.div 

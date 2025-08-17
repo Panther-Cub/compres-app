@@ -1,6 +1,5 @@
 import { Menu, shell } from 'electron';
-import { getMainWindow, getOverlayWindow, showMainWindow, hideOverlayWindow } from './window-manager';
-import { createSettingsWindow } from './window-manager';
+import { getMainWindow, getOverlayWindow, showMainWindow, hideOverlayWindow, createSettingsWindow, createAboutWindow, createDefaultsWindow } from './window-manager';
 import { UpdateManager } from './update-manager';
 import { APP_CONSTANTS } from './utils/constants';
 
@@ -12,18 +11,7 @@ export function createApplicationMenu(): Menu {
         {
           label: 'About Compres',
           click: async () => {
-            // If overlay is visible, switch to main window first
-            const overlayWindow = getOverlayWindow();
-            if (overlayWindow && overlayWindow.isVisible()) {
-              showMainWindow();
-              hideOverlayWindow();
-            }
-            
-            // Show about modal on main window
-            const mainWindow = getMainWindow();
-            if (mainWindow) {
-              mainWindow.webContents.send('show-about-modal');
-            }
+            createAboutWindow();
           }
         },
         {

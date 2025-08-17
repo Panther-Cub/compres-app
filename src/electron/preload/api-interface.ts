@@ -65,6 +65,10 @@ export interface ElectronAPI {
   // Theme management
   getCurrentTheme: () => Promise<string>;
   
+  // Window management
+  createDefaultsWindow: () => Promise<{ success: boolean }>;
+  createBatchRenameWindow: () => Promise<{ success: boolean }>;
+  
   // Event listeners - FIXED: Added missing compression event handlers
   onCompressionStarted: (callback: (data: CompressionEventData) => void) => void;
   onCompressionProgress: (callback: (data: CompressionProgressData) => void) => void;

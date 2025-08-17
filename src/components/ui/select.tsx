@@ -52,7 +52,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "flex h-9 w-full items-center justify-between rounded-full border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors hover:bg-accent hover:text-accent-foreground",
+            "flex h-9 w-full items-center justify-between rounded-md border border-input px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-border/60 hover:bg-accent/30 focus:border-primary bg-white dark:bg-gray-900",
             className
           )}
           ref={ref}
@@ -68,7 +68,7 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
         </button>
         
         {isOpen && (
-          <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-full border border-border bg-background shadow-sm">
+          <div className="select-dropdown absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-md border border-border bg-white dark:bg-gray-900 shadow-lg">
             {React.Children.map(children, (child) => {
               if (React.isValidElement(child)) {
                 return (
@@ -77,8 +77,8 @@ const Select = React.forwardRef<HTMLButtonElement, SelectProps>(
                     type="button"
                     onClick={() => handleSelect(child.props.value)}
                     className={cn(
-                      "flex w-full items-center px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-                      child.props.value === selectedValue && "bg-accent text-accent-foreground"
+                      "flex w-full items-center px-3 py-2 text-sm transition-colors hover:bg-blue-500 hover:text-white first:rounded-t-md last:rounded-b-md",
+                      child.props.value === selectedValue && "bg-blue-500 text-white"
                     )}
                   >
                     {child.props.children}

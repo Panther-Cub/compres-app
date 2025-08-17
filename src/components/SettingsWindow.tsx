@@ -13,7 +13,7 @@ import {
   RadioGroup,
   RadioGroupItem
 } from './ui';
-import UpdateSettings from './UpdateSettings';
+
 import { macAnimations } from '../lib/animations';
 import { themeManager } from '../lib/theme';
 import type { Theme } from '../types';
@@ -144,13 +144,13 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
 
   return (
     <motion.div 
-      className="h-full w-full bg-background text-foreground flex flex-col overflow-hidden"
+      className="h-full w-full native-vibrancy text-foreground flex flex-col overflow-hidden"
       variants={macAnimations.fadeIn}
       initial="initial"
       animate="animate"
     >
       {/* Draggable Title Bar */}
-      <div className="draggable-region fixed top-0 left-0 right-0 z-50 h-10 glass border-b border-border/20 flex items-center justify-between px-4 select-none flex-shrink-0">
+      <div className="draggable-region fixed top-0 left-0 right-0 z-50 h-10 border-b border-border/20 flex items-center justify-between px-4 select-none flex-shrink-0">
         <div className="flex items-center gap-3 pl-20">
           <Settings className="w-3 h-3 text-foreground/70" />
           <span className="text-[0.625rem] font-normal text-foreground/70">Settings</span>
@@ -296,8 +296,7 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
             </CardContent>
           </Card>
 
-          {/* Update Settings */}
-          <UpdateSettings />
+
 
           {/* Info Card */}
           <Card className="bg-muted/50">
@@ -318,7 +317,7 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-border/50 p-4 bg-background/80 backdrop-blur-sm flex-shrink-0">
+              <div className="border-t border-border/50 p-4 modal flex-shrink-0">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {hasChanges ? 'You have unsaved changes' : 'All changes saved'}

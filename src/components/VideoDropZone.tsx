@@ -31,7 +31,7 @@ const VideoDropZone: React.FC<VideoDropZoneProps> = ({
       </AnimatePresence>
 
       {/* Subtle background pattern */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background/5 via-transparent to-background/5" />
+      <div className="absolute inset-0 transparent-area" />
       
       {/* Centered content */}
       <motion.div 

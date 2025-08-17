@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Tooltip } from './ui';
 import { PresetRecommendations } from './PresetRecommendations';
 import AdvancedSettings from './AdvancedSettings';
-import DefaultsDrawer from './DefaultsDrawer';
+
 import { useStartupSettings } from '../hooks/useStartupSettings';
 import { themeManager } from '../lib/theme';
 import type { SettingsDrawerProps } from '../types';
@@ -54,7 +54,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   resetToDefaults
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('presets');
-  const [showDefaultsDrawer, setShowDefaultsDrawer] = useState(false);
+
   const [activeCategory, setActiveCategory] = useState<string>('web');
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
     activePresets: false,
@@ -137,16 +137,12 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   return (
     <>
       <div 
-        className={`absolute top-0 right-0 h-full w-80 drawer bg-background text-foreground shadow-none transition-transform duration-150 ease-out z-10 ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`} 
+        className={`absolute top-0 right-0 h-full w-80 drawer native-vibrancy text-foreground shadow-none transition-transform duration-150 ease-out z-10 ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`} 
         data-theme="auto"
-        style={{
-          backgroundColor: 'hsl(var(--background))',
-          color: 'hsl(var(--foreground))'
-        }}
       >
         <div className="h-full flex flex-col">
           {/* Header */}
-          <div className="p-4 border-b border-border/20 flex-shrink-0">
+          <div className="p-4 flex-shrink-0">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
@@ -173,10 +169,10 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                   <Tooltip key={tab.id} id={`${tab.id}-tab-tooltip`} content={tab.label}>
                     <button
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-full text-xs font-medium transition-all ${
+                      className={`tab-button flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-full text-xs font-medium transition-all ${
                         isActive
                           ? 'bg-primary text-primary-foreground'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                          : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
                       <Icon className="w-3 h-3" />
@@ -212,7 +208,11 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setShowDefaultsDrawer(true)}
+                          onClick={() => {
+                            if (window.electronAPI && window.electronAPI.createDefaultsWindow) {
+                              window.electronAPI.createDefaultsWindow();
+                            }
+                          }}
                           className="h-6 px-2 text-xs"
                         >
                           <Settings className="w-3 h-3 mr-1" />
@@ -234,10 +234,10 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           <Tooltip key={categoryKey} id={`${categoryKey}-category-tooltip`} content={category.description}>
                             <button
                               onClick={() => setActiveCategory(categoryKey)}
-                              className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-medium transition-all ${
+                              className={`tab-button flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-medium transition-all ${
                                 isActive
                                   ? 'bg-primary text-primary-foreground'
-                                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                                  : 'text-muted-foreground hover:text-foreground'
                               }`}
                             >
                               <Icon className="w-3 h-3" />
@@ -310,10 +310,10 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                     return (
                                       <motion.div
                                         key={key}
-                                        className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                                          isSelected 
-                                            ? 'border-primary/20 bg-primary/5 hover:bg-primary/10' 
-                                            : 'border-border hover:border-border/60 bg-background hover:bg-muted/20'
+                                                                                  className={`preset-item p-3 rounded-lg border cursor-pointer transition-all ${
+                                                                                      isSelected 
+                                              ? 'border-primary/20 bg-primary/5' 
+                                              : 'border-border'
                                         }`}
                                         onClick={() => onPresetToggle(key)}
                                       >
@@ -507,7 +507,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           value={outputFolderName}
                           onChange={(e) => onOutputFolderNameChange(e.target.value).catch(console.error)}
                           placeholder="Enter folder name..."
-                          className="w-full px-3 py-2 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                          className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                         />
                       </div>
                       
@@ -543,31 +543,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
         </div>
       </div>
 
-      {/* Defaults Drawer */}
-      <AnimatePresence>
-        {showDefaultsDrawer && (
-          <DefaultsDrawer
-            isOpen={showDefaultsDrawer}
-            onClose={() => setShowDefaultsDrawer(false)}
-            presets={presets}
-            selectedPresets={selectedPresets}
-            presetSettings={presetSettings}
-            advancedSettings={advancedSettings}
-            defaultPresets={defaultPresets}
-            setDefaultPresets={setDefaultPresets}
-            defaultPresetSettings={defaultPresetSettings}
-            setDefaultPresetSettings={setDefaultPresetSettings}
-            defaultAdvancedSettings={defaultAdvancedSettings}
-            setDefaultAdvancedSettings={setDefaultAdvancedSettings}
-            saveUserDefaults={saveUserDefaults}
-            resetToDefaults={resetToDefaults}
-            defaultOutputDirectory={defaultOutputDirectory}
-            onSetDefaultOutputDirectory={onSetDefaultOutputDirectory}
-            defaultOutputFolderName={defaultOutputFolderName}
-            onSetDefaultOutputFolderName={onSetDefaultOutputFolderName}
-          />
-        )}
-      </AnimatePresence>
+
     </>
   );
 };

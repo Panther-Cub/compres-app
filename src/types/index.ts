@@ -129,7 +129,6 @@ export interface AppHeaderProps {
   onBuyCoffee: () => void;
   theme: Theme;
   onToggleTheme: () => void;
-  onShowAbout: () => void;
   onShowDefaults: () => void;
   onToggleOverlay?: () => void;
 }
@@ -159,12 +158,7 @@ export interface AboutModalProps {
   onClose: () => void;
 }
 
-export interface CustomPresetModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (preset: Preset) => void;
-  advancedSettings: AdvancedSettings;
-}
+
 
 export interface SettingsDrawerProps {
   presets: Record<string, Preset>;
@@ -217,10 +211,7 @@ export interface PresetRecommendationsProps {
   onPresetToggle: (presetId: string) => void;
 }
 
-export interface ThemeToggleProps {
-  theme: Theme;
-  onToggle: () => void;
-}
+
 
 // Hook return types
 export interface UseVideoCompressionReturn {

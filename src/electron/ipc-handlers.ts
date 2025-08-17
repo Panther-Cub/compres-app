@@ -22,7 +22,9 @@ import {
   showMainWindow, 
   hideMainWindow, 
   showOverlayWindow, 
-  hideOverlayWindow 
+  hideOverlayWindow,
+  createDefaultsWindow,
+  createBatchRenameWindow
 } from './window-manager';
 
 import { FileValidation, Settings } from './utils';
@@ -677,6 +679,34 @@ export function setupIpcHandlers(): void {
     } catch (error) {
       console.error('Error reading default window setting:', error);
       return APP_CONSTANTS.DEFAULT_WINDOW;
+    }
+  });
+
+  ipcMain.handle('create-defaults-window', async () => {
+    try {
+      console.log('Creating defaults window...');
+      console.log('createDefaultsWindow function:', typeof createDefaultsWindow);
+      const window = createDefaultsWindow();
+      console.log('Defaults window created:', window ? 'success' : 'failed');
+      console.log('Window object:', window);
+      return { success: true };
+    } catch (error) {
+      console.error('Error creating defaults window:', error);
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('create-batch-rename-window', async () => {
+    try {
+      console.log('Creating batch rename window...');
+      console.log('createBatchRenameWindow function:', typeof createBatchRenameWindow);
+      const window = createBatchRenameWindow();
+      console.log('Batch rename window created:', window ? 'success' : 'failed');
+      console.log('Window object:', window);
+      return { success: true };
+    } catch (error) {
+      console.error('Error creating batch rename window:', error);
+      return { success: false, error: String(error) };
     }
   });
 }

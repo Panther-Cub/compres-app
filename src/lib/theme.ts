@@ -1,6 +1,6 @@
 import type { Theme } from '../types';
 
-// Shared theme utility for consistent theme handling across windows
+// Native macOS vibrancy-aware theme manager
 export class ThemeManager {
   private static instance: ThemeManager;
   private listeners: Set<(theme: Theme) => void> = new Set();
@@ -18,59 +18,47 @@ export class ThemeManager {
   }
 
   private initializeTheme(): void {
-    const savedTheme = (localStorage.getItem('compress-theme') as Theme) || 'system';
-    this.applyTheme(savedTheme);
+    // Always use system theme for native vibrancy
+    this.applyNativeTheme();
   }
 
   private setupEventListeners(): void {
-    // Listen for theme changes from localStorage
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'compress-theme') {
-        const newTheme = (e.newValue as Theme) || 'system';
-        this.applyTheme(newTheme);
-        this.notifyListeners(newTheme);
-      }
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    mediaQuery.addEventListener('change', () => {
+      this.applyNativeTheme();
+      this.notifyListeners('system');
     });
 
-    // Listen for system theme changes when in system mode
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', (e) => {
-      const savedTheme = (localStorage.getItem('compress-theme') as Theme) || 'system';
-      if (savedTheme === 'system') {
-        this.applyTheme('system');
-        this.notifyListeners('system');
-      }
-    });
+    // Listen for vibrancy changes (if supported)
+    if ('vibrancy' in window) {
+      // Handle any vibrancy-related theme changes
+      this.applyNativeTheme();
+    }
   }
 
-  private applyTheme(themeMode: Theme): void {
-    let isDark = false;
+  private applyNativeTheme(): void {
+    // Remove all existing theme classes
+    document.documentElement.classList.remove('dark', 'light', 'system');
+    document.body.classList.remove('dark', 'light', 'system');
     
-    if (themeMode === 'system') {
-      // Check system preference
-      isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    } else {
-      isDark = themeMode === 'dark';
-    }
+    // Check system theme preference
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
-    // Remove existing dark class first
-    document.documentElement.classList.remove('dark');
-    
-    // Add dark class if needed
+    // Apply appropriate theme class
     if (isDark) {
       document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
     }
     
-    // Force a repaint to ensure theme is applied
+    // Add native vibrancy class
+    document.documentElement.classList.add('native-vibrancy');
+    document.body.classList.add('native-vibrancy');
+    
+    // Force a repaint to ensure native effects are applied
     document.documentElement.style.display = 'none';
     void document.documentElement.offsetHeight; // Trigger reflow
     document.documentElement.style.display = '';
-    
-    // Also apply to body as backup
-    document.body.classList.remove('dark');
-    if (isDark) {
-      document.body.classList.add('dark');
-    }
   }
 
   private notifyListeners(theme: Theme): void {
@@ -79,22 +67,20 @@ export class ThemeManager {
 
   // Public methods
   getCurrentTheme(): Theme {
-    return (localStorage.getItem('compress-theme') as Theme) || 'system';
+    // Always return system for native vibrancy
+    return 'system';
   }
 
   setTheme(theme: Theme): void {
-    localStorage.setItem('compress-theme', theme);
-    this.applyTheme(theme);
-    this.notifyListeners(theme);
+    // Always use system theme for native vibrancy
+    localStorage.setItem('compress-theme', 'system');
+    this.applyNativeTheme();
+    this.notifyListeners('system');
   }
 
   toggleTheme(): void {
-    const themes: Theme[] = ['system', 'light', 'dark'];
-    const currentTheme = this.getCurrentTheme();
-    const currentIndex = themes.indexOf(currentTheme);
-    const nextIndex = (currentIndex + 1) % themes.length;
-    const newTheme = themes[nextIndex];
-    this.setTheme(newTheme);
+    // Theme toggle disabled - always follows macOS system
+    console.log('Theme toggle disabled - using native macOS vibrancy');
   }
 
   subscribe(listener: (theme: Theme) => void): () => void {
@@ -105,10 +91,14 @@ export class ThemeManager {
     };
   }
 
-  // Force immediate theme application (useful for overlay windows)
+  // Force immediate native theme application
   forceApplyTheme(): void {
-    const theme = this.getCurrentTheme();
-    this.applyTheme(theme);
+    this.applyNativeTheme();
+  }
+
+  // Check if native vibrancy is supported
+  isNativeVibrancySupported(): boolean {
+    return process.platform === 'darwin';
   }
 }
 

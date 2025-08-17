@@ -163,3 +163,4 @@ export const easing = {
   easeIn: [0.55, 0.055, 0.675, 0.19],
   easeInOut: [0.645, 0.045, 0.355, 1]
 };
+

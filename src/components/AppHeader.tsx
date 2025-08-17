@@ -1,9 +1,8 @@
 import React from 'react';
-import { Coffee, Info, Star, Minimize2 } from 'lucide-react';
+import { Coffee, Star, Minimize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button, Tooltip } from './ui';
 import AppIcon from './AppIcon';
-import ThemeToggle from './ThemeToggle';
 import { macAnimations } from '../lib/animations';
 import type { AppHeaderProps } from '../types';
 
@@ -12,13 +11,12 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   onBuyCoffee, 
   theme, 
   onToggleTheme, 
-  onShowAbout,
   onShowDefaults,
   onToggleOverlay
 }) => {
   return (
     <motion.header 
-      className="draggable-region fixed top-0 left-0 right-0 z-50 h-10 glass border-b border-border/20 flex items-center justify-between px-4 select-none"
+      className="draggable-region fixed top-0 left-0 right-0 z-50 h-10 transparent-area border-b border-border/20 flex items-center justify-between px-4 select-none"
       variants={macAnimations.fadeIn}
       initial="initial"
       animate="animate"
@@ -53,7 +51,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             variant="ghost"
             size="sm"
             onClick={onShowDefaults}
-            className="non-draggable text-[0.625rem]"
+            className="non-draggable ghost-button text-[0.625rem]"
           >
             <Star className="w-3 h-3" />
           </Button>
@@ -64,29 +62,20 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               variant="ghost"
               size="sm"
               onClick={onToggleOverlay}
-              className="non-draggable text-[0.625rem]"
+              className="non-draggable ghost-button text-[0.625rem]"
             >
               <Minimize2 className="w-3 h-3" />
             </Button>
           </Tooltip>
         )}
-        <ThemeToggle theme={theme} onToggle={onToggleTheme} />
-        <Tooltip id="about-tooltip" content="About Compres">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onShowAbout}
-            className="non-draggable text-[0.625rem]"
-          >
-            <Info className="w-3 h-3" />
-          </Button>
-        </Tooltip>
+
+
         <Tooltip id="coffee-tooltip" content="Support the developer">
           <Button
             variant="ghost"
             size="sm"
             onClick={onBuyCoffee}
-            className="non-draggable text-[0.625rem]"
+            className="non-draggable ghost-button text-[0.625rem]"
           >
             <Coffee className="w-3 h-3 mr-1" />
             Buy Coffee

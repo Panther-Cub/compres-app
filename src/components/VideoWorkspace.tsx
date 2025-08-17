@@ -6,7 +6,7 @@ import { cn } from '../lib/utils';
 import { macAnimations, drawerVariants } from '../lib/animations';
 import VideoList from './VideoList';
 import SettingsDrawer from './SettingsDrawer';
-import BatchRenameModal from './BatchRenameModal';
+
 import { formatFileSize, formatDuration } from '../utils/formatters';
 import type { VideoWorkspaceProps } from '../types';
 
@@ -29,7 +29,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
   onAddMoreVideos
 }) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-  const [showBatchRename, setShowBatchRename] = useState(false);
+
 
   return (
     <motion.div 
@@ -41,14 +41,14 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
       {/* Main Content Area */}
       <motion.div 
         className={cn(
-          "h-full flex flex-col transition-all duration-150 ease-out",
+          "h-full flex flex-col transition-all duration-150 ease-out semi-transparent",
           drawerOpen ? "pr-80" : "pr-0"
         )}
         variants={macAnimations.slideUp}
       >
         {/* Top Bar */}
         <motion.div 
-          className="flex items-center justify-between p-4 border-b border-border/20 flex-shrink-0"
+          className="flex items-center justify-between p-4 border-b border-border/20 flex-shrink-0 transparent-area"
           variants={macAnimations.slideUp}
         >
           <div className="flex items-center gap-4">
@@ -57,7 +57,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
                 variant="ghost" 
                 size="sm"
                 onClick={onReset}
-                className="non-draggable text-sm"
+                className="non-draggable ghost-button text-sm"
               >
                 <ArrowLeft className="w-3 h-3 mr-2" />
                 Back
@@ -75,7 +75,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={onAddMoreVideos}
-                className="non-draggable text-sm"
+                className="non-draggable outline-button text-sm"
               >
                 <Plus className="w-3 h-3 mr-2" />
                 Add More Videos
@@ -86,8 +86,20 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowBatchRename(true)}
-                  className="non-draggable text-sm"
+                  onClick={() => {
+                    console.log('Rename button clicked');
+                    if (window.electronAPI && window.electronAPI.createBatchRenameWindow) {
+                      console.log('Calling createBatchRenameWindow...');
+                      window.electronAPI.createBatchRenameWindow().then(result => {
+                        console.log('createBatchRenameWindow result:', result);
+                      }).catch(error => {
+                        console.error('Error creating batch rename window:', error);
+                      });
+                    } else {
+                      console.error('electronAPI or createBatchRenameWindow not available');
+                    }
+                  }}
+                  className="non-draggable outline-button text-sm"
                 >
                   <Edit3 className="w-3 h-3 mr-2" />
                   Rename Files
@@ -116,7 +128,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
 
         {/* Bottom Actions */}
         <motion.div 
-          className="p-4 border-t border-border/20 flex-shrink-0"
+          className="p-4 border-t border-border/20 flex-shrink-0 transparent-area"
           variants={macAnimations.slideUp}
         >
           <div className="flex gap-3">
@@ -134,7 +146,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
                 <Button 
                   onClick={onCompress}
                   disabled={isCompressing || selectedFiles.length === 0 || selectedPresets.length === 0 || !settings.outputDirectory}
-                  className="mac-button w-full non-draggable text-sm"
+                  className="mac-button primary-button w-full non-draggable text-sm"
                   size="sm"
                 >
                   <Play className="w-3 h-3 mr-2" />
@@ -150,7 +162,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
               <Button 
                 variant="outline"
                 onClick={onToggleDrawer}
-                className="mac-button non-draggable text-sm"
+                className="mac-button outline-button non-draggable text-sm"
                 size="sm"
               >
                 <Settings className="w-3 h-3 mr-2" />
@@ -165,7 +177,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
       <AnimatePresence>
         {drawerOpen && (
           <motion.div 
-            className="absolute top-0 right-0 h-full w-80 drawer glass border-l border-border/20 z-10"
+            className="absolute top-0 right-0 h-full w-80 drawer native-vibrancy border-l border-border/20 z-10"
             variants={drawerVariants}
             initial="closed"
             animate="open"
@@ -209,16 +221,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
         )}
       </AnimatePresence>
 
-      {/* Batch Rename Modal */}
-      <AnimatePresence>
-        {showBatchRename && (
-          <BatchRenameModal
-            selectedFiles={selectedFiles}
-            onRename={onBatchRename}
-            onClose={() => setShowBatchRename(false)}
-          />
-        )}
-      </AnimatePresence>
+
 
 
     </motion.div>

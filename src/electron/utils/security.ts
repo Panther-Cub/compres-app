@@ -38,7 +38,11 @@ export class Security {
       preload: preloadPath,
       webSecurity: true,
       allowRunningInsecureContent: false,
-      partition
+      partition,
+      // Enable hardware acceleration for backdrop-filter support
+      webgl: true,
+      experimentalFeatures: true,
+      enableBlinkFeatures: 'CSSBackdropFilter'
     };
   }
 }

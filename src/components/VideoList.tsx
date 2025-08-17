@@ -139,7 +139,7 @@ const VideoList: React.FC<VideoListProps> = ({
                               variant="ghost"
                               size="sm"
                               onClick={() => onRemoveFile(file)}
-                              className="non-draggable opacity-60 hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                              className="non-draggable action-button opacity-60 hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
                             >
                               <X className="w-3 h-3" />
                             </Button>
@@ -152,7 +152,7 @@ const VideoList: React.FC<VideoListProps> = ({
                               variant="outline"
                               size="sm"
                               onClick={() => onOpenFile(file)}
-                              className="text-xs px-2 py-1 h-7"
+                              className="text-xs px-2 py-1 h-7 action-button"
                             >
                               <Play className="w-3 h-3 mr-1" />
                               Play
@@ -163,7 +163,7 @@ const VideoList: React.FC<VideoListProps> = ({
                               variant="outline"
                               size="sm"
                               onClick={() => onShowInFinder(file)}
-                              className="text-xs px-2 py-1 h-7"
+                              className="text-xs px-2 py-1 h-7 action-button"
                             >
                               <FolderOpen className="w-3 h-3 mr-1" />
                               Show

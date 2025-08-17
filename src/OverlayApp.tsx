@@ -36,7 +36,7 @@ function OverlayApp() {
 
   return (
     <motion.div 
-      className="h-full w-full bg-background text-foreground overflow-hidden"
+      className="h-full w-full native-vibrancy overlay-window text-foreground overflow-hidden"
       variants={macAnimations.fadeIn}
       initial="initial"
       animate="animate"

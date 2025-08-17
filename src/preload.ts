@@ -44,6 +44,13 @@ function createElectronAPI(): any {
     // App information
     getAppVersion: () => ipcRenderer.invoke('get-app-version'),
     
+    // Theme management
+    getCurrentTheme: () => ipcRenderer.invoke('get-current-theme'),
+    
+    // Window management
+    createDefaultsWindow: () => ipcRenderer.invoke('create-defaults-window'),
+    createBatchRenameWindow: () => ipcRenderer.invoke('create-batch-rename-window'),
+    
     // Event listeners
     onCompressionStarted: (callback: (data: any) => void) => {
       ipcRenderer.on('compression-started', (event, data) => callback(data));
@@ -63,7 +70,7 @@ function createElectronAPI(): any {
     
     // Menu events
     onShowAboutModal: (callback: () => void) => {
-      ipcRenderer.on('show-about-modal', () => callback());
+    
     },
     
     onTriggerFileSelect: (callback: () => void) => {

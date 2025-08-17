@@ -32,6 +32,27 @@ export const APP_CONSTANTS = {
     MIN_HEIGHT: 500
   },
   
+  ABOUT_WINDOW: {
+    WIDTH: 450,
+    HEIGHT: 500,
+    MIN_WIDTH: 400,
+    MIN_HEIGHT: 450
+  },
+  
+  DEFAULTS_WINDOW: {
+    WIDTH: 400,
+    HEIGHT: 600,
+    MIN_WIDTH: 350,
+    MIN_HEIGHT: 500
+  },
+  
+  BATCH_RENAME_WINDOW: {
+    WIDTH: 500,
+    HEIGHT: 600,
+    MIN_WIDTH: 450,
+    MIN_HEIGHT: 500
+  },
+  
   // Tray icon
   TRAY_ICON_SIZE: 16,
   

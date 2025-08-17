@@ -47,6 +47,10 @@ export function createElectronAPI(): ElectronAPI {
     // Theme management
     getCurrentTheme: () => ipcRenderer.invoke('get-current-theme'),
     
+    // Window management
+    createDefaultsWindow: () => ipcRenderer.invoke('create-defaults-window'),
+    createBatchRenameWindow: () => ipcRenderer.invoke('create-batch-rename-window'),
+    
     // Event listeners - FIXED: Added missing compression event handlers
     onCompressionStarted: (callback: (data: any) => void) => {
       ipcRenderer.on('compression-started', (event, data) => callback(data));
@@ -66,7 +70,7 @@ export function createElectronAPI(): ElectronAPI {
     
     // Menu events
     onShowAboutModal: (callback: () => void) => {
-      ipcRenderer.on('show-about-modal', () => callback());
+    
     },
     
     onTriggerFileSelect: (callback: () => void) => {

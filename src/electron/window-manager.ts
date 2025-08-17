@@ -6,6 +6,9 @@ import { APP_CONSTANTS, DEV_CONSTANTS } from './utils/constants';
 let mainWindow: BrowserWindow | null = null;
 let overlayWindow: BrowserWindow | null = null;
 let settingsWindow: BrowserWindow | null = null;
+let aboutWindow: BrowserWindow | null = null;
+let defaultsWindow: BrowserWindow | null = null;
+let batchRenameWindow: BrowserWindow | null = null;
 
 /**
  * Create and configure a window with common settings
@@ -50,14 +53,16 @@ export function createMainWindow(): BrowserWindow {
     vibrancy: 'under-window',
     visualEffectState: 'active',
     transparent: false,
+    hasShadow: true,
+    backgroundColor: '#00000000',
     show: false
   });
 
   loadWindowContent(mainWindow);
 
   mainWindow.once('ready-to-show', () => {
-    // Don't show main window initially - keep it hidden
-    // mainWindow.show();
+    // Show the main window so we can see the transparency effect
+    mainWindow?.show();
   });
 
   // Ensure overlay is hidden whenever main window is shown
@@ -90,7 +95,9 @@ export function createOverlayWindow(): BrowserWindow {
     x: width - APP_CONSTANTS.OVERLAY_WINDOW.OFFSET_X, // Position in bottom right
     y: height - APP_CONSTANTS.OVERLAY_WINDOW.OFFSET_Y,
     frame: false,
-    transparent: true,
+    vibrancy: 'under-window',
+    visualEffectState: 'active',
+    transparent: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
@@ -98,6 +105,8 @@ export function createOverlayWindow(): BrowserWindow {
     maximizable: false,
     closable: false,
     focusable: false,
+    hasShadow: true,
+    backgroundColor: '#00000000',
     show: false
   });
 
@@ -138,6 +147,9 @@ export function createSettingsWindow(): BrowserWindow {
     titleBarStyle: 'hiddenInset',
     vibrancy: 'under-window',
     visualEffectState: 'active',
+    transparent: false,
+    hasShadow: true,
+    backgroundColor: '#00000000',
     show: false,
     resizable: true,
     movable: true,
@@ -172,6 +184,147 @@ export function createSettingsWindow(): BrowserWindow {
   return settingsWindow;
 }
 
+export function createAboutWindow(): BrowserWindow {
+  // Don't create multiple about windows
+  if (aboutWindow) {
+    aboutWindow.focus();
+    return aboutWindow;
+  }
+  
+  aboutWindow = createWindow({
+    width: APP_CONSTANTS.ABOUT_WINDOW.WIDTH,
+    height: APP_CONSTANTS.ABOUT_WINDOW.HEIGHT,
+    minWidth: APP_CONSTANTS.ABOUT_WINDOW.MIN_WIDTH,
+    minHeight: APP_CONSTANTS.ABOUT_WINDOW.MIN_HEIGHT,
+    titleBarStyle: 'hiddenInset',
+    vibrancy: 'under-window',
+    visualEffectState: 'active',
+    transparent: false,
+    hasShadow: true,
+    backgroundColor: '#00000000',
+    show: false,
+    resizable: true,
+    movable: true,
+    minimizable: true,
+    maximizable: true
+  });
+
+  loadWindowContent(aboutWindow, 'about');
+
+  aboutWindow.once('ready-to-show', () => {
+    aboutWindow?.show();
+    aboutWindow?.focus();
+  });
+
+  aboutWindow.on('closed', () => {
+    aboutWindow = null;
+    // Ensure main window is focused when about closes
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+
+  return aboutWindow;
+}
+
+export function createDefaultsWindow(): BrowserWindow {
+  // Don't create multiple defaults windows
+  if (defaultsWindow) {
+    defaultsWindow.focus();
+    return defaultsWindow;
+  }
+  
+  defaultsWindow = createWindow({
+    width: APP_CONSTANTS.DEFAULTS_WINDOW.WIDTH,
+    height: APP_CONSTANTS.DEFAULTS_WINDOW.HEIGHT,
+    minWidth: APP_CONSTANTS.DEFAULTS_WINDOW.MIN_WIDTH,
+    minHeight: APP_CONSTANTS.DEFAULTS_WINDOW.MIN_HEIGHT,
+    titleBarStyle: 'hiddenInset',
+    vibrancy: 'under-window',
+    visualEffectState: 'active',
+    transparent: false,
+    hasShadow: true,
+    backgroundColor: '#00000000',
+    show: false,
+    resizable: true,
+    movable: true,
+    minimizable: true,
+    maximizable: true
+  });
+
+  loadWindowContent(defaultsWindow, 'defaults');
+
+  defaultsWindow.once('ready-to-show', () => {
+    defaultsWindow?.show();
+    defaultsWindow?.focus();
+  });
+
+  defaultsWindow.on('closed', () => {
+    defaultsWindow = null;
+    // Ensure main window is focused when defaults closes
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+
+  return defaultsWindow;
+}
+
+export function createBatchRenameWindow(): BrowserWindow {
+  // Don't create multiple batch rename windows
+  if (batchRenameWindow) {
+    batchRenameWindow.focus();
+    return batchRenameWindow;
+  }
+  
+  batchRenameWindow = createWindow({
+    width: APP_CONSTANTS.BATCH_RENAME_WINDOW.WIDTH,
+    height: APP_CONSTANTS.BATCH_RENAME_WINDOW.HEIGHT,
+    minWidth: APP_CONSTANTS.BATCH_RENAME_WINDOW.MIN_WIDTH,
+    minHeight: APP_CONSTANTS.BATCH_RENAME_WINDOW.MIN_HEIGHT,
+    titleBarStyle: 'hiddenInset',
+    vibrancy: 'under-window',
+    visualEffectState: 'active',
+    transparent: false,
+    hasShadow: true,
+    backgroundColor: '#00000000',
+    show: false,
+    resizable: true,
+    movable: true,
+    minimizable: true,
+    maximizable: true
+  });
+
+  loadWindowContent(batchRenameWindow, 'batch-rename');
+
+  batchRenameWindow.once('ready-to-show', () => {
+    batchRenameWindow?.show();
+    batchRenameWindow?.focus();
+  });
+
+  batchRenameWindow.on('closed', () => {
+    batchRenameWindow = null;
+    // Ensure main window is focused when batch rename closes
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+
+  return batchRenameWindow;
+}
+
 export function getMainWindow(): BrowserWindow | null {
   return mainWindow;
 }
@@ -182,6 +335,18 @@ export function getOverlayWindow(): BrowserWindow | null {
 
 export function getSettingsWindow(): BrowserWindow | null {
   return settingsWindow;
+}
+
+export function getAboutWindow(): BrowserWindow | null {
+  return aboutWindow;
+}
+
+export function getDefaultsWindow(): BrowserWindow | null {
+  return defaultsWindow;
+}
+
+export function getBatchRenameWindow(): BrowserWindow | null {
+  return batchRenameWindow;
 }
 
 export function showMainWindow(): void {
@@ -226,5 +391,20 @@ export function destroyAllWindows(): void {
   if (settingsWindow) {
     settingsWindow.destroy();
     settingsWindow = null;
+  }
+  
+  if (aboutWindow) {
+    aboutWindow.destroy();
+    aboutWindow = null;
+  }
+  
+  if (defaultsWindow) {
+    defaultsWindow.destroy();
+    defaultsWindow = null;
+  }
+  
+  if (batchRenameWindow) {
+    batchRenameWindow.destroy();
+    batchRenameWindow = null;
   }
 }

@@ -9,19 +9,13 @@ import type { UpdateStatusData } from './electron/preload/api-interface';
 import {
   AppHeader,
   VideoDropZone,
-  VideoWorkspace,
-  ProgressOverlay,
-  CompressionNotification,
-  AboutModal,
-  CustomPresetModal,
-  DefaultsDrawer,
-  UpdateNotification
+  VideoWorkspace
 } from './components';
 
 function App() {
-  const [showAbout, setShowAbout] = useState(false);
-  const [showProgressOverlay, setShowProgressOverlay] = useState(true);
-  const [showDefaultsDrawer, setShowDefaultsDrawer] = useState(false);
+
+
+
   
   // Update notification state
   const [showUpdateNotification, setShowUpdateNotification] = useState(false);
@@ -163,10 +157,7 @@ function App() {
   useEffect(() => {
     // Only set up menu events if we're in Electron
     if (window.electronAPI) {
-      // About modal from menu
-      window.electronAPI.onShowAboutModal(() => {
-        setShowAbout(true);
-      });
+
 
       // File selection from menu
       window.electronAPI.onTriggerFileSelect(() => {
@@ -204,7 +195,7 @@ function App() {
       // Cleanup listeners
       return () => {
         if (window.electronAPI) {
-          window.electronAPI.removeAllListeners('show-about-modal');
+  
           window.electronAPI.removeAllListeners('trigger-file-select');
           window.electronAPI.removeAllListeners('trigger-output-select');
           window.electronAPI.removeAllListeners('overlay-files-dropped');
@@ -222,7 +213,6 @@ function App() {
   }, [selectedFiles.length, ensureOverlayHidden]);
 
   const handleCompress = (): void => {
-    setShowProgressOverlay(true);
     
     // Only use advanced settings if they're enabled AND have been modified from defaults
     const defaultAdvancedSettings = {
@@ -437,7 +427,7 @@ function App() {
 
   return (
     <motion.div 
-      className="h-full w-full bg-background text-foreground overflow-hidden"
+      className="h-full w-full native-vibrancy text-foreground overflow-hidden"
       variants={macAnimations.fadeIn}
       initial="initial"
       animate="animate"
@@ -447,8 +437,24 @@ function App() {
         onBuyCoffee={handleBuyCoffee}
         theme={theme}
         onToggleTheme={toggleTheme}
-        onShowAbout={() => setShowAbout(true)}
-        onShowDefaults={() => setShowDefaultsDrawer(true)}
+
+        onShowDefaults={() => {
+          console.log('Defaults button clicked');
+          console.log('window.electronAPI:', window.electronAPI);
+          console.log('Available methods:', Object.keys(window.electronAPI || {}));
+          if (window.electronAPI && window.electronAPI.createDefaultsWindow) {
+            console.log('Calling createDefaultsWindow...');
+            window.electronAPI.createDefaultsWindow().then(result => {
+              console.log('createDefaultsWindow result:', result);
+            }).catch(error => {
+              console.error('Error creating defaults window:', error);
+            });
+          } else {
+            console.error('electronAPI or createDefaultsWindow not available');
+            console.log('electronAPI available:', !!window.electronAPI);
+            console.log('createDefaultsWindow available:', !!(window.electronAPI && window.electronAPI.createDefaultsWindow));
+          }
+        }}
         onToggleOverlay={handleShowOverlay}
       />
       
@@ -486,31 +492,9 @@ function App() {
           )}
         </AnimatePresence>
 
-        <AnimatePresence>
-          {showProgressOverlay && (
-            <ProgressOverlay
-              isCompressing={isCompressing}
-              compressionComplete={compressionComplete}
-              compressionProgress={compressionProgress}
-              outputPaths={outputPaths}
-              presets={presets}
-              getTotalProgress={getTotalProgress}
-              onClose={() => {
-                closeProgress();
-                setShowProgressOverlay(false);
-              }}
-              onCancel={cancelCompression}
-            />
-          )}
-        </AnimatePresence>
 
-        <CompressionNotification
-          type={error ? 'error' : compressionComplete ? 'success' : 'info'}
-          title={error ? 'Compression Failed' : compressionComplete ? 'Compression Complete' : 'Compressing Videos'}
-          message={error || (compressionComplete ? 'All videos have been compressed successfully!' : 'Compression in progress...')}
-          isVisible={(isCompressing || compressionComplete || !!error) && !showProgressOverlay}
-          onClose={() => {}}
-        />
+
+
 
         {/* Bottom Right Controls - Removed, moved to header */}
 
@@ -532,57 +516,13 @@ function App() {
         </AnimatePresence>
       </main>
 
-      <AnimatePresence>
-        {showAbout && (
-          <AboutModal isOpen={showAbout} onClose={() => setShowAbout(false)} />
-        )}
-      </AnimatePresence>
 
-      {/* Custom Preset Modal */}
-      <AnimatePresence>
-        {showCustomPresetModal && (
-          <CustomPresetModal
-            isOpen={showCustomPresetModal}
-            onClose={() => setShowCustomPresetModal(false)}
-            onSave={handleCustomPresetSave}
-            advancedSettings={advancedSettings}
-          />
-        )}
-      </AnimatePresence>
 
-      {/* Defaults Drawer */}
-      <AnimatePresence>
-        {showDefaultsDrawer && (
-          <DefaultsDrawer
-            isOpen={showDefaultsDrawer}
-            onClose={() => setShowDefaultsDrawer(false)}
-            presets={presets}
-            selectedPresets={selectedPresets}
-            presetSettings={presetSettings}
-            advancedSettings={advancedSettings}
-            defaultPresets={defaultPresets}
-            setDefaultPresets={setDefaultPresets}
-            defaultPresetSettings={defaultPresetSettings}
-            setDefaultPresetSettings={setDefaultPresetSettings}
-            defaultAdvancedSettings={defaultAdvancedSettings}
-            setDefaultAdvancedSettings={setDefaultAdvancedSettings}
-            saveUserDefaults={saveUserDefaults}
-            resetToDefaults={resetToDefaults}
-            defaultOutputDirectory={defaultOutputDirectory}
-            onSetDefaultOutputDirectory={setDefaultOutputDirectory}
-            defaultOutputFolderName={defaultOutputFolderName}
-            onSetDefaultOutputFolderName={setDefaultOutputFolderName}
-          />
-        )}
-      </AnimatePresence>
 
-      {/* Update Notification */}
-      <UpdateNotification
-        isVisible={showUpdateNotification}
-        updateInfo={updateInfo}
-        onDownload={handleUpdateDownload}
-        onDismiss={handleUpdateDismiss}
-      />
+
+
+
+
     </motion.div>
   );
 }
