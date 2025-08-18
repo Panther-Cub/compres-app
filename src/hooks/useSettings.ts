@@ -53,14 +53,12 @@ export const useSettings = (): UseSettingsReturn => {
       const saved = localStorage.getItem(STORAGE_KEYS.USER_DEFAULTS);
       if (saved) {
         const parsed = JSON.parse(saved);
-        console.log('Loaded user defaults:', parsed);
         // Merge with defaults to ensure all properties exist
         return { ...DEFAULT_USER_SETTINGS, ...parsed };
       }
     } catch (error) {
-      console.error('Error loading user defaults:', error);
+      // Error loading user defaults
     }
-    console.log('Using default user settings:', DEFAULT_USER_SETTINGS);
     return DEFAULT_USER_SETTINGS;
   }, []);
 
@@ -71,7 +69,6 @@ export const useSettings = (): UseSettingsReturn => {
       const hasUserSetDefaults = defaultPresets.length > 0 || defaultOutputDirectory !== '';
       
       if (!hasUserSetDefaults) {
-        console.log('No user defaults to save - skipping save operation');
         return;
       }
       
@@ -83,10 +80,9 @@ export const useSettings = (): UseSettingsReturn => {
         defaultAdvancedSettings,
         drawerOpen
       };
-      console.log('Saving user defaults:', userDefaults);
       localStorage.setItem(STORAGE_KEYS.USER_DEFAULTS, JSON.stringify(userDefaults));
     } catch (error) {
-      console.error('Error saving user defaults:', error);
+      // Error saving user defaults
     }
   }, [defaultPresets, defaultOutputDirectory, defaultOutputFolderName, defaultPresetSettings, defaultAdvancedSettings, drawerOpen]);
 
@@ -114,11 +110,6 @@ export const useSettings = (): UseSettingsReturn => {
     const initializeSettings = async (): Promise<void> => {
       // Load user defaults
       const userDefaults = loadUserDefaults();
-      console.log('Applying user defaults to current session:', {
-        defaultPresets: userDefaults.defaultPresets,
-        defaultPresetSettings: userDefaults.defaultPresetSettings,
-        defaultOutputDirectory: userDefaults.defaultOutputDirectory
-      });
       setDefaultPresets(userDefaults.defaultPresets);
       setDefaultPresetSettings(userDefaults.defaultPresetSettings);
       setDefaultAdvancedSettings(userDefaults.defaultAdvancedSettings);
@@ -131,14 +122,10 @@ export const useSettings = (): UseSettingsReturn => {
       const hasUserSetDefaults = userDefaults.defaultPresets.length > 0 || userDefaults.defaultOutputDirectory !== '';
       
       if (hasUserSetDefaults) {
-        console.log('User has set defaults - applying to current session');
-        console.log('Default presets to apply:', userDefaults.defaultPresets);
-        console.log('Default preset settings to apply:', userDefaults.defaultPresetSettings);
         setSelectedPresets(userDefaults.defaultPresets);
         setPresetSettings(userDefaults.defaultPresetSettings);
         setAdvancedSettings(userDefaults.defaultAdvancedSettings);
       } else {
-        console.log('Fresh install or no user defaults set - starting with empty selection');
         // Start with empty selection for fresh installs
         setSelectedPresets([]);
         setPresetSettings({});
@@ -164,14 +151,13 @@ export const useSettings = (): UseSettingsReturn => {
             userDefaults.defaultPresets.forEach(presetId => {
               if (!updatedPresetSettings[presetId]) {
                 updatedPresetSettings[presetId] = { keepAudio: true };
-                console.log('Added default settings for preset:', presetId);
               }
             });
             
             setPresetSettings(updatedPresetSettings);
           }
         } catch (err) {
-          console.error('Error loading presets:', err);
+          // Error loading presets
         }
         
         // Set default output directory - use saved default if available, otherwise get from API
@@ -181,18 +167,17 @@ export const useSettings = (): UseSettingsReturn => {
         } else {
           try {
             if (!window.electronAPI) {
-      console.warn('Electron API not available');
       return;
     }
     const defaultDir = await window.electronAPI.getDefaultOutputDirectory(userDefaults.defaultOutputFolderName);
             setDefaultOutputDirectory(defaultDir);
             setOutputDirectory(defaultDir);
           } catch (err) {
-            console.error('Error getting default output directory:', err);
+            // Error getting default output directory
           }
         }
       } else {
-        console.warn('Electron API not available - using default presets');
+        // Using default presets for browser mode
         // Set some default presets for browser mode using the registry
         const browserPresets: Record<string, Preset> = {};
         Object.entries(PRESET_REGISTRY).forEach(([key, metadata]) => {
@@ -225,18 +210,15 @@ export const useSettings = (): UseSettingsReturn => {
   }, [defaultPresets, defaultPresetSettings, defaultAdvancedSettings, defaultOutputDirectory, defaultOutputFolderName, saveUserDefaults]);
 
   const handlePresetToggle = useCallback((presetKey: string): void => {
-    console.log('Preset toggle called for:', presetKey);
     setSelectedPresets(prev => {
       const newSelection = prev.includes(presetKey) 
         ? prev.filter(p => p !== presetKey)
         : [...prev, presetKey];
-      console.log('New preset selection:', newSelection);
       
       // If adding a preset, ensure it has default settings
       if (!prev.includes(presetKey) && newSelection.includes(presetKey)) {
         setPresetSettings(currentSettings => {
           if (!currentSettings[presetKey]) {
-            console.log('Adding default settings for newly selected preset:', presetKey);
             return {
               ...currentSettings,
               [presetKey]: { keepAudio: true }
@@ -251,13 +233,11 @@ export const useSettings = (): UseSettingsReturn => {
   }, []);
 
   const handlePresetSettingsChange = useCallback((presetId: string, settings: PresetSettings): void => {
-    console.log('Preset settings change for:', presetId, settings);
     setPresetSettings(prev => {
       const newSettings = {
         ...prev,
         [presetId]: settings
       };
-      console.log('New preset settings:', newSettings);
       return newSettings;
     });
   }, []);
@@ -266,14 +246,8 @@ export const useSettings = (): UseSettingsReturn => {
     try {
       // Check if we're in Electron environment
       if (!window.electronAPI) {
-        console.warn('Electron API not available - cannot select output directory');
         return;
       }
-      
-      if (!window.electronAPI) {
-      console.warn('Electron API not available');
-      return;
-    }
     const directory = await window.electronAPI.selectOutputDirectory();
       if (directory) {
         setOutputDirectory(directory);
@@ -334,10 +308,10 @@ export const useSettings = (): UseSettingsReturn => {
         const updatedPresets = await window.electronAPI.getAllPresets();
         setPresets(updatedPresets);
         
-        console.log('Custom preset saved successfully:', customPreset.id);
+        // Custom preset saved successfully
       }
     } catch (error) {
-      console.error('Error saving custom preset:', error);
+      // Error saving custom preset
     }
     
     setShowCustomPresetModal(false);
@@ -356,10 +330,10 @@ export const useSettings = (): UseSettingsReturn => {
         // Remove from selected presets if it was selected
         setSelectedPresets(prev => prev.filter(p => p !== presetId));
         
-        console.log('Custom preset removed successfully:', presetId);
+        // Custom preset removed successfully
       }
     } catch (error) {
-      console.error('Error removing custom preset:', error);
+      // Error removing custom preset
     }
   }, []);
 

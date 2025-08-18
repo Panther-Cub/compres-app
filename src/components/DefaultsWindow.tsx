@@ -13,12 +13,7 @@ type TabType = 'presets' | 'folder';
 
 const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
   const [presets, setPresets] = useState<Record<string, Preset>>({});
-  const [selectedPresets, setSelectedPresets] = useState<string[]>([]);
-  const [presetSettings, setPresetSettings] = useState<Record<string, any>>({});
-  const [advancedSettings, setAdvancedSettings] = useState<any>({});
   const [defaultPresets, setDefaultPresets] = useState<string[]>([]);
-  const [defaultPresetSettings, setDefaultPresetSettings] = useState<Record<string, any>>({});
-  const [defaultAdvancedSettings, setDefaultAdvancedSettings] = useState<any>({});
   const [defaultOutputDirectory, setDefaultOutputDirectory] = useState<string>('');
   const [defaultOutputFolderName, setDefaultOutputFolderName] = useState<string>('');
   const [activeTab, setActiveTab] = useState<TabType>('presets');
@@ -54,11 +49,9 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
   const resetToDefaults = async () => {
     try {
       setDefaultPresets([]);
-      setDefaultPresetSettings({});
-      setDefaultAdvancedSettings({});
-      console.log('Reset to defaults');
+      // Reset to defaults
     } catch (error) {
-      console.error('Error resetting defaults:', error);
+      // Error resetting defaults
     }
   };
 
@@ -107,9 +100,8 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
   ];
 
   const handleSaveCurrentAsDefaults = () => {
-    setDefaultPresets(selectedPresets);
-    setDefaultPresetSettings(presetSettings);
-    setDefaultAdvancedSettings(advancedSettings);
+    // This function would need to get current values from the main app
+    // For now, just save the current defaults
     saveUserDefaults();
   };
 

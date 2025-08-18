@@ -58,7 +58,6 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
           const dataUrl = await onGetThumbnailDataUrl(currentThumbnail);
           setThumbnailDataUrl(dataUrl);
         } catch (error) {
-          console.error('Failed to convert thumbnail to data URL:', error);
           setThumbnailDataUrl(undefined);
         }
       }
@@ -75,7 +74,7 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
       const thumbnailPath = await onGenerateThumbnail(filePath);
       setCurrentThumbnail(thumbnailPath);
     } catch (error) {
-      console.error('Failed to generate thumbnail:', error);
+      // Failed to generate thumbnail
     } finally {
       setIsGenerating(false);
     }
@@ -85,9 +84,9 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
     if (onPlay) {
       try {
         await onPlay(filePath);
-      } catch (error) {
-        console.error('Failed to play file:', error);
-      }
+          } catch (error) {
+      // Failed to play file
+    }
     }
   };
 

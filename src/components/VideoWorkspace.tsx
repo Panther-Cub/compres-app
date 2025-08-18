@@ -87,16 +87,12 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    console.log('Rename button clicked');
                     if (window.electronAPI && window.electronAPI.createBatchRenameWindow) {
-                      console.log('Calling createBatchRenameWindow...');
                       window.electronAPI.createBatchRenameWindow().then(result => {
-                        console.log('createBatchRenameWindow result:', result);
+                        // Batch rename window created successfully
                       }).catch(error => {
-                        console.error('Error creating batch rename window:', error);
+                        // Error creating batch rename window
                       });
-                    } else {
-                      console.error('electronAPI or createBatchRenameWindow not available');
                     }
                   }}
                   className="non-draggable outline-button text-sm"

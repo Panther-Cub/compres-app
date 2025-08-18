@@ -9,7 +9,6 @@ import {
   sendCompressionEvent,
   createTaskKey,
   getFileName,
-  ensureOutputDirectory,
   buildOutputPath
 } from './utils';
 import {
@@ -43,7 +42,6 @@ export class CompressionManager {
     this.maxConcurrentCompressions = Math.max(1, Math.min(4, require('os').cpus().length - 1));
     this.memoryManager = MemoryManager.getInstance();
     this.memoryManager.initialize(mainWindow);
-    console.log(`Compression manager initialized with max ${this.maxConcurrentCompressions} concurrent compressions`);
   }
 
   /**
@@ -51,7 +49,6 @@ export class CompressionManager {
    */
   setMaxVideosPerBatch(maxVideos: number): void {
     this.maxVideosPerBatch = Math.max(1, Math.min(20, maxVideos)); // Limit between 1-20
-    console.log(`Max videos per batch set to: ${this.maxVideosPerBatch}`);
   }
 
   /**
@@ -124,10 +121,6 @@ export class CompressionManager {
       // This preserves user preferences while still providing hardware recommendations
       if (!this.userSetConcurrency) {
         this.maxConcurrentCompressions = recommendedConcurrency;
-        console.log(`Hardware optimization applied: ${capabilities.chipType} with ${capabilities.recommendedCodec} codec`);
-        console.log(`Optimized concurrency: ${this.maxConcurrentCompressions}`);
-      } else {
-        console.log(`Using user-specified concurrency: ${this.maxConcurrentCompressions} (hardware recommendation: ${recommendedConcurrency})`);
       }
       
       // Send hardware info to UI
@@ -137,7 +130,7 @@ export class CompressionManager {
         chipType: capabilities.chipType
       }, this.mainWindow);
     } catch (error) {
-      console.warn('Hardware detection failed, using default settings:', error);
+      // Hardware detection failed, using default settings
     }
   }
 
@@ -149,20 +142,13 @@ export class CompressionManager {
     const results: T[] = [];
     const maxConcurrent = this.maxConcurrentCompressions;
     
-    console.log(`Starting concurrency control with ${tasks.length} tasks, max concurrent: ${maxConcurrent}`);
-    
     // Process tasks in batches
     for (let i = 0; i < tasks.length; i += maxConcurrent) {
       const batch = tasks.slice(i, i + maxConcurrent);
-      console.log(`Processing batch ${Math.floor(i / maxConcurrent) + 1}: tasks ${i + 1} to ${Math.min(i + maxConcurrent, tasks.length)}`);
       
       // Execute batch concurrently
-      const batchPromises = batch.map((task, batchIndex) => {
-        const taskIndex = i + batchIndex;
-        console.log(`Starting task ${taskIndex + 1}/${tasks.length}`);
-        
+      const batchPromises = batch.map((task) => {
         return task().catch(error => {
-          console.error(`Task ${taskIndex + 1} failed:`, error);
           return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error'
@@ -176,13 +162,10 @@ export class CompressionManager {
         
         for (let j = 0; j < batchResults.length; j++) {
           const result = batchResults[j];
-          const taskIndex = i + j;
           
           if (result.status === 'fulfilled' && result.value) {
             results.push(result.value);
-            console.log(`Task ${taskIndex + 1} completed successfully`);
           } else if (result.status === 'rejected') {
-            console.error(`Task ${taskIndex + 1} rejected:`, result.reason);
             results.push({
               success: false,
               error: result.reason instanceof Error ? result.reason.message : 'Task rejected'
@@ -190,13 +173,10 @@ export class CompressionManager {
           }
         }
         
-        console.log(`Batch ${Math.floor(i / maxConcurrent) + 1} completed, ${results.length}/${tasks.length} total tasks done`);
       } catch (error) {
-        console.error(`Error in batch ${Math.floor(i / maxConcurrent) + 1}:`, error);
+        // Error in batch processing
       }
     }
-    
-    console.log(`All tasks completed. Total results: ${results.length}`);
     return results;
   }
 
@@ -241,16 +221,14 @@ export class CompressionManager {
       if (startupSettings.performanceSettings?.maxConcurrentCompressions) {
         this.maxConcurrentCompressions = Math.max(1, Math.min(6, startupSettings.performanceSettings.maxConcurrentCompressions));
         this.userSetConcurrency = true;
-        console.log(`Updated max concurrent compressions to: ${this.maxConcurrentCompressions} (from system settings)`);
       }
     } catch (error) {
-      console.warn('Could not load performance settings, using default:', error);
+      // Could not load performance settings, using default
     }
     
     // Validate batch size
     if (files.length > this.maxVideosPerBatch) {
       const error = `Too many videos selected (${files.length}). Maximum allowed is ${this.maxVideosPerBatch}. Please select fewer videos or increase the limit in settings.`;
-      console.error(error);
       throw new Error(error);
     }
     
@@ -264,7 +242,6 @@ export class CompressionManager {
     
     if (missingFiles.length > 0) {
       const error = `The following files no longer exist and cannot be compressed:\n${missingFiles.join('\n')}\n\nPlease re-select the files and try again.`;
-      console.error(error);
       throw new Error(error);
     }
     
@@ -272,13 +249,9 @@ export class CompressionManager {
     const totalTasks = files.length * presetConfigs.length;
     const estimatedTimeMinutes = Math.ceil(totalTasks / this.maxConcurrentCompressions) * 2; // Rough estimate: 2 minutes per task
     
-    console.log(`Task count validation: ${files.length} files × ${presetConfigs.length} presets = ${totalTasks} total tasks`);
-    console.log(`Estimated completion time: ~${estimatedTimeMinutes} minutes (with ${this.maxConcurrentCompressions} concurrent)`);
-    
     // Warn about large task counts
     if (totalTasks > 20) {
       const warning = `Warning: You're about to create ${totalTasks} compression tasks. This may take a very long time (~${estimatedTimeMinutes} minutes). Consider reducing the number of files or presets.`;
-      console.warn(warning);
       
       // Send warning to UI
       sendCompressionEvent('compression-warning', {
@@ -293,20 +266,13 @@ export class CompressionManager {
     // Hard limit to prevent system overload
     if (totalTasks > 50) {
       const error = `Too many compression tasks (${totalTasks}). Maximum allowed is 50. Please select fewer files or presets.`;
-      console.error(error);
       throw new Error(error);
     }
     
     // Initialize hardware optimization
     await this.initializeHardwareOptimization();
     
-    console.log(`Starting ${isAdvanced ? 'advanced' : 'basic'} compression of ${files.length} files with ${presetConfigs.length} presets each`);
-    console.log('Files:', files);
-    console.log('Preset configs:', presetConfigs);
-    console.log('Advanced settings:', advancedSettings);
-    console.log('Output directory:', outputDirectory);
-    console.log(`Max concurrent compressions: ${this.maxConcurrentCompressions}`);
-    console.log(`Max videos per batch: ${this.maxVideosPerBatch}`);
+
     
     // Log memory usage before compression
     MemoryUtils.logMemoryUsage('Before compression batch');
@@ -317,7 +283,7 @@ export class CompressionManager {
       // Add a small delay to ensure cleanup is complete before starting new batch
       await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
-      console.warn('Error cleaning up previous batch progress:', error);
+      // Error cleaning up previous batch progress
     }
     
     // Initialize batch progress tracking
@@ -337,7 +303,6 @@ export class CompressionManager {
       for (const presetConfig of presetConfigs) {
         const preset = videoPresets[presetConfig.presetId];
         if (!preset) {
-          console.warn(`Preset ${presetConfig.presetId} not found, skipping`);
           continue;
         }
         

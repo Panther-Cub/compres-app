@@ -24,18 +24,10 @@ export function setupFFmpeg(): void {
 
   // Verify paths exist and are executable
   if (!fs.existsSync(ffmpegPath)) {
-    console.error('FFmpeg binary not found at:', ffmpegPath);
-    console.error('Current working directory:', process.cwd());
-    console.error('App is packaged:', app.isPackaged);
-    console.error('Resources path:', process.resourcesPath);
     throw new Error(`FFmpeg binary not found at: ${ffmpegPath}`);
   }
 
   if (!fs.existsSync(ffprobePath)) {
-    console.error('FFprobe binary not found at:', ffprobePath);
-    console.error('Current working directory:', process.cwd());
-    console.error('App is packaged:', app.isPackaged);
-    console.error('Resources path:', process.resourcesPath);
     throw new Error(`FFprobe binary not found at: ${ffprobePath}`);
   }
 
@@ -44,13 +36,8 @@ export function setupFFmpeg(): void {
     fs.accessSync(ffmpegPath, fs.constants.X_OK);
     fs.accessSync(ffprobePath, fs.constants.X_OK);
   } catch (error) {
-    console.error('FFmpeg binaries are not executable:', error);
     throw new Error('FFmpeg binaries are not executable');
   }
-
-  console.log('FFmpeg path:', ffmpegPath);
-  console.log('FFprobe path:', ffprobePath);
-  console.log('FFmpeg binary exists and is executable');
 
   // Set ffmpeg paths
   ffmpeg.setFfmpegPath(ffmpegPath);

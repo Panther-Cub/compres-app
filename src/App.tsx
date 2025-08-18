@@ -18,24 +18,18 @@ function App() {
 
   
   // Update notification state
-  const [showUpdateNotification, setShowUpdateNotification] = useState(false);
-  const [updateInfo, setUpdateInfo] = useState<UpdateStatusData | null>(null);
+  const [, setShowUpdateNotification] = useState(false);
+  const [, setUpdateInfo] = useState<UpdateStatusData | null>(null);
   
   const {
     selectedFiles,
     fileInfos,
     isCompressing,
-    compressionProgress,
-    compressionComplete,
-    outputPaths,
     error,
     handleFileSelect,
     removeFile,
     compressVideos,
-    reset,
-    getTotalProgress,
-    closeProgress,
-    cancelCompression
+    reset
   } = useVideoCompression();
 
   const {
@@ -49,7 +43,6 @@ function App() {
     presets,
     drawerOpen,
     showAdvanced,
-    showCustomPresetModal,
     advancedSettings,
     handlePresetToggle,
     handleSelectOutputDirectory,
@@ -60,9 +53,7 @@ function App() {
     toggleAdvanced,
     handleAdvancedSettingsChange,
     handleSaveCustomPreset,
-    handleCustomPresetSave,
     handleCustomPresetRemove,
-    setShowCustomPresetModal,
     // New default settings methods
     defaultPresets,
     setDefaultPresets,
@@ -105,7 +96,7 @@ function App() {
         await window.electronAPI.hideOverlay();
       }
     } catch (error) {
-      console.error('Error hiding overlay:', error);
+      // Error hiding overlay
     }
   }, []);
 
@@ -134,7 +125,7 @@ function App() {
         }
       }
     } catch (error) {
-      console.error('Error selecting files:', error);
+      // Error selecting files
     }
   }, [handleFileSelect]);
 
@@ -147,7 +138,7 @@ function App() {
         }
       }
     } catch (error) {
-      console.error('Error adding more videos:', error);
+      // Error adding more videos
     }
   }, [handleFileSelect]);
 
@@ -176,8 +167,6 @@ function App() {
 
       // Update status events
       window.electronAPI.onUpdateStatus((data: any) => {
-        console.log('Update status received in App:', data);
-        
         // Handle different update statuses
         if (data.status === 'available') {
           setUpdateInfo(data);
@@ -187,8 +176,7 @@ function App() {
           setUpdateInfo(data);
           setShowUpdateNotification(true);
         } else if (data.status === 'error') {
-          // Log update errors
-          console.error('Update error:', data.error);
+          // Handle update errors silently
         }
       });
 
@@ -246,7 +234,6 @@ function App() {
   const handleBatchRename = async (newNames: Record<string, string>): Promise<void> => {
     try {
       if (!window.electronAPI) {
-        console.warn('Electron API not available - cannot rename files');
         return;
       }
       
@@ -258,8 +245,7 @@ function App() {
       // Check for any errors
       const errors = results.filter(r => !r.success);
       if (errors.length > 0) {
-        console.error('Some files could not be renamed:', errors);
-        // You could show a notification here
+        // Some files could not be renamed
         return;
       }
       
@@ -273,7 +259,7 @@ function App() {
       await handleFileSelect(newFilePaths);
       
     } catch (error) {
-      console.error('Error during batch rename:', error);
+      // Error during batch rename
     }
   };
 
@@ -284,7 +270,6 @@ function App() {
       }
       return await window.electronAPI.generateThumbnail(filePath);
     } catch (error) {
-      console.error('Error generating thumbnail:', error);
       throw error;
     }
   };
@@ -296,7 +281,6 @@ function App() {
       }
       return await window.electronAPI.getThumbnailDataUrl(filePath);
     } catch (error) {
-      console.error('Error getting thumbnail data URL:', error);
       throw error;
     }
   };
@@ -308,7 +292,6 @@ function App() {
       }
       await window.electronAPI.showInFinder(filePath);
     } catch (error) {
-      console.error('Error showing in Finder:', error);
       throw error;
     }
   };
@@ -320,7 +303,6 @@ function App() {
       }
       await window.electronAPI.openFile(filePath);
     } catch (error) {
-      console.error('Error opening file:', error);
       throw error;
     }
   };
@@ -331,20 +313,7 @@ function App() {
   };
 
   // Update notification handlers
-  const handleUpdateDownload = async () => {
-    try {
-      if (window.electronAPI) {
-        await window.electronAPI.downloadUpdate();
-      }
-    } catch (error) {
-      console.error('Error downloading update:', error);
-    }
-  };
 
-  const handleUpdateDismiss = () => {
-    setShowUpdateNotification(false);
-    setUpdateInfo(null);
-  };
 
   // Removed handleToggleOverlay since we now use handleShowOverlay
 
@@ -358,7 +327,7 @@ function App() {
         }
       }
     } catch (error) {
-      console.error('Error showing overlay:', error);
+      // Error showing overlay
     }
   }, []);
 
@@ -383,7 +352,6 @@ function App() {
         }
       }
     } catch (error) {
-      console.error('Error showing default window:', error);
       // Fallback to overlay if there's an error
       await handleShowOverlay();
     }
@@ -439,20 +407,12 @@ function App() {
         onToggleTheme={toggleTheme}
 
         onShowDefaults={() => {
-          console.log('Defaults button clicked');
-          console.log('window.electronAPI:', window.electronAPI);
-          console.log('Available methods:', Object.keys(window.electronAPI || {}));
           if (window.electronAPI && window.electronAPI.createDefaultsWindow) {
-            console.log('Calling createDefaultsWindow...');
             window.electronAPI.createDefaultsWindow().then(result => {
-              console.log('createDefaultsWindow result:', result);
+              // Defaults window created successfully
             }).catch(error => {
-              console.error('Error creating defaults window:', error);
+              // Error creating defaults window
             });
-          } else {
-            console.error('electronAPI or createDefaultsWindow not available');
-            console.log('electronAPI available:', !!window.electronAPI);
-            console.log('createDefaultsWindow available:', !!(window.electronAPI && window.electronAPI.createDefaultsWindow));
           }
         }}
         onToggleOverlay={handleShowOverlay}

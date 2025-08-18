@@ -3,8 +3,6 @@ import fs from 'fs';
 import os from 'os';
 import { BrowserWindow } from 'electron';
 import { 
-  CompressionEvent, 
-  CompressionProgress,
   CompressionEventData
 } from './types';
 import { getFileName } from '../../utils/formatters';

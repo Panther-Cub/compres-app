@@ -74,7 +74,6 @@ export class UpdateManager {
    */
   initialize(window: BrowserWindow, trayInstance: Tray | null): void {
     if (this.isInitialized) {
-      console.log('UpdateManager already initialized');
       return;
     }
 
@@ -84,7 +83,6 @@ export class UpdateManager {
     this.setupIPCHandlers();
     
     this.isInitialized = true;
-    console.log('UpdateManager initialized successfully');
     
     // Check for automatic update on startup
     this.checkForAutomaticUpdateOnStartup();
@@ -103,8 +101,6 @@ export class UpdateManager {
     const { wasUpdated, previousVersion } = Settings.checkForAutomaticUpdate(currentVersion);
     
     if (wasUpdated && previousVersion) {
-      console.log(`Automatic update detected: ${previousVersion} → ${currentVersion}`);
-      
       // Show notification about the automatic update
       if (this.tray) {
         this.tray.displayBalloon({
@@ -128,10 +124,7 @@ export class UpdateManager {
     const { autoUpdateEnabled } = Settings.getUpdateSettings();
     
     if (autoUpdateEnabled) {
-      console.log('Auto-update enabled, checking for updates on startup...');
       await this.checkForUpdates(true);
-    } else {
-      console.log('Auto-update disabled, skipping startup check');
     }
   }
 
@@ -140,21 +133,13 @@ export class UpdateManager {
    */
   async checkForUpdates(isAutoCheck = false): Promise<{ success: boolean; error?: string; data?: any }> {
     try {
-      console.log(`Checking for updates (${isAutoCheck ? 'auto' : 'manual'})...`);
-      console.log(`App is packaged: ${app.isPackaged}`);
-      console.log(`Current version: ${app.getVersion()}`);
-      
       // Always use manual GitHub API check for unsigned applications
-      console.log('Using manual GitHub API check for unsigned application...');
       return await this.checkForUpdatesManually();
       
     } catch (error: any) {
-      console.error('Update check failed:', error);
-      
       // If it's a manual check (not auto), offer to open GitHub releases page
       if (!isAutoCheck) {
         const releasesUrl = `https://github.com/${APP_CONSTANTS.GITHUB_OWNER}/${APP_CONSTANTS.GITHUB_REPO}/releases`;
-        console.log(`Opening GitHub releases page as fallback: ${releasesUrl}`);
         
         // Open GitHub releases page for manual check
         shell.openExternal(releasesUrl);
@@ -176,14 +161,12 @@ export class UpdateManager {
     try {
       const currentVersion = app.getVersion();
       
-      console.log(`Checking for updates manually. Current version: ${currentVersion}`);
-      console.log(`GitHub repository: ${APP_CONSTANTS.GITHUB_OWNER}/${APP_CONSTANTS.GITHUB_REPO}`);
+
       
       // Update status to show we're checking
       this.updateStatus({ status: 'checking' });
       
       const url = `https://api.github.com/repos/${APP_CONSTANTS.GITHUB_OWNER}/${APP_CONSTANTS.GITHUB_REPO}/releases/latest`;
-      console.log(`GitHub API URL: ${url}`);
       
       const response = await new Promise<any>((resolve, reject) => {
         const request = https.get(url, {
@@ -195,21 +178,14 @@ export class UpdateManager {
           let data = '';
           res.on('data', (chunk: any) => data += chunk);
           res.on('end', () => {
-            console.log(`GitHub API response status: ${res.statusCode}`);
-            console.log(`GitHub API response headers:`, res.headers);
-            
             if (res.statusCode === 200) {
               try {
                 const jsonData = JSON.parse(data);
-                console.log('GitHub API response data:', jsonData);
                 resolve(jsonData);
               } catch (parseError) {
-                console.error('Failed to parse GitHub API response:', parseError);
                 reject(new Error('Invalid response from GitHub API'));
               }
             } else if (res.statusCode === 403) {
-              console.error('GitHub API 403 Forbidden error');
-              console.error('Response data:', data);
               
               // Check if it's a rate limit issue
               const rateLimitRemaining = res.headers['x-ratelimit-remaining'];
@@ -230,7 +206,6 @@ export class UpdateManager {
         });
         
         request.on('error', (err) => {
-          console.error('GitHub API request error:', err);
           reject(new Error(`Network error: ${err.message}`));
         });
         
@@ -242,13 +217,11 @@ export class UpdateManager {
       });
       
       const latestVersion = response.tag_name?.replace('v', '');
-      console.log(`Latest version on GitHub: ${latestVersion}`);
       
       // Store release info for download
       this.latestReleaseInfo = response;
       
       if (latestVersion && latestVersion !== currentVersion) {
-        console.log('Update available!');
         this.updateStatus({
           status: 'available',
           version: latestVersion,
@@ -257,7 +230,6 @@ export class UpdateManager {
         });
         return { success: true, data: { version: latestVersion, releaseInfo: response } };
       } else {
-        console.log('No updates available');
         this.updateStatus({
           status: 'not-available',
           currentVersion: currentVersion
@@ -266,7 +238,6 @@ export class UpdateManager {
       }
       
     } catch (error: any) {
-      console.error('Manual update check failed:', error);
       this.updateStatus({
         status: 'error',
         error: error.message || 'Failed to check for updates',
@@ -281,7 +252,7 @@ export class UpdateManager {
    */
   async downloadUpdate(): Promise<{ success: boolean; error?: string; data?: any }> {
     try {
-      console.log('Downloading update...');
+
       
       // Check if update is available
       if (this.currentStatus.status !== 'available') {
@@ -292,8 +263,7 @@ export class UpdateManager {
         return { success: false, error: 'No release information available' };
       }
       
-      console.log('Release info:', this.latestReleaseInfo);
-      console.log('Release assets:', this.latestReleaseInfo.assets);
+
       
       // Find the macOS pkg file in the release assets
       const macPkgAsset = this.latestReleaseInfo.assets?.find((asset: any) => 
@@ -301,21 +271,15 @@ export class UpdateManager {
       );
       
       if (!macPkgAsset) {
-        console.error('Available assets:', this.latestReleaseInfo.assets?.map((a: any) => a.name));
         return { success: false, error: 'No macOS pkg file found in the release' };
       }
-      
-      console.log('Found asset:', macPkgAsset);
-      console.log('Download URL:', macPkgAsset.browser_download_url);
-      console.log('Asset size:', macPkgAsset.size);
       
       // Get user's Downloads folder
       const downloadsPath = path.join(os.homedir(), 'Downloads');
       const fileName = macPkgAsset.name;
       const downloadPath = path.join(downloadsPath, fileName);
       
-      console.log(`Downloading to: ${downloadPath}`);
-      console.log(`Expected file size: ${macPkgAsset.size} bytes`);
+
       
       // Update status to downloading
       this.updateStatus({ status: 'downloading', progress: 0 });
@@ -326,10 +290,8 @@ export class UpdateManager {
       if (result.success) {
         // Verify the downloaded file size
         const stats = fs.statSync(downloadPath);
-        console.log(`Downloaded file size: ${stats.size} bytes`);
         
         if (stats.size < 1000000) { // Less than 1MB is suspicious
-          console.error('Downloaded file is too small, likely corrupted');
           fs.unlinkSync(downloadPath);
           return { success: false, error: 'Downloaded file is too small, download may have failed' };
         }
@@ -355,7 +317,6 @@ export class UpdateManager {
       }
       
     } catch (error: any) {
-      console.error('Error downloading update:', error);
       this.updateStatus({ status: 'error', error: error.message });
       return { success: false, error: error.message };
     }
@@ -370,7 +331,7 @@ export class UpdateManager {
       let downloadedBytes = 0;
       let totalBytes = 0;
       
-      console.log(`Starting download from: ${url}`);
+
       
       const request = https.get(url, {
         headers: {
@@ -378,14 +339,12 @@ export class UpdateManager {
           'Accept': 'application/octet-stream'
         }
       }, (response) => {
-        console.log(`Download response status: ${response.statusCode}`);
-        console.log(`Download response headers:`, response.headers);
+
         
         // Handle redirects
         if ((response.statusCode === 301 || response.statusCode === 302) && redirectCount < 5) {
           const location = response.headers.location;
           if (location) {
-            console.log(`Following redirect to: ${location}`);
             file.close();
             fs.unlink(filePath, () => {}); // Clean up the partial file
             
@@ -399,18 +358,14 @@ export class UpdateManager {
           let errorData = '';
           response.on('data', (chunk) => errorData += chunk);
           response.on('end', () => {
-            console.error('Download failed:', errorData);
+    
             resolve({ success: false, error: `Download failed with status ${response.statusCode}: ${errorData}` });
           });
           return;
         }
         
         totalBytes = parseInt(response.headers['content-length'] || '0', 10);
-        console.log(`Expected download size: ${totalBytes} bytes`);
-        
-        if (expectedSize && totalBytes !== expectedSize) {
-          console.warn(`Size mismatch: expected ${expectedSize}, got ${totalBytes}`);
-        }
+
         
         response.on('data', (chunk) => {
           downloadedBytes += chunk.length;
@@ -421,30 +376,23 @@ export class UpdateManager {
             progress: Math.round(progress)
           });
           
-          // Log progress every 10%
-          if (Math.round(progress) % 10 === 0) {
-            console.log(`Download progress: ${Math.round(progress)}% (${downloadedBytes}/${totalBytes} bytes)`);
-          }
+
         });
         
         response.pipe(file);
         
         file.on('finish', () => {
           file.close();
-          console.log(`Download completed: ${filePath}`);
-          console.log(`Final downloaded size: ${downloadedBytes} bytes`);
           resolve({ success: true });
         });
         
         file.on('error', (err) => {
           fs.unlink(filePath, () => {}); // Delete the file if there was an error
-          console.error('File write error:', err);
           resolve({ success: false, error: err.message });
         });
       });
       
       request.on('error', (err) => {
-        console.error('Download request error:', err);
         resolve({ success: false, error: err.message });
       });
       
@@ -461,7 +409,6 @@ export class UpdateManager {
    */
   async installUpdate(): Promise<{ success: boolean; error?: string; message?: string }> {
     try {
-      console.log('Handling update installation for unsigned app...');
       
       // Check if update is downloaded
       if (this.currentStatus.status !== 'downloaded') {
@@ -485,14 +432,12 @@ export class UpdateManager {
       
       if (result.response === 0) {
         // Quit and install - open the pkg file and quit the app
-        console.log('User chose to quit and install update');
         
         // Open the pkg file first
         shell.openPath(downloadPath);
         
         // Give a moment for the installer to start, then quit the app
         setTimeout(() => {
-          console.log('Quitting app for update installation');
           app.quit();
         }, 1000);
         
@@ -516,7 +461,7 @@ export class UpdateManager {
       };
       
     } catch (error: any) {
-      console.error('Error during update installation:', error);
+
       
       // Fallback: open GitHub releases page for manual download
       const releasesUrl = `https://github.com/${APP_CONSTANTS.GITHUB_OWNER}/${APP_CONSTANTS.GITHUB_REPO}/releases`;

@@ -18,7 +18,6 @@ let systemMonitorInterval: NodeJS.Timeout | null = null;
 
 function startSystemMonitoring() {
   // Disabled for now - causing too much noise
-  console.log('System monitoring disabled');
   return;
 }
 
@@ -80,17 +79,14 @@ app.whenReady().then(() => {
   session.defaultSession.clearStorageData({
     storages: ['serviceworkers']
   }).then(() => {
-    console.log('Service worker storage cleared');
     initializeApp();
   }).catch((err: any) => {
-    console.warn('Failed to clear service worker storage:', err);
     initializeApp();
   });
 });
 
 app.on('window-all-closed', () => {
   stopSystemMonitoring();
-  console.log('All windows closed, quitting app...');
   app.quit();
 });
 
@@ -103,8 +99,6 @@ app.on('activate', () => {
 
 // Clean up when app is about to quit
 app.on('before-quit', () => {
-  console.log('App is quitting, cleaning up...');
-  
   // Clean up tray
   destroyTray();
   

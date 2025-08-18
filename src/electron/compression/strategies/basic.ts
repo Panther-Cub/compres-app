@@ -1,7 +1,7 @@
 import ffmpeg from 'fluent-ffmpeg';
 import { BrowserWindow } from 'electron';
 import { CompressionResult } from '../types';
-import { buildOutputPath, getFileName } from '../utils';
+import { buildOutputPath } from '../utils';
 import { BaseCompressionStrategy, CompressionContext } from './base';
 
 export async function compressFileWithPreset(

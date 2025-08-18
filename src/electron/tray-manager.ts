@@ -116,7 +116,6 @@ export async function checkDefaultWindowAndShow(): Promise<void> {
       hideMainWindow();
     }
   } catch (error) {
-    console.error('Error checking default window:', error);
     // Fallback to overlay
     showOverlayWindow();
     hideMainWindow();

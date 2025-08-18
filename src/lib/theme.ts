@@ -80,7 +80,7 @@ export class ThemeManager {
 
   toggleTheme(): void {
     // Theme toggle disabled - always follows macOS system
-    console.log('Theme toggle disabled - using native macOS vibrancy');
+
   }
 
   subscribe(listener: (theme: Theme) => void): () => void {

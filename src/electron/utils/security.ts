@@ -1,4 +1,4 @@
-import { BrowserWindow, session } from 'electron';
+import { BrowserWindow } from 'electron';
 import { Environment } from './environment';
 
 /**

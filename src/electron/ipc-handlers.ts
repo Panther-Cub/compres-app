@@ -6,8 +6,6 @@ import ffmpeg from 'fluent-ffmpeg';
 import { 
   videoPresets, 
   CompressionManager,
-  addCustomPreset,
-  removeCustomPreset,
   getAllPresets,
   isCustomPreset,
   getCustomPresets
@@ -82,7 +80,6 @@ export function setupIpcHandlers(): void {
       addCustomPresetWithPersistence(presetId, preset);
       return { success: true, presetId };
     } catch (error) {
-      console.error('Error adding custom preset:', error);
       throw error;
     }
   });
@@ -92,7 +89,6 @@ export function setupIpcHandlers(): void {
       removeCustomPresetWithPersistence(presetId);
       return { success: true, presetId };
     } catch (error) {
-      console.error('Error removing custom preset:', error);
       throw error;
     }
   });
@@ -101,7 +97,6 @@ export function setupIpcHandlers(): void {
     try {
       return getAllPresets();
     } catch (error) {
-      console.error('Error getting all presets:', error);
       throw error;
     }
   });
@@ -110,7 +105,6 @@ export function setupIpcHandlers(): void {
     try {
       return getCustomPresets();
     } catch (error) {
-      console.error('Error getting custom presets:', error);
       throw error;
     }
   });
@@ -119,7 +113,6 @@ export function setupIpcHandlers(): void {
     try {
       return isCustomPreset(presetId);
     } catch (error) {
-      console.error('Error checking if preset is custom:', error);
       throw error;
     }
   });
@@ -144,7 +137,6 @@ export function setupIpcHandlers(): void {
         `);
         return theme;
       } catch (error) {
-        console.error('Error getting current theme:', error);
         return 'system';
       }
     }
@@ -153,15 +145,8 @@ export function setupIpcHandlers(): void {
 
   // Overlay window communication
   ipcMain.handle('overlay-file-drop', async (event, filePaths: string[]) => {
-    console.log('Overlay received file drop:', filePaths);
-    
     // Validate and filter files using the utility
-    const { validFiles, errors } = FileValidation.validateVideoFiles(filePaths);
-    
-    // Log any validation errors
-    if (errors.length > 0) {
-      console.warn('File validation errors:', errors);
-    }
+    const { validFiles } = FileValidation.validateVideoFiles(filePaths);
     
     // Send files to main window if any are valid
     if (validFiles.length > 0) {
@@ -244,7 +229,6 @@ export function setupIpcHandlers(): void {
       
       return validFiles;
     } catch (error) {
-      console.error('Error selecting files:', error);
       throw error;
     }
   });
@@ -260,9 +244,7 @@ export function setupIpcHandlers(): void {
       if (!fs.existsSync(compressedVideosDir)) {
         try {
           fs.mkdirSync(compressedVideosDir, { recursive: true });
-          console.log(`Created default output directory: ${compressedVideosDir}`);
         } catch (error) {
-          console.warn('Could not create default directory, using Desktop:', error);
           return desktopDir;
         }
       }
@@ -270,13 +252,11 @@ export function setupIpcHandlers(): void {
       // Verify the directory is writable using the utility
       const validation = FileValidation.validateDirectory(compressedVideosDir);
       if (!validation.isValid) {
-        console.warn('Default directory is not writable, using Desktop:', validation.error);
         return desktopDir;
       }
       
       return compressedVideosDir;
     } catch (error) {
-      console.error('Error getting default output directory:', error);
       throw error;
     }
   });
@@ -307,7 +287,6 @@ export function setupIpcHandlers(): void {
       
       return selectedDir;
     } catch (error) {
-      console.error('Error selecting output directory:', error);
       throw error;
     }
   });
@@ -383,7 +362,6 @@ export function setupIpcHandlers(): void {
         });
       });
     } catch (error) {
-      console.error('Error getting file info:', error);
       throw error;
     }
   });
@@ -396,7 +374,6 @@ export function setupIpcHandlers(): void {
     
     try {
       const { files, presetConfigs, outputDirectory, advancedSettings } = data;
-      console.log('Received compress-videos request:', data);
       
       if (advancedSettings) {
         return await compressionManager.compressVideosAdvanced(files, presetConfigs, outputDirectory, advancedSettings);
@@ -404,7 +381,6 @@ export function setupIpcHandlers(): void {
         return await compressionManager.compressVideos(files, presetConfigs, outputDirectory);
       }
     } catch (error) {
-      console.error('Compression error:', error);
       throw error;
     }
   });
@@ -433,7 +409,6 @@ export function setupIpcHandlers(): void {
     files: string[];
     newNames: Record<string, string>;
   }) => {
-    console.log('Received batch-rename-files request:', { files, newNames });
     
     const results: { success: boolean; oldPath: string; newPath?: string; error?: string }[] = [];
     
@@ -563,12 +538,10 @@ export function setupIpcHandlers(): void {
           }
         })
         .on('error', (err) => {
-          console.error('Thumbnail generation error:', err);
           reject(new Error(`Failed to generate thumbnail: ${err.message}`));
         });
     });
   } catch (error) {
-    console.error('Error generating thumbnail:', error);
     throw error;
   }
 });
@@ -599,7 +572,6 @@ export function setupIpcHandlers(): void {
       // Return as data URL
       return `data:image/jpeg;base64,${base64}`;
     } catch (error) {
-      console.error('Error converting thumbnail to data URL:', error);
       throw error;
     }
   });
@@ -618,7 +590,6 @@ export function setupIpcHandlers(): void {
       shell.showItemInFolder(filePath);
       return { success: true };
     } catch (error) {
-      console.error('Error showing file in Finder:', error);
       throw error;
     }
   });
@@ -637,7 +608,6 @@ export function setupIpcHandlers(): void {
       shell.openPath(filePath);
       return { success: true };
     } catch (error) {
-      console.error('Error opening file:', error);
       throw error;
     }
   });
@@ -647,7 +617,6 @@ export function setupIpcHandlers(): void {
     try {
       return Settings.getStartupSettings();
     } catch (error) {
-      console.error('Error reading startup settings:', error);
       return Settings.getDefaultSettings();
     }
   });
@@ -668,7 +637,6 @@ export function setupIpcHandlers(): void {
       
       return { success: true };
     } catch (error) {
-      console.error('Error saving startup settings:', error);
       throw error;
     }
   });
@@ -677,35 +645,24 @@ export function setupIpcHandlers(): void {
     try {
       return Settings.getDefaultWindow();
     } catch (error) {
-      console.error('Error reading default window setting:', error);
       return APP_CONSTANTS.DEFAULT_WINDOW;
     }
   });
 
   ipcMain.handle('create-defaults-window', async () => {
     try {
-      console.log('Creating defaults window...');
-      console.log('createDefaultsWindow function:', typeof createDefaultsWindow);
-      const window = createDefaultsWindow();
-      console.log('Defaults window created:', window ? 'success' : 'failed');
-      console.log('Window object:', window);
+      createDefaultsWindow();
       return { success: true };
     } catch (error) {
-      console.error('Error creating defaults window:', error);
       return { success: false, error: String(error) };
     }
   });
 
   ipcMain.handle('create-batch-rename-window', async () => {
     try {
-      console.log('Creating batch rename window...');
-      console.log('createBatchRenameWindow function:', typeof createBatchRenameWindow);
-      const window = createBatchRenameWindow();
-      console.log('Batch rename window created:', window ? 'success' : 'failed');
-      console.log('Window object:', window);
+      createBatchRenameWindow();
       return { success: true };
     } catch (error) {
-      console.error('Error creating batch rename window:', error);
       return { success: false, error: String(error) };
     }
   });

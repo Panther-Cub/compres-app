@@ -110,45 +110,33 @@ export class MemoryManager {
    * Clean up all tracked resources
    */
   cleanup(): void {
-    console.log('MemoryManager: Starting cleanup...');
-    
-    // Log memory stats before cleanup
-    const stats = this.getMemoryStats();
-    console.log('MemoryManager: Memory stats before cleanup:', stats);
-
     try {
       // Clear all active compressions
       this.activeCompressions.clear();
-      console.log('MemoryManager: Cleared active compressions');
 
       // Clear all progress intervals
       this.progressIntervals.forEach(interval => {
         try {
           clearInterval(interval);
         } catch (error) {
-          console.warn('Error clearing progress interval:', error);
+          // Error clearing progress interval
         }
       });
       this.progressIntervals.clear();
-      console.log('MemoryManager: Cleared progress intervals');
 
       // Clear all event listeners
       this.eventListeners.clear();
-      console.log('MemoryManager: Cleared event listeners');
 
       // Force garbage collection if available (development only)
       if (global.gc) {
         try {
           global.gc();
-          console.log('MemoryManager: Forced garbage collection');
         } catch (error) {
-          console.warn('Error during garbage collection:', error);
+          // Error during garbage collection
         }
       }
-
-      console.log('MemoryManager: Cleanup completed');
     } catch (error) {
-      console.error('Error during memory manager cleanup:', error);
+      // Error during memory manager cleanup
     }
   }
 
@@ -156,8 +144,6 @@ export class MemoryManager {
    * Clean up compression-specific resources
    */
   cleanupCompression(): void {
-    console.log('MemoryManager: Cleaning up compression resources...');
-    
     try {
       // Clear active compressions
       this.activeCompressions.clear();
@@ -167,7 +153,7 @@ export class MemoryManager {
         try {
           clearInterval(interval);
         } catch (error) {
-          console.warn('Error clearing progress interval during compression cleanup:', error);
+          // Error clearing progress interval during compression cleanup
         }
       });
       this.progressIntervals.clear();
@@ -179,19 +165,12 @@ export class MemoryManager {
       if (global.gc) {
         try {
           global.gc();
-          console.log('MemoryManager: Forced garbage collection during compression cleanup');
         } catch (error) {
-          console.warn('Error during garbage collection:', error);
+          // Error during garbage collection
         }
       }
-      
-      // Log memory usage after cleanup
-      const stats = this.getMemoryStats();
-      console.log('MemoryManager: Memory stats after compression cleanup:', stats);
-      
-      console.log('MemoryManager: Compression cleanup completed');
     } catch (error) {
-      console.error('Error during compression cleanup:', error);
+      // Error during compression cleanup
     }
   }
 
@@ -202,32 +181,28 @@ export class MemoryManager {
     const stats = this.getMemoryStats();
     
     if (stats.activeCompressions > 0) {
-      console.warn(`MemoryManager: Potential leak - ${stats.activeCompressions} active compressions not cleaned up`);
+      // Potential leak - active compressions not cleaned up
     }
     
     if (stats.progressIntervals > 0) {
-      console.warn(`MemoryManager: Potential leak - ${stats.progressIntervals} progress intervals not cleaned up`);
+      // Potential leak - progress intervals not cleaned up
     }
     
     if (stats.totalEvents > 0) {
-      console.warn(`MemoryManager: Potential leak - ${stats.totalEvents} event listeners not cleaned up`);
+      // Potential leak - event listeners not cleaned up
     }
     
     // Check memory usage and warn if high
     const memUsage = process.memoryUsage();
     const heapUsedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
-    const heapTotalMB = Math.round(memUsage.heapTotal / 1024 / 1024);
     
     if (heapUsedMB > 1500) { // Warn if using more than 1.5GB
-      console.warn(`MemoryManager: High memory usage detected - Heap: ${heapUsedMB}MB/${heapTotalMB}MB`);
-      
       // Force garbage collection if available
       if (global.gc) {
         try {
           global.gc();
-          console.log('MemoryManager: Forced garbage collection due to high memory usage');
         } catch (error) {
-          console.warn('Error during emergency garbage collection:', error);
+          // Error during emergency garbage collection
         }
       }
     }
@@ -242,47 +217,31 @@ export class MemoryUtils {
    * Safely clear a Map and log the operation
    */
   static clearMap<T>(map: Map<string, T>, name: string): void {
-    const size = map.size;
     map.clear();
-    if (size > 0) {
-      console.log(`MemoryUtils: Cleared ${size} items from ${name}`);
-    }
   }
 
   /**
    * Safely clear an array and log the operation
    */
   static clearArray<T>(array: T[], name: string): void {
-    const size = array.length;
     array.length = 0;
-    if (size > 0) {
-      console.log(`MemoryUtils: Cleared ${size} items from ${name}`);
-    }
   }
 
   /**
    * Safely clear a Set and log the operation
    */
   static clearSet<T>(set: Set<T>, name: string): void {
-    const size = set.size;
     set.clear();
-    if (size > 0) {
-      console.log(`MemoryUtils: Cleared ${size} items from ${name}`);
-    }
   }
 
   /**
    * Safely clear intervals and log the operation
    */
   static clearIntervals(intervals: Set<NodeJS.Timeout>, name: string): void {
-    const size = intervals.size;
     intervals.forEach(interval => {
       clearInterval(interval);
     });
     intervals.clear();
-    if (size > 0) {
-      console.log(`MemoryUtils: Cleared ${size} intervals from ${name}`);
-    }
   }
 
   /**
@@ -291,7 +250,6 @@ export class MemoryUtils {
   static forceGarbageCollection(): void {
     if (global.gc) {
       global.gc();
-      console.log('MemoryUtils: Forced garbage collection');
     }
   }
 
@@ -317,7 +275,6 @@ export class MemoryUtils {
    * Log memory usage
    */
   static logMemoryUsage(context: string): void {
-    const usage = this.getMemoryUsage();
-    console.log(`MemoryUtils: ${context} - Heap: ${usage.heapUsed}MB/${usage.heapTotal}MB, External: ${usage.external}MB, RSS: ${usage.rss}MB`);
+    // Memory usage logging disabled
   }
 }
