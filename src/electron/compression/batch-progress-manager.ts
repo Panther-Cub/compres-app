@@ -12,6 +12,7 @@ export interface BatchProgressTask {
   startTime: number;
   outputPath?: string;
   error?: string;
+  isExecuting?: boolean; // Track if task is currently being executed
 }
 
 export interface BatchProgressState {
@@ -34,6 +35,7 @@ export class BatchProgressManager {
   private memoryManager: MemoryManager;
   private isInitialized: boolean = false;
   private isCleaningUp: boolean = false;
+  private executingTasks: Set<string> = new Set(); // Track currently executing tasks
 
   constructor(mainWindow: BrowserWindow) {
     this.mainWindow = mainWindow;
@@ -58,6 +60,9 @@ export class BatchProgressManager {
       // Stop any existing progress updates before reinitializing
       this.stopProgressUpdates();
       
+      // Clear executing tasks set
+      this.executingTasks.clear();
+      
       // Reset state completely
       this.state = {
         totalTasks: 0,
@@ -78,22 +83,18 @@ export class BatchProgressManager {
           
           console.log(`Creating task with key: ${taskKey}`);
           
-          this.state.activeTasks.set(taskKey, {
+          const task: BatchProgressTask = {
             taskKey,
             fileName,
             presetKey: presetConfig.presetId,
             status: 'pending',
             progress: 0,
-            startTime: Date.now()
-          });
-          this.state.allTasks.set(taskKey, {
-            taskKey,
-            fileName,
-            presetKey: presetConfig.presetId,
-            status: 'pending',
-            progress: 0,
-            startTime: Date.now()
-          });
+            startTime: Date.now(),
+            isExecuting: false
+          };
+          
+          this.state.activeTasks.set(taskKey, task);
+          this.state.allTasks.set(taskKey, task);
         }
       }
 
@@ -154,6 +155,26 @@ export class BatchProgressManager {
   }
 
   /**
+   * Check if a task is already being executed
+   */
+  isTaskExecuting(taskKey: string): boolean {
+    return this.executingTasks.has(taskKey);
+  }
+
+  /**
+   * Mark task as being executed to prevent duplicates
+   */
+  markTaskExecuting(taskKey: string): boolean {
+    if (this.executingTasks.has(taskKey)) {
+      console.warn(`Task ${taskKey} is already being executed, skipping duplicate`);
+      return false;
+    }
+    
+    this.executingTasks.add(taskKey);
+    return true;
+  }
+
+  /**
    * Update individual task progress
    */
   updateTaskProgress(taskKey: string, progress: number): void {
@@ -167,16 +188,6 @@ export class BatchProgressManager {
 
       const task = this.state.allTasks.get(taskKey);
       if (!task) {
-        // Try alternative task key format (with hyphens instead of double colons)
-        const alternativeKey = taskKey.replace(/::/g, '-');
-        console.log(`Trying alternative key: ${alternativeKey}`);
-        const altTask = this.state.allTasks.get(alternativeKey);
-        if (altTask) {
-          console.log(`Found task with alternative key format: ${alternativeKey}`);
-          this.updateTaskProgressInternal(altTask, progress);
-          return;
-        }
-        
         console.warn(`Task not found for progress update: ${taskKey}`);
         return;
       }
@@ -225,21 +236,15 @@ export class BatchProgressManager {
         return;
       }
 
-      let task = this.state.allTasks.get(taskKey);
+      const task = this.state.allTasks.get(taskKey);
       if (!task) {
-        // Try alternative task key format (with hyphens instead of double colons)
-        const alternativeKey = taskKey.replace(/::/g, '-');
-        task = this.state.allTasks.get(alternativeKey);
-        if (task) {
-          console.log(`Found task with alternative key format for start: ${alternativeKey}`);
-        } else {
-          console.warn(`Task not found for start: ${taskKey}`);
-          return;
-        }
+        console.warn(`Task not found for start: ${taskKey}`);
+        return;
       }
 
       task.status = 'compressing';
       task.startTime = Date.now();
+      task.isExecuting = true;
       
       // Add to active tasks when it starts
       this.state.activeTasks.set(taskKey, task);
@@ -257,28 +262,24 @@ export class BatchProgressManager {
         return;
       }
 
-      let task = this.state.allTasks.get(taskKey);
+      const task = this.state.allTasks.get(taskKey);
       if (!task) {
-        // Try alternative task key format (with hyphens instead of double colons)
-        const alternativeKey = taskKey.replace(/::/g, '-');
-        task = this.state.allTasks.get(alternativeKey);
-        if (task) {
-          console.log(`Found task with alternative key format for completion: ${alternativeKey}`);
-        } else {
-          console.warn(`Task not found for completion: ${taskKey}`);
-          return;
-        }
+        console.warn(`Task not found for completion: ${taskKey}`);
+        return;
       }
 
       task.status = 'completed';
       task.progress = 100;
       task.outputPath = outputPath;
+      task.isExecuting = false;
       this.state.completedTasks++;
       console.log(`Task completed: ${taskKey}`);
       
+      // Remove from executing tasks set
+      this.executingTasks.delete(taskKey);
+      
       // Remove from active tasks (no longer running) but keep in allTasks
       this.state.activeTasks.delete(taskKey);
-      this.state.activeTasks.delete(taskKey.replace(/::/g, '-')); // Also remove alternative format
     } catch (error) {
       console.error(`Error marking task completed: ${taskKey}`, error);
     }
@@ -293,27 +294,23 @@ export class BatchProgressManager {
         return;
       }
 
-      let task = this.state.allTasks.get(taskKey);
+      const task = this.state.allTasks.get(taskKey);
       if (!task) {
-        // Try alternative task key format (with hyphens instead of double colons)
-        const alternativeKey = taskKey.replace(/::/g, '-');
-        task = this.state.allTasks.get(alternativeKey);
-        if (task) {
-          console.log(`Found task with alternative key format for failure: ${alternativeKey}`);
-        } else {
-          console.warn(`Task not found for failure: ${taskKey}`);
-          return;
-        }
+        console.warn(`Task not found for failure: ${taskKey}`);
+        return;
       }
 
       task.status = 'failed';
       task.error = error;
+      task.isExecuting = false;
       this.state.failedTasks++;
       console.log(`Task failed: ${taskKey} - ${error}`);
       
+      // Remove from executing tasks set
+      this.executingTasks.delete(taskKey);
+      
       // Remove from active tasks (no longer running) but keep in allTasks
       this.state.activeTasks.delete(taskKey);
-      this.state.activeTasks.delete(taskKey.replace(/::/g, '-')); // Also remove alternative format
     } catch (error) {
       console.error(`Error marking task failed: ${taskKey}`, error);
     }
@@ -328,26 +325,22 @@ export class BatchProgressManager {
         return;
       }
 
-      let task = this.state.allTasks.get(taskKey);
+      const task = this.state.allTasks.get(taskKey);
       if (!task) {
-        // Try alternative task key format (with hyphens instead of double colons)
-        const alternativeKey = taskKey.replace(/::/g, '-');
-        task = this.state.allTasks.get(alternativeKey);
-        if (task) {
-          console.log(`Found task with alternative key format for cancellation: ${alternativeKey}`);
-        } else {
-          console.warn(`Task not found for cancellation: ${taskKey}`);
-          return;
-        }
+        console.warn(`Task not found for cancellation: ${taskKey}`);
+        return;
       }
 
       task.status = 'cancelled';
+      task.isExecuting = false;
       this.state.cancelledTasks++;
       console.log(`Task cancelled: ${taskKey}`);
       
+      // Remove from executing tasks set
+      this.executingTasks.delete(taskKey);
+      
       // Remove from active tasks (no longer running) but keep in allTasks
       this.state.activeTasks.delete(taskKey);
-      this.state.activeTasks.delete(taskKey.replace(/::/g, '-')); // Also remove alternative format
     } catch (error) {
       console.error(`Error marking task cancelled: ${taskKey}`, error);
     }
@@ -503,6 +496,9 @@ export class BatchProgressManager {
       this.isInitialized = false;
       
       this.stopProgressUpdates();
+      
+      // Clear executing tasks set
+      this.executingTasks.clear();
       
       // Clear active tasks map
       MemoryUtils.clearMap(this.state.activeTasks, 'batch progress active tasks');

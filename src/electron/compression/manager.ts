@@ -298,9 +298,18 @@ export class CompressionManager {
     // Create compression tasks (not promises yet)
     const compressionTasks: (() => Promise<CompressionResult>)[] = [];
     
+    // Deduplicate inputs to avoid duplicate tasks
+    const uniqueFiles = Array.from(new Set(files));
+    const uniquePresetConfigs = Array.from(
+      new Map(presetConfigs.map(pc => [pc.presetId, pc])).values()
+    );
+
+    // Track created task keys to ensure tasks are enqueued only once
+    const createdTaskKeys = new Set<string>();
+
     // Create all compression tasks upfront with hardware optimization
-    for (const file of files) {
-      for (const presetConfig of presetConfigs) {
+    for (const file of uniqueFiles) {
+      for (const presetConfig of uniquePresetConfigs) {
         const preset = videoPresets[presetConfig.presetId];
         if (!preset) {
           continue;
@@ -316,6 +325,11 @@ export class CompressionManager {
         
         // Send initial progress for all files (0%)
         const taskKey = createTaskKey(fileName, presetConfig.presetId);
+
+        // Skip if we already created this exact task
+        if (createdTaskKeys.has(taskKey)) {
+          continue;
+        }
         
         // Check for custom output naming preferences
         let customOutputName = null;
@@ -339,6 +353,9 @@ export class CompressionManager {
           outputPath
         }, this.mainWindow);
         
+        // Mark as created so we do not enqueue duplicates
+        createdTaskKeys.add(taskKey);
+
         // Create task function (not executing yet)
         const compressionTask = () => this.compressFileWithErrorHandling(
           file, 
@@ -411,6 +428,27 @@ export class CompressionManager {
     isAdvanced: boolean
   ): Promise<CompressionResult> {
     const fileName = getFileName(file);
+    
+    // Check if task is already being executed to prevent duplicates
+    if (this.batchProgressManager.isTaskExecuting(taskKey)) {
+      console.warn(`Task ${taskKey} is already being executed, skipping duplicate`);
+      return {
+        file: fileName,
+        preset: presetKey,
+        error: 'Task already being executed',
+        success: false
+      };
+    }
+    
+    // Mark task as executing to prevent duplicates
+    if (!this.batchProgressManager.markTaskExecuting(taskKey)) {
+      return {
+        file: fileName,
+        preset: presetKey,
+        error: 'Task already being executed',
+        success: false
+      };
+    }
     
     // Check for custom output naming preferences
     let customOutputName = null;

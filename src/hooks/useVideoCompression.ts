@@ -34,18 +34,13 @@ export const useVideoCompression = (presetSettings?: Record<string, PresetSettin
   const [compressionStatuses, setCompressionStatuses] = useState<Record<string, CompressionStatus>>({});
   const [overwriteConfirmation, setOverwriteConfirmation] = useState<OverwriteConfirmation | null>(null);
   const [batchOverwriteConfirmation, setBatchOverwriteConfirmation] = useState<BatchOverwriteConfirmation | null>(null);
-  const [pendingCompressionParams, setPendingCompressionParams] = useState<{
-    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
-    outputDirectory: string;
-    advancedSettings?: AdvancedSettings;
-    existingFilesToRemove: string[];
-  } | null>(null);
   
   // Track all compression tasks
   const compressionTasksRef = useRef<Map<string, CompressionTask>>(new Map());
   const totalTasksRef = useRef<number>(0);
   const completedTasksRef = useRef<number>(0);
   const lastProgressLogRef = useRef<number>(0);
+  const isWaitingForOverwriteRef = useRef<boolean>(false); // Track if waiting for overwrite confirmation
 
   // Helper function to get task key - use consistent file naming
   const getTaskKey = useCallback((file: string, preset: string): string => {
@@ -381,54 +376,24 @@ export const useVideoCompression = (presetSettings?: Record<string, PresetSettin
     });
   }, []);
 
-  // Helper function to check for existing output files using the same logic as compression manager
-  const checkExistingOutputFiles = useCallback(async (
-    files: string[],
-    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>,
-    outputDirectory: string
-  ): Promise<Array<{
-    filePath: string;
-    presetId: string;
-    existingOutputPath: string;
-    fileName: string;
-    existingFileName: string;
-  }>> => {
-    console.log('checkExistingOutputFiles called with:', { files, presetConfigs, outputDirectory });
-    console.log('window.electronAPI available:', !!window.electronAPI);
-    console.log('window.electronAPI methods:', window.electronAPI ? Object.keys(window.electronAPI) : 'N/A');
-    
-    if (!window.electronAPI) {
-      console.log('window.electronAPI not available');
-      return [];
-    }
-
-    try {
-      // Get custom output names if available
-      const customOutputNames = (window as any).compressionOutputNaming || {};
-      console.log('Custom output names:', customOutputNames);
-      
-      // Use the new IPC method that uses the same path construction logic as the compression manager
-      console.log('Calling window.electronAPI.checkExistingOutputFiles...');
-      const existingFiles = await window.electronAPI.checkExistingOutputFiles({
-        files,
-        presetConfigs,
-        outputDirectory,
-        customOutputNames
-      });
-      
-      console.log('IPC returned existing files:', existingFiles);
-      return existingFiles;
-    } catch (error) {
-      console.error('Error checking existing output files:', error);
-      return [];
-    }
-  }, []);
-
   const compressVideos = useCallback(async (
     presetConfigs: Array<{ presetId: string; keepAudio: boolean }>, 
     outputDirectory: string, 
     advancedSettings?: AdvancedSettings
   ): Promise<void> => {
+    // Check if already waiting for overwrite confirmation
+    if (isWaitingForOverwriteRef.current) {
+      console.warn('Already waiting for overwrite confirmation, ignoring duplicate compression request');
+      return;
+    }
+    
+    // Check if already compressing
+    if (isCompressing) {
+      console.warn('Already compressing, ignoring duplicate compression request');
+      return;
+    }
+    
+    // Validate inputs
     if (selectedFiles.length === 0 || presetConfigs.length === 0) {
       setError('No files or presets selected');
       return;
@@ -439,13 +404,36 @@ export const useVideoCompression = (presetSettings?: Record<string, PresetSettin
       return;
     }
     
-    // Check for existing output files using the same logic as compression manager
-    console.log('Checking for existing output files...');
-    console.log('Selected files:', selectedFiles);
+    console.log('Starting compression with files:', selectedFiles.length);
     console.log('Preset configs:', presetConfigs);
-    console.log('Output directory:', outputDirectory);
     
-    const existingOutputFiles = await checkExistingOutputFiles(selectedFiles, presetConfigs, outputDirectory);
+    // Check for existing output files that would be overwritten
+    const existingOutputFiles: Array<{
+      filePath: string;
+      presetId: string;
+      existingOutputPath: string;
+      fileName: string;
+      existingFileName: string;
+    }> = [];
+    
+    try {
+      if (window.electronAPI) {
+        // Get custom output names from the window object
+        const customOutputNames = (window as any).compressionOutputNaming || {};
+        
+        // Use the existing IPC handler to check for existing output files
+        const existingFiles = await window.electronAPI.checkExistingOutputFiles({
+          files: selectedFiles,
+          presetConfigs,
+          outputDirectory,
+          customOutputNames
+        });
+        
+        existingOutputFiles.push(...existingFiles);
+      }
+    } catch (error) {
+      console.warn('Error checking existing output files:', error);
+    }
     
     console.log('Existing output files found:', existingOutputFiles);
     
@@ -453,6 +441,9 @@ export const useVideoCompression = (presetSettings?: Record<string, PresetSettin
     
     // If there are existing output files, show batch overwrite confirmation
     if (existingOutputFiles.length > 0) {
+      // Set waiting flag to prevent duplicate compression
+      isWaitingForOverwriteRef.current = true;
+      
       // Showing batch overwrite confirmation
       
       // Prepare batch confirmation data
@@ -476,25 +467,20 @@ export const useVideoCompression = (presetSettings?: Record<string, PresetSettin
             .filter(f => !filesToOverwrite.includes(`${f.filePath}::${f.presetId}`))
             .map(f => `${f.filePath}::${f.presetId}`);
           
-          setPendingCompressionParams({
-            presetConfigs,
-            outputDirectory,
-            advancedSettings,
-            existingFilesToRemove: filesToRemove
-          });
-          
-          // Start compression with the updated parameters
-          startCompressionWithParams(presetConfigs, outputDirectory, advancedSettings, filesToRemove);
+          // Start compression directly with the updated parameters
+          setTimeout(() => {
+            startCompressionWithParams(presetConfigs, outputDirectory, advancedSettings, filesToRemove);
+          }, 0);
         },
         onCancel: () => {
           // User cancelled batch overwrite
           setBatchOverwriteConfirmation(null);
-          setPendingCompressionParams(null);
+          isWaitingForOverwriteRef.current = false; // Reset waiting flag
         },
         onClose: () => {
           // User closed batch overwrite dialog
           setBatchOverwriteConfirmation(null);
-          setPendingCompressionParams(null);
+          isWaitingForOverwriteRef.current = false; // Reset waiting flag
         }
       });
       
@@ -632,6 +618,9 @@ export const useVideoCompression = (presetSettings?: Record<string, PresetSettin
     advancedSettings?: AdvancedSettings,
     existingFilesToRemove: string[] = []
   ): Promise<void> => {
+    // Reset waiting flag since compression is starting
+    isWaitingForOverwriteRef.current = false;
+    
     setIsCompressing(true);
     setCompressionComplete(false);
     setError('');
@@ -838,9 +827,12 @@ export const useVideoCompression = (presetSettings?: Record<string, PresetSettin
     }
   }, [compressionStatuses, compressSingleFile]);
 
-  // Function to confirm overwrite and proceed with compression
+  // Function to confirm overwrite and continue compression
   const confirmOverwrite = useCallback(async (): Promise<void> => {
-    if (!overwriteConfirmation) return;
+    if (!overwriteConfirmation) {
+      console.warn('No overwrite confirmation to confirm');
+      return;
+    }
 
     // confirmOverwrite called
 
@@ -848,50 +840,27 @@ export const useVideoCompression = (presetSettings?: Record<string, PresetSettin
       // Close confirmation dialog first
       setOverwriteConfirmation(null);
 
-      // Check if this was triggered from main compression flow or individual recompress
-      if (pendingCompressionParams) {
-        // Continuing with main compression flow
-        // This was triggered from main compression flow, continue with the full batch
-        const { existingFilesToRemove } = pendingCompressionParams;
-        setPendingCompressionParams(null);
-        
-        // Removing existing files
-        
-        // Remove all existing compression statuses for files that will be recompressed
-        setCompressionStatuses(prev => {
-          const newStatuses = { ...prev };
-          existingFilesToRemove.forEach(statusKey => {
-            delete newStatuses[statusKey];
-          });
-          // Updated compressionStatuses
-          return newStatuses;
-        });
-        
-        // Don't reset compression state since we want to continue the existing process
-        // The compression is already running, we just need to let it continue
-        // Letting existing compression continue
-        return; // Don't call compressVideos again since it's already running
-      } else {
-        // This was triggered from individual recompress button, compress single file
-        const statusKey = `${overwriteConfirmation.filePath}::${overwriteConfirmation.presetId}`;
-        setCompressionStatuses(prev => {
-          const newStatuses = { ...prev };
-          delete newStatuses[statusKey];
-          return newStatuses;
-        });
-        
-        const keepAudio = presetSettings?.[overwriteConfirmation.presetId]?.keepAudio ?? true;
-        await compressSingleFile(overwriteConfirmation.filePath, overwriteConfirmation.presetId, keepAudio);
-      }
+      // This is for individual recompress button, compress single file
+      const statusKey = `${overwriteConfirmation.filePath}::${overwriteConfirmation.presetId}`;
+      setCompressionStatuses(prev => {
+        const newStatuses = { ...prev };
+        delete newStatuses[statusKey];
+        return newStatuses;
+      });
+      
+      const keepAudio = presetSettings?.[overwriteConfirmation.presetId]?.keepAudio ?? true;
+      await compressSingleFile(overwriteConfirmation.filePath, overwriteConfirmation.presetId, keepAudio);
+      
+      // Reset waiting flag after compression starts
+      isWaitingForOverwriteRef.current = false;
     } catch (error) {
       console.error('Error confirming overwrite:', error);
     }
-  }, [overwriteConfirmation, compressSingleFile, pendingCompressionParams]);
+  }, [overwriteConfirmation, compressSingleFile, presetSettings]);
 
   // Function to cancel overwrite
   const cancelOverwrite = useCallback((): void => {
     setOverwriteConfirmation(null);
-    setPendingCompressionParams(null);
   }, []);
 
   const getTotalProgress = useCallback((): number => {
