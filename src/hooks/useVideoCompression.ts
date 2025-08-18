@@ -7,8 +7,9 @@ import type {
   OverwriteConfirmation,
   BatchOverwriteConfirmation
 } from '../types';
-import type { CompressionProgressData, CompressionCompleteData } from '../electron/preload/api-interface';
+import type { CompressionProgressData, CompressionCompleteData } from '../types/shared';
 import { getFileName } from '../utils/formatters';
+import { getPresetFolderName, getPresetSuffix } from '../shared/presetRegistry';
 
 interface CompressionTask {
   file: string;
@@ -377,6 +378,43 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     });
   }, []);
 
+  // Helper function to construct expected output path using the same logic as compression process
+  const constructExpectedOutputPath = useCallback(async (
+    file: string,
+    presetConfig: { presetId: string; keepAudio: boolean },
+    outputDirectory: string,
+    customOutputName?: string
+  ): Promise<string> => {
+    // Get preset metadata for proper naming - prefer IPC, fallback to shared registry helpers
+    let folderName = getPresetFolderName(presetConfig.presetId);
+    let fileSuffix = getPresetSuffix(presetConfig.presetId);
+    
+    try {
+      const presetMetadata = await window.electronAPI?.getPresetMetadata?.(presetConfig.presetId);
+      if (presetMetadata) {
+        folderName = presetMetadata.folderName || folderName;
+        fileSuffix = presetMetadata.fileSuffix || fileSuffix;
+      }
+    } catch (error) {
+      console.warn('Could not get preset metadata, using fallback:', error);
+    }
+    
+    const audioSuffix = presetConfig.keepAudio ? ' - audio' : ' - muted';
+    const presetFolder = `${outputDirectory}/${folderName}`;
+    
+    let outputFileName: string;
+    if (customOutputName) {
+      const cleanCustomName = customOutputName.replace(/\.[^/.]+$/, '');
+      outputFileName = `${cleanCustomName}${fileSuffix}${audioSuffix}.mp4`;
+    } else {
+      const fileName = getFileName(file);
+      const baseName = fileName.replace(/\.[^/.]+$/, '');
+      outputFileName = `${baseName}${fileSuffix}${audioSuffix}.mp4`;
+    }
+    
+    return `${presetFolder}/${outputFileName}`;
+  }, []);
+
   const compressVideos = useCallback(async (
     presetConfigs: Array<{ presetId: string; keepAudio: boolean }>, 
     outputDirectory: string, 
@@ -399,10 +437,6 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     
           for (const file of selectedFiles) {
         for (const presetConfig of presetConfigs) {
-          // Use the same path construction logic as the compression manager
-          const fileName = getFileName(file);
-          const baseName = fileName.replace(/\.[^/.]+$/, '');
-          
           // Check for custom output naming preferences
           let customOutputName = null;
           if ((window as any).compressionOutputNaming && (window as any).compressionOutputNaming[file]) {
@@ -410,40 +444,8 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
             // Using custom output name
           }
           
-          // Get preset metadata for proper naming
-          // Temporarily hardcode for web-hero preset to test overwrite dialog
-          let folderName = presetConfig.presetId;
-          let fileSuffix = '';
-          
-          if (presetConfig.presetId === 'web-hero') {
-            folderName = 'Web Hero';
-            fileSuffix = ' - Hero';
-          } else {
-            // Try to get from API, but fallback to hardcoded values
-            try {
-              const presetMetadata = await window.electronAPI?.getPresetMetadata?.(presetConfig.presetId);
-              folderName = presetMetadata?.folderName || presetConfig.presetId;
-              fileSuffix = presetMetadata?.fileSuffix || '';
-            } catch (error) {
-              console.warn('Could not get preset metadata, using fallback:', error);
-            }
-          }
-          const audioSuffix = presetConfig.keepAudio ? ' - audio' : ' - muted';
-          
-          // Construct the expected path using the same logic as buildOutputPath
-          const presetFolder = `${outputDirectory}/${folderName}`;
-          
-          // Use custom output name if available, otherwise use default naming
-          let outputFileName: string;
-          if (customOutputName) {
-            // Remove extension if present in custom name and add .mp4
-            const cleanCustomName = customOutputName.replace(/\.[^/.]+$/, '');
-            outputFileName = `${cleanCustomName}.mp4`;
-          } else {
-            outputFileName = `${baseName}${fileSuffix}${audioSuffix}.mp4`;
-          }
-          
-          const expectedOutputPath = `${presetFolder}/${outputFileName}`;
+          // Construct the expected path using the same logic as the compression process
+          const expectedOutputPath = await constructExpectedOutputPath(file, presetConfig, outputDirectory, customOutputName);
           
           // File path construction completed
           

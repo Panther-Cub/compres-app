@@ -95,13 +95,18 @@ export function createUserFriendlyFilename(
 ): string {
   const outputExt = getOutputExtension(videoCodec);
   
-  // Use custom output name if provided
+  // Get preset suffix and audio suffix (mandatory components)
+  const presetSuffix = getPresetSuffix(presetKey);
+  const audioSuffix = keepAudio ? ' - audio' : ' - muted';
+  
+  // Use custom output name if provided, but still include mandatory components
   if (customOutputName) {
     // Remove extension if present in custom name
     const cleanCustomName = customOutputName.replace(/\.[^/.]+$/, '');
-    // Only add index suffix if there are multiple files with same name
+    // Add index suffix if there are multiple files with same name
     const indexSuffix = index !== undefined && index > 0 ? ` (${index + 1})` : '';
-    return `${cleanCustomName}${indexSuffix}.${outputExt}`;
+    // Include mandatory components: custom name + preset suffix + audio suffix + index + extension
+    return `${cleanCustomName}${presetSuffix}${audioSuffix}${indexSuffix}.${outputExt}`;
   }
   
   // Default naming logic
@@ -117,12 +122,6 @@ export function createUserFriendlyFilename(
   if (cleanName.length > 50) {
     cleanName = cleanName.substring(0, 47) + '...';
   }
-  
-  // Add preset suffix for clarity
-  const presetSuffix = getPresetSuffix(presetKey);
-  
-  // Add audio setting suffix
-  const audioSuffix = keepAudio ? ' - audio' : ' - muted';
   
   // Add index if provided (for multiple files with same name)
   const indexSuffix = index !== undefined ? ` (${index + 1})` : '';

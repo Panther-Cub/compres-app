@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AlertCircle } from 'lucide-react';
+import type { UpdateStatusData } from './types/shared';
 import { useVideoCompression } from './hooks/useVideoCompression';
 import { useSettings } from './hooks/useSettings';
 import { useTheme } from './hooks/useTheme';
 import { macAnimations, themeManager } from './lib';
-import type { UpdateStatusData } from './electron/preload/api-interface';
 import {
   AppHeader,
   VideoDropZone,
@@ -161,12 +161,13 @@ function App() {
     }
   }, []);
 
-  const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
     
     const files = Array.from(e.dataTransfer.files);
-    const filePaths = files.map(file => file.path);
+    // In Electron, File objects have a path property, but not in regular browsers
+    const filePaths = files.map(file => (file as any).path).filter(Boolean);
     
     if (filePaths.length > 0) {
       handleFileSelect(filePaths);

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Lightbulb, Sparkles, ChevronDown, ChevronRight } from 'lucide-react';
 import { Button } from './ui';
-import { videoPresets } from '../electron/compression/presets';
+import { simplePresets } from '../types/presets';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface PresetRecommendationsProps {
@@ -87,7 +87,7 @@ export const PresetRecommendations: React.FC<PresetRecommendationsProps> = ({
           >
             <div className="flex flex-wrap gap-2 mt-3">
               {unselectedRecommendations.map((presetKey) => {
-                const preset = videoPresets[presetKey];
+                const preset = simplePresets[presetKey];
                 if (!preset) return null;
                 
                 return (

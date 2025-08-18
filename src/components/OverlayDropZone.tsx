@@ -34,7 +34,8 @@ const OverlayDropZone: React.FC = () => {
     setIsDragOver(false);
     
     const files = Array.from(e.dataTransfer.files);
-    const filePaths = files.map(file => file.path);
+    // In Electron, File objects have a path property, but not in regular browsers
+    const filePaths = files.map(file => (file as any).path).filter(Boolean);
     
     if (filePaths.length > 0 && window.electronAPI) {
       try {

@@ -320,40 +320,13 @@ export class CompressionManager {
         // Check for custom output naming preferences
         let customOutputName = null;
         try {
-          const escapedFilePath = file.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/`/g, '\\`');
-          const customNaming = await this.mainWindow.webContents.executeJavaScript(`
-            (() => {
-              try {
-                const filePath = '${escapedFilePath}';
-                // Try exact match first
-                if (window.compressionOutputNaming && window.compressionOutputNaming[filePath]) {
-                  return window.compressionOutputNaming[filePath];
-                }
-                // Try with normalized path
-                const normalizedPath = filePath.replace(/\\\\/g, '/');
-                if (window.compressionOutputNaming && window.compressionOutputNaming[normalizedPath]) {
-                  return window.compressionOutputNaming[normalizedPath];
-                }
-                // Try with basename as fallback
-                const basename = filePath.split('/').pop();
-                for (const [key, value] of Object.entries(window.compressionOutputNaming || {})) {
-                  if (key.split('/').pop() === basename) {
-                    return value;
-                  }
-                }
-                return null;
-              } catch (e) {
-                return null;
-              }
-            })()
-          `);
-          customOutputName = customNaming;
+          customOutputName = await this.getCustomOutputName(file);
           if (customOutputName) {
             // Found custom output name
           }
         } catch (_) {}
         
-        const outputPath = buildOutputPath(file, presetConfig.presetId, outputDirectory, optimizedPreset.settings.videoCodec, presetConfig.keepAudio, currentIndex, customOutputName);
+        const outputPath = buildOutputPath(file, presetConfig.presetId, outputDirectory, optimizedPreset.settings.videoCodec, presetConfig.keepAudio, currentIndex, customOutputName || undefined);
         if (customOutputName) {
           console.log(`Final output path: ${outputPath}`);
         }
@@ -442,34 +415,7 @@ export class CompressionManager {
     // Check for custom output naming preferences
     let customOutputName = null;
     try {
-      const escapedFilePath = file.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/`/g, '\\`');
-      const customNaming = await this.mainWindow.webContents.executeJavaScript(`
-        (() => {
-          try {
-            const filePath = '${escapedFilePath}';
-            // Try exact match first
-            if (window.compressionOutputNaming && window.compressionOutputNaming[filePath]) {
-              return window.compressionOutputNaming[filePath];
-            }
-            // Try with normalized path
-            const normalizedPath = filePath.replace(/\\\\/g, '/');
-            if (window.compressionOutputNaming && window.compressionOutputNaming[normalizedPath]) {
-              return window.compressionOutputNaming[normalizedPath];
-            }
-            // Try with basename as fallback
-            const basename = filePath.split('/').pop();
-            for (const [key, value] of Object.entries(window.compressionOutputNaming || {})) {
-              if (key.split('/').pop() === basename) {
-                return value;
-              }
-            }
-            return null;
-          } catch (e) {
-            return null;
-          }
-        })()
-      `);
-      customOutputName = customNaming;
+      customOutputName = await this.getCustomOutputName(file);
       if (customOutputName) {
         // Found custom output name
       }
@@ -507,7 +453,7 @@ export class CompressionManager {
         if (isAdvanced) {
           result = await this.compressFileWithAdvancedSettings(file, presetKey, preset, keepAudio, outputDirectory, advancedSettings, taskKey, fileIndex);
         } else {
-          result = await compressFileWithPreset(file, presetKey, preset, keepAudio, outputDirectory, taskKey, this.mainWindow, advancedSettings, this.batchProgressManager, customOutputName);
+          result = await compressFileWithPreset(file, presetKey, preset, keepAudio, outputDirectory, taskKey, this.mainWindow, advancedSettings, this.batchProgressManager, customOutputName || undefined);
         }
       } catch (compressionError) {
         console.error(`Compression failed for ${fileName}:`, compressionError);
@@ -633,6 +579,33 @@ export class CompressionManager {
     // Check for custom output naming preferences
     let customOutputName = null;
     try {
+      customOutputName = await this.getCustomOutputName(file);
+      if (customOutputName) {
+        // Found custom output name
+      }
+    } catch (_) {}
+    
+    const outputPath = buildOutputPath(file, presetKey, outputDirectory, preset.settings.videoCodec, keepAudio, fileIndex, customOutputName || undefined);
+    if (customOutputName) {
+      // Final output path calculated
+    }
+    
+    // Use advanced settings if provided, otherwise use preset defaults
+    const settings = advancedSettings || preset.settings;
+    
+    // Handle two-pass encoding
+    if (settings.twoPass) {
+      return compressWithTwoPass(file, presetKey, preset, keepAudio, outputDirectory, settings, taskKey, fileName, outputPath, this.mainWindow, this.batchProgressManager);
+    } else {
+      return compressWithSinglePass(file, presetKey, preset, keepAudio, outputDirectory, settings, taskKey, fileName, outputPath, this.mainWindow, this.batchProgressManager);
+    }
+  }
+
+  /**
+   * Get custom output name for a file from the renderer process
+   */
+  private async getCustomOutputName(file: string): Promise<string | null> {
+    try {
       const escapedFilePath = file.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/`/g, '\\`');
       const customNaming = await this.mainWindow.webContents.executeJavaScript(`
         (() => {
@@ -660,25 +633,9 @@ export class CompressionManager {
           }
         })()
       `);
-      customOutputName = customNaming;
-      if (customOutputName) {
-        // Found custom output name
-      }
-    } catch (_) {}
-    
-    const outputPath = buildOutputPath(file, presetKey, outputDirectory, preset.settings.videoCodec, keepAudio, fileIndex, customOutputName);
-    if (customOutputName) {
-      // Final output path calculated
-    }
-    
-    // Use advanced settings if provided, otherwise use preset defaults
-    const settings = advancedSettings || preset.settings;
-    
-    // Handle two-pass encoding
-    if (settings.twoPass) {
-      return compressWithTwoPass(file, presetKey, preset, keepAudio, outputDirectory, settings, taskKey, fileName, outputPath, this.mainWindow, this.batchProgressManager);
-    } else {
-      return compressWithSinglePass(file, presetKey, preset, keepAudio, outputDirectory, settings, taskKey, fileName, outputPath, this.mainWindow, this.batchProgressManager);
+      return customNaming;
+    } catch (_) {
+      return null;
     }
   }
 
