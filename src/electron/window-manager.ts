@@ -312,13 +312,16 @@ export function createBatchRenameWindow(): BrowserWindow {
 
   batchRenameWindow.on('closed', () => {
     batchRenameWindow = null;
-    // Ensure main window is focused when batch rename closes
+    // Ensure main window is focused when compression naming window closes
     if (mainWindow) {
       if (mainWindow.isMinimized()) {
         mainWindow.restore();
       }
       mainWindow.show();
       mainWindow.focus();
+      
+      // Notify main window that batch rename window closed (so it can check for updates)
+      mainWindow.webContents.send('batch-rename-window-closed');
     }
   });
 

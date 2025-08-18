@@ -2,7 +2,10 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import type { 
   UseVideoCompressionReturn, 
   FileInfo, 
-  AdvancedSettings
+  AdvancedSettings,
+  CompressionStatus,
+  OverwriteConfirmation,
+  BatchOverwriteConfirmation
 } from '../types';
 import type { CompressionProgressData, CompressionCompleteData } from '../electron/preload/api-interface';
 import { getFileName } from '../utils/formatters';
@@ -24,6 +27,17 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
   const [compressionComplete, setCompressionComplete] = useState<boolean>(false);
   const [outputPaths, setOutputPaths] = useState<string[]>([]);
   const [error, setError] = useState<string>('');
+  
+  // New compression status tracking
+  const [compressionStatuses, setCompressionStatuses] = useState<Record<string, CompressionStatus>>({});
+  const [overwriteConfirmation, setOverwriteConfirmation] = useState<OverwriteConfirmation | null>(null);
+  const [batchOverwriteConfirmation, setBatchOverwriteConfirmation] = useState<BatchOverwriteConfirmation | null>(null);
+  const [pendingCompressionParams, setPendingCompressionParams] = useState<{
+    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
+    outputDirectory: string;
+    advancedSettings?: AdvancedSettings;
+    existingFilesToRemove: string[];
+  } | null>(null);
   
   // Track all compression tasks
   const compressionTasksRef = useRef<Map<string, CompressionTask>>(new Map());
@@ -105,7 +119,6 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     
     const handleCompressionProgress = (data: CompressionProgressData) => {
       try {
-        console.log('Received compression progress:', data);
         
         // Handle both old and new data structures
         let file: string, preset: string, progress: number;
@@ -136,6 +149,45 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
           ...prev,
           [taskKey]: Math.max(0, Math.min(100, progress)) // Removed Math.round for fluid progress
         }));
+
+        // Update compression status - find the full file path that matches the filename
+        const fullFilePath = Object.keys(compressionStatuses).find(key => {
+          const status = compressionStatuses[key];
+          const fileName = getFileName(status.filePath);
+          return fileName === file;
+        })?.split('::')[0];
+
+        if (fullFilePath) {
+          const statusKey = `${fullFilePath}::${preset}`;
+          setCompressionStatuses(prev => ({
+            ...prev,
+            [statusKey]: {
+              filePath: fullFilePath,
+              presetId: preset,
+              status: 'compressing',
+              progress: Math.max(0, Math.min(100, progress))
+            }
+          }));
+        } else {
+          // If we can't find the full path, try to find it in selectedFiles
+          const matchingFile = selectedFiles.find(selectedFile => {
+            const fileName = getFileName(selectedFile);
+            return fileName === file;
+          });
+          
+          if (matchingFile) {
+            const statusKey = `${matchingFile}::${preset}`;
+            setCompressionStatuses(prev => ({
+              ...prev,
+              [statusKey]: {
+                filePath: matchingFile,
+                presetId: preset,
+                status: 'compressing',
+                progress: Math.max(0, Math.min(100, progress))
+              }
+            }));
+          }
+        }
       } catch (error) {
         console.error('Error handling compression progress:', error);
       }
@@ -143,7 +195,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
 
     const handleCompressionComplete = (data: CompressionCompleteData) => {
       try {
-        const { file, preset, taskKey } = data;
+        const { file, preset, taskKey, success, outputPath, error } = data;
         if (!file || !preset) {
           console.warn('Invalid compression complete data:', data);
           return;
@@ -151,7 +203,52 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
 
         // Use provided taskKey or generate one
         const finalTaskKey = taskKey || getTaskKey(file, preset);
-        markTaskComplete(finalTaskKey);
+        markTaskComplete(finalTaskKey, outputPath, error);
+
+        // Update compression status - find the full file path that matches the filename
+        const fullFilePath = Object.keys(compressionStatuses).find(key => {
+          const status = compressionStatuses[key];
+          const fileName = getFileName(status.filePath);
+          return fileName === file;
+        })?.split('::')[0];
+
+        if (fullFilePath) {
+          const statusKey = `${fullFilePath}::${preset}`;
+          setCompressionStatuses(prev => ({
+            ...prev,
+            [statusKey]: {
+              filePath: fullFilePath,
+              presetId: preset,
+              status: success ? 'completed' : 'failed',
+              progress: success ? 100 : 0,
+              outputPath: success ? outputPath : undefined,
+              error: success ? undefined : error,
+              completedAt: success ? Date.now() : undefined
+            }
+          }));
+        } else {
+          // If we can't find the full path, try to find it in selectedFiles
+          const matchingFile = selectedFiles.find(selectedFile => {
+            const fileName = getFileName(selectedFile);
+            return fileName === file;
+          });
+          
+          if (matchingFile) {
+            const statusKey = `${matchingFile}::${preset}`;
+            setCompressionStatuses(prev => ({
+              ...prev,
+              [statusKey]: {
+                filePath: matchingFile,
+                presetId: preset,
+                status: success ? 'completed' : 'failed',
+                progress: success ? 100 : 0,
+                outputPath: success ? outputPath : undefined,
+                error: success ? undefined : error,
+                completedAt: success ? Date.now() : undefined
+              }
+            }));
+          }
+        }
       } catch (error) {
         console.error('Error handling compression complete:', error);
       }
@@ -179,7 +276,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     
     // Return empty cleanup if electronAPI is not available
     return () => {};
-  }, [getTaskKey, markTaskComplete]);
+  }, [getTaskKey, markTaskComplete, selectedFiles, compressionStatuses]);
 
   const handleFileSelect = useCallback(async (files: string[], addToExisting: boolean = false): Promise<void> => {
     setError('');
@@ -200,6 +297,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
       setCompressionComplete(false);
       setCompressionProgress({});
       setOutputPaths([]);
+      setCompressionStatuses({}); // Clear compression statuses when replacing files
       
       // Reset compression tracking
       compressionTasksRef.current.clear();
@@ -294,6 +392,157 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
       return;
     }
     
+    // Check for existing output files in the output directory before starting compression
+    const existingOutputFiles: Array<{ filePath: string; presetId: string; existingOutputPath: string }> = [];
+    
+    console.log('Checking for existing output files in directory...');
+    
+          for (const file of selectedFiles) {
+        for (const presetConfig of presetConfigs) {
+          // Use the same path construction logic as the compression manager
+          const fileName = getFileName(file);
+          const baseName = fileName.replace(/\.[^/.]+$/, '');
+          
+          // Check for custom output naming preferences
+          let customOutputName = null;
+          if ((window as any).compressionOutputNaming && (window as any).compressionOutputNaming[file]) {
+            customOutputName = (window as any).compressionOutputNaming[file];
+            console.log('Using custom output name for file:', file, '->', customOutputName);
+          }
+          
+          // Get preset metadata for proper naming
+          // Temporarily hardcode for web-hero preset to test overwrite dialog
+          let folderName = presetConfig.presetId;
+          let fileSuffix = '';
+          
+          if (presetConfig.presetId === 'web-hero') {
+            folderName = 'Web Hero';
+            fileSuffix = ' - Hero';
+          } else {
+            // Try to get from API, but fallback to hardcoded values
+            try {
+              const presetMetadata = await window.electronAPI?.getPresetMetadata?.(presetConfig.presetId);
+              folderName = presetMetadata?.folderName || presetConfig.presetId;
+              fileSuffix = presetMetadata?.fileSuffix || '';
+            } catch (error) {
+              console.warn('Could not get preset metadata, using fallback:', error);
+            }
+          }
+          const audioSuffix = presetConfig.keepAudio ? ' - audio' : ' - muted';
+          
+          // Construct the expected path using the same logic as buildOutputPath
+          const presetFolder = `${outputDirectory}/${folderName}`;
+          
+          // Use custom output name if available, otherwise use default naming
+          let outputFileName: string;
+          if (customOutputName) {
+            // Remove extension if present in custom name and add .mp4
+            const cleanCustomName = customOutputName.replace(/\.[^/.]+$/, '');
+            outputFileName = `${cleanCustomName}.mp4`;
+          } else {
+            outputFileName = `${baseName}${fileSuffix}${audioSuffix}.mp4`;
+          }
+          
+          const expectedOutputPath = `${presetFolder}/${outputFileName}`;
+          
+          console.log('File path construction:');
+          console.log('  Original file:', file);
+          console.log('  File name:', fileName);
+          console.log('  Base name:', baseName);
+          console.log('  Folder name:', folderName);
+          console.log('  File suffix:', fileSuffix);
+          console.log('  Audio suffix:', audioSuffix);
+          console.log('  Preset folder:', presetFolder);
+          console.log('  Output file name:', outputFileName);
+          console.log('  Expected output path:', expectedOutputPath);
+          
+          try {
+          // Check if the output file already exists using Electron API
+          console.log(`Checking if file exists: ${expectedOutputPath}`);
+          console.log('window.electronAPI available:', !!window.electronAPI);
+          
+          if (window.electronAPI) {
+            // Try using getFileInfo as a way to check if file exists
+            try {
+              console.log('Trying getFileInfo to check file existence...');
+              await window.electronAPI.getFileInfo(expectedOutputPath);
+              console.log(`File exists (confirmed by getFileInfo): ${expectedOutputPath}`);
+              existingOutputFiles.push({
+                filePath: file,
+                presetId: presetConfig.presetId,
+                existingOutputPath: expectedOutputPath
+              });
+            } catch (fileError) {
+              console.log(`File does not exist (getFileInfo failed): ${expectedOutputPath}`);
+              console.log('File error:', fileError);
+            }
+          } else {
+            console.warn('window.electronAPI not available');
+          }
+        } catch (error) {
+          console.warn('Could not check file existence:', error);
+        }
+      }
+    }
+    
+    console.log('Found existing output files:', existingOutputFiles);
+    
+    // If there are existing output files, show batch overwrite confirmation
+    if (existingOutputFiles.length > 0) {
+      console.log('Showing batch overwrite confirmation for:', existingOutputFiles.length, 'files');
+      
+      // Prepare batch confirmation data
+      const batchFiles = existingOutputFiles.map(existing => {
+        const fileName = getFileName(existing.filePath);
+        const existingFileName = existing.existingOutputPath.split('/').pop() || '';
+        const newFileName = existing.existingOutputPath.split('/').pop() || '';
+        
+        return {
+          filePath: existing.filePath,
+          presetId: existing.presetId,
+          existingOutputPath: existing.existingOutputPath,
+          newOutputPath: existing.existingOutputPath, // Same path since we're overwriting
+          fileName,
+          existingFileName,
+          newFileName
+        };
+      });
+      
+      setBatchOverwriteConfirmation({
+        files: batchFiles,
+        onConfirm: (filesToOverwrite: string[]) => {
+          console.log('User confirmed overwrite for files:', filesToOverwrite);
+          setBatchOverwriteConfirmation(null);
+          // Continue with compression, excluding files that weren't selected for overwrite
+          const filesToRemove = existingOutputFiles
+            .filter(f => !filesToOverwrite.includes(`${f.filePath}::${f.presetId}`))
+            .map(f => `${f.filePath}::${f.presetId}`);
+          
+          setPendingCompressionParams({
+            presetConfigs,
+            outputDirectory,
+            advancedSettings,
+            existingFilesToRemove: filesToRemove
+          });
+          
+          // Start compression with the updated parameters
+          startCompressionWithParams(presetConfigs, outputDirectory, advancedSettings, filesToRemove);
+        },
+        onCancel: () => {
+          console.log('User cancelled batch overwrite');
+          setBatchOverwriteConfirmation(null);
+          setPendingCompressionParams(null);
+        },
+        onClose: () => {
+          console.log('User closed batch overwrite dialog');
+          setBatchOverwriteConfirmation(null);
+          setPendingCompressionParams(null);
+        }
+      });
+      
+      return; // Stop here and wait for user confirmation
+    }
+    
     // Validate that all files still exist before starting compression
     // Note: File validation is handled by the backend
     for (const file of selectedFiles) {
@@ -322,6 +571,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     // Create compression tasks and initialize progress state
     const tasks: CompressionTask[] = [];
     const initialProgress: Record<string, number> = {};
+    const initialStatuses: Record<string, CompressionStatus> = {};
     
     for (const file of selectedFiles) {
       for (const presetConfig of presetConfigs) {
@@ -338,11 +588,21 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
         compressionTasksRef.current.set(taskKey, task);
         initialProgress[taskKey] = 0;
         totalTasksRef.current++;
+
+        // Initialize compression status - use full file path for consistency
+        const statusKey = `${file}::${presetConfig.presetId}`;
+        initialStatuses[statusKey] = {
+          filePath: file,
+          presetId: presetConfig.presetId,
+          status: 'pending',
+          progress: 0
+        };
       }
     }
     
     // Set initial progress state for all tasks
     setCompressionProgress(initialProgress);
+    setCompressionStatuses(initialStatuses);
     
     try {
       if (window.electronAPI) {
@@ -393,11 +653,256 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     setOutputPaths([]);
     setError('');
     setIsCompressing(false);
+    setCompressionStatuses({});
+    setOverwriteConfirmation(null);
+    setBatchOverwriteConfirmation(null);
     
     // Reset compression tracking
     compressionTasksRef.current.clear();
     totalTasksRef.current = 0;
     completedTasksRef.current = 0;
+  }, []);
+
+  // Function to start compression with given parameters
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const startCompressionWithParams = useCallback(async (
+    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>,
+    outputDirectory: string,
+    advancedSettings?: AdvancedSettings,
+    existingFilesToRemove: string[] = []
+  ): Promise<void> => {
+    setIsCompressing(true);
+    setCompressionComplete(false);
+    setError('');
+    setOutputPaths([]);
+    
+    // Reset compression tracking
+    compressionTasksRef.current.clear();
+    totalTasksRef.current = 0;
+    completedTasksRef.current = 0;
+    lastProgressLogRef.current = 0;
+    
+    // Create compression tasks and initialize progress state
+    const tasks: CompressionTask[] = [];
+    const initialProgress: Record<string, number> = {};
+    const initialStatuses: Record<string, CompressionStatus> = {};
+    
+    for (const file of selectedFiles) {
+      for (const presetConfig of presetConfigs) {
+        // Use consistent file naming with the manager
+        const fileName = getFileName(file);
+        const taskKey = getTaskKey(fileName, presetConfig.presetId);
+        const task: CompressionTask = {
+          file: fileName,
+          preset: presetConfig.presetId,
+          status: 'pending',
+          progress: 0
+        };
+        tasks.push(task);
+        compressionTasksRef.current.set(taskKey, task);
+        initialProgress[taskKey] = 0;
+        totalTasksRef.current++;
+
+        // Initialize compression status - use full file path for consistency
+        const statusKey = `${file}::${presetConfig.presetId}`;
+        initialStatuses[statusKey] = {
+          filePath: file,
+          presetId: presetConfig.presetId,
+          status: 'pending',
+          progress: 0
+        };
+      }
+    }
+    
+    // Set initial progress state for all tasks
+    setCompressionProgress(initialProgress);
+    setCompressionStatuses(initialStatuses);
+    
+    try {
+      if (window.electronAPI) {
+        if (advancedSettings) {
+          await window.electronAPI.compressVideosAdvanced({
+            files: selectedFiles,
+            presetConfigs,
+            outputDirectory,
+            advancedSettings
+          });
+        } else {
+          await window.electronAPI.compressVideos({
+            files: selectedFiles,
+            presetConfigs,
+            outputDirectory,
+            advancedSettings: undefined
+          });
+        }
+      } else {
+        throw new Error('Electron API not available');
+      }
+    } catch (err) {
+      console.error('Compression error:', err);
+      setError(err instanceof Error ? err.message : 'Compression failed');
+      setIsCompressing(false);
+      
+      // Mark all pending tasks as failed
+      for (const task of tasks) {
+        if (task.status === 'pending') {
+          const taskKey = getTaskKey(task.file, task.preset);
+          markTaskComplete(taskKey, undefined, 'Compression failed');
+        }
+      }
+    }
+  }, [selectedFiles, markTaskComplete, getTaskKey]);
+
+  // Function to compress a single file
+  const compressSingleFile = useCallback(async (filePath: string, presetId: string): Promise<void> => {
+    try {
+      const statusKey = `${filePath}::${presetId}`;
+      
+      // Update status to pending
+      setCompressionStatuses(prev => ({
+        ...prev,
+        [statusKey]: {
+          filePath,
+          presetId,
+          status: 'pending',
+          progress: 0
+        }
+      }));
+
+      // Get output directory and compress
+      const outputDirectory = await window.electronAPI.getDefaultOutputDirectory();
+      const result = await window.electronAPI.compressVideos({
+        files: [filePath],
+        presetConfigs: [{ presetId, keepAudio: true }],
+        outputDirectory
+      });
+
+      if (result && result.length > 0 && result[0].success) {
+        // Update status to completed
+        setCompressionStatuses(prev => ({
+          ...prev,
+          [statusKey]: {
+            filePath,
+            presetId,
+            status: 'completed',
+            progress: 100,
+            outputPath: result[0].outputPath,
+            completedAt: Date.now()
+          }
+        }));
+      } else {
+        // Update status to failed
+        setCompressionStatuses(prev => ({
+          ...prev,
+          [statusKey]: {
+            filePath,
+            presetId,
+            status: 'failed',
+            progress: 0,
+            error: result?.[0]?.error || 'Compression failed'
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Error compressing single file:', error);
+      const statusKey = `${filePath}::${presetId}`;
+      setCompressionStatuses(prev => ({
+        ...prev,
+        [statusKey]: {
+          filePath,
+          presetId,
+          status: 'failed',
+          progress: 0,
+          error: error instanceof Error ? error.message : 'Compression failed'
+        }
+      }));
+    }
+  }, []);
+
+  // New function to handle re-compression with overwrite confirmation
+  const handleRecompressFile = useCallback(async (filePath: string, presetId: string): Promise<void> => {
+    try {
+      // Check if this file/preset combination has already been compressed
+      const statusKey = `${filePath}::${presetId}`;
+      const existingStatus = compressionStatuses[statusKey];
+      
+      console.log('handleRecompressFile called with:', { filePath, presetId, statusKey });
+      console.log('Current compressionStatuses:', compressionStatuses);
+      console.log('Existing status for this key:', existingStatus);
+      
+      if (existingStatus && existingStatus.status === 'completed' && existingStatus.outputPath) {
+        console.log('Found completed compression, showing overwrite dialog');
+        // File already compressed, show overwrite confirmation
+        const newOutputPath = await window.electronAPI.getDefaultOutputDirectory();
+        setOverwriteConfirmation({
+          filePath,
+          presetId,
+          existingOutputPath: existingStatus.outputPath,
+          newOutputPath: `${newOutputPath}/${filePath.split('/').pop()?.replace(/\.[^/.]+$/, '')}_${presetId}.mp4`
+        });
+      } else {
+        console.log('No existing compression found, proceeding with single file compression');
+        // No existing compression, proceed normally
+        await compressSingleFile(filePath, presetId);
+      }
+    } catch (error) {
+      console.error('Error handling re-compression:', error);
+    }
+  }, [compressionStatuses, compressSingleFile]);
+
+  // Function to confirm overwrite and proceed with compression
+  const confirmOverwrite = useCallback(async (): Promise<void> => {
+    if (!overwriteConfirmation) return;
+
+    console.log('confirmOverwrite called with:', { overwriteConfirmation, pendingCompressionParams });
+
+    try {
+      // Close confirmation dialog first
+      setOverwriteConfirmation(null);
+
+      // Check if this was triggered from main compression flow or individual recompress
+      if (pendingCompressionParams) {
+        console.log('Continuing with main compression flow...');
+        // This was triggered from main compression flow, continue with the full batch
+        const { existingFilesToRemove } = pendingCompressionParams;
+        setPendingCompressionParams(null);
+        
+        console.log('Removing existing files:', existingFilesToRemove);
+        
+        // Remove all existing compression statuses for files that will be recompressed
+        setCompressionStatuses(prev => {
+          const newStatuses = { ...prev };
+          existingFilesToRemove.forEach(statusKey => {
+            delete newStatuses[statusKey];
+          });
+          console.log('Updated compressionStatuses:', newStatuses);
+          return newStatuses;
+        });
+        
+        // Don't reset compression state since we want to continue the existing process
+        // The compression is already running, we just need to let it continue
+        console.log('Letting existing compression continue...');
+        return; // Don't call compressVideos again since it's already running
+      } else {
+        // This was triggered from individual recompress button, compress single file
+        const statusKey = `${overwriteConfirmation.filePath}::${overwriteConfirmation.presetId}`;
+        setCompressionStatuses(prev => {
+          const newStatuses = { ...prev };
+          delete newStatuses[statusKey];
+          return newStatuses;
+        });
+        
+        await compressSingleFile(overwriteConfirmation.filePath, overwriteConfirmation.presetId);
+      }
+    } catch (error) {
+      console.error('Error confirming overwrite:', error);
+    }
+  }, [overwriteConfirmation, compressSingleFile, pendingCompressionParams]);
+
+  // Function to cancel overwrite
+  const cancelOverwrite = useCallback((): void => {
+    setOverwriteConfirmation(null);
+    setPendingCompressionParams(null);
   }, []);
 
   const getTotalProgress = useCallback((): number => {
@@ -457,6 +962,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
 
   return {
     selectedFiles,
+    setSelectedFiles,
     fileInfos,
     isCompressing,
     compressionProgress,
@@ -469,6 +975,13 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     reset,
     getTotalProgress,
     closeProgress,
-    cancelCompression
+    cancelCompression,
+    // New compression status tracking
+    compressionStatuses,
+    overwriteConfirmation,
+    batchOverwriteConfirmation,
+    handleRecompressFile,
+    confirmOverwrite,
+    cancelOverwrite
   };
 };

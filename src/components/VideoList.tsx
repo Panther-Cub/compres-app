@@ -3,6 +3,7 @@ import { Grid, List, X, Play, FolderOpen, ZoomIn, ZoomOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Tooltip } from './ui';
 import VideoThumbnail from './VideoThumbnail';
+import CompressionProgressBar from './CompressionProgressBar';
 import { containerVariants, macAnimations } from '../lib/animations';
 import type { VideoListProps } from '../types';
 
@@ -17,9 +18,30 @@ const VideoList: React.FC<VideoListProps> = ({
   onGenerateThumbnail,
   onGetThumbnailDataUrl,
   onShowInFinder,
-  onOpenFile
+  onOpenFile,
+  compressionStatuses,
+  onRecompressFile
 }) => {
   const [gridZoom, setGridZoom] = useState(200); // Default minimum column width
+
+  // Helper function to get compression statuses for a specific file
+  const getFileCompressionStatuses = (filePath: string) => {
+    return Object.values(compressionStatuses).filter(
+      status => status.filePath === filePath
+    );
+  };
+
+  // Helper function to get display name for a file (custom output name or original name)
+  const getDisplayName = (filePath: string) => {
+    // Check for custom output naming
+    if ((window as any).compressionOutputNaming && (window as any).compressionOutputNaming[filePath]) {
+      const customName = (window as any).compressionOutputNaming[filePath];
+      // Remove .mp4 extension if present
+      return customName.replace(/\.mp4$/i, '');
+    }
+    // Fall back to original filename
+    return filePath.split('/').pop() || '';
+  };
   return (
     <div className="h-full flex flex-col">
       {/* Top Bar */}
@@ -98,7 +120,7 @@ const VideoList: React.FC<VideoListProps> = ({
                   return (
                     <motion.div
                       key={file}
-                      className="file-card p-3 rounded-xl group"
+                      className="file-card p-3 rounded-xl group relative"
                       variants={macAnimations.fileCard}
                       initial="initial"
                       animate="animate"
@@ -110,7 +132,7 @@ const VideoList: React.FC<VideoListProps> = ({
                         <div className="flex justify-center">
                           <VideoThumbnail
                             filePath={file}
-                            fileName={file.split('/').pop() || ''}
+                            fileName={getDisplayName(file)}
                             thumbnail={info.thumbnail}
                             onGenerateThumbnail={onGenerateThumbnail}
                             onGetThumbnailDataUrl={onGetThumbnailDataUrl}
@@ -120,7 +142,7 @@ const VideoList: React.FC<VideoListProps> = ({
                         </div>
                         <div className="flex items-start justify-between">
                           <div className="flex-1 min-w-0">
-                            <h4 className="text-sm font-medium truncate">{file.split('/').pop()}</h4>
+                            <h4 className="text-sm font-medium truncate">{getDisplayName(file)}</h4>
                             <div className="space-y-1 mt-1">
                               {info.size && (
                                 <p className="text-xs text-muted-foreground">
@@ -133,8 +155,17 @@ const VideoList: React.FC<VideoListProps> = ({
                                 </p>
                               )}
                             </div>
+                            {/* Compression progress bars underneath video info */}
+                            {getFileCompressionStatuses(file).map((status) => (
+                              <CompressionProgressBar
+                                key={`${status.filePath}-${status.presetId}`}
+                                status={status}
+                                onRecompress={onRecompressFile ? () => onRecompressFile(file, status.presetId) : undefined}
+                                className="mt-2"
+                              />
+                            ))}
                           </div>
-                                                                                <Tooltip id={`remove-${file}-tooltip`} content="Remove from queue">
+                          <Tooltip id={`remove-${file}-tooltip`} content="Remove from queue">
                             <Button
                               variant="ghost"
                               size="sm"
@@ -190,18 +221,19 @@ const VideoList: React.FC<VideoListProps> = ({
                   return (
                     <motion.div
                       key={file}
-                      className="file-card py-1 px-2 rounded-xl group"
+                      className="file-card py-1 px-2 rounded-xl group relative"
                       variants={macAnimations.listItem}
                       initial="initial"
                       animate="animate"
                       exit="exit"
                       transition={{ delay: index * 0.05 }}
                     >
-                                              <div className="flex items-center justify-between">
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 flex-1 min-w-0">
                             <VideoThumbnail
                               filePath={file}
-                              fileName={file.split('/').pop() || ''}
+                              fileName={getDisplayName(file)}
                               thumbnail={info.thumbnail}
                               onGenerateThumbnail={onGenerateThumbnail}
                               onGetThumbnailDataUrl={onGetThumbnailDataUrl}
@@ -210,7 +242,7 @@ const VideoList: React.FC<VideoListProps> = ({
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-3">
-                                <h4 className="text-sm font-medium truncate">{file.split('/').pop()}</h4>
+                                <h4 className="text-sm font-medium truncate">{getDisplayName(file)}</h4>
                                 {info.size && (
                                   <span className="text-xs text-muted-foreground">
                                     {formatFileSize(info.size)}
@@ -263,6 +295,16 @@ const VideoList: React.FC<VideoListProps> = ({
                             </motion.div>
                           </div>
                         </div>
+                        {/* Compression progress bars underneath file info for list view */}
+                        {getFileCompressionStatuses(file).map((status) => (
+                          <CompressionProgressBar
+                            key={`${status.filePath}-${status.presetId}`}
+                            status={status}
+                            onRecompress={onRecompressFile ? () => onRecompressFile(file, status.presetId) : undefined}
+                            className="ml-10"
+                          />
+                        ))}
+                      </div>
                     </motion.div>
                   );
                 })}

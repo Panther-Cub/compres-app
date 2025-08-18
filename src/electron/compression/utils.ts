@@ -90,10 +90,22 @@ export function createUserFriendlyFilename(
   presetKey: string, 
   videoCodec: string,
   keepAudio: boolean,
-  index?: number
+  index?: number,
+  customOutputName?: string
 ): string {
-  const baseName = path.basename(originalFile, path.extname(originalFile));
   const outputExt = getOutputExtension(videoCodec);
+  
+  // Use custom output name if provided
+  if (customOutputName) {
+    // Remove extension if present in custom name
+    const cleanCustomName = customOutputName.replace(/\.[^/.]+$/, '');
+    // Only add index suffix if there are multiple files with same name
+    const indexSuffix = index !== undefined && index > 0 ? ` (${index + 1})` : '';
+    return `${cleanCustomName}${indexSuffix}.${outputExt}`;
+  }
+  
+  // Default naming logic
+  const baseName = path.basename(originalFile, path.extname(originalFile));
   
   // Clean up the base name (remove special characters, limit length)
   let cleanName = baseName
@@ -132,13 +144,14 @@ export function buildOutputPath(
   outputDirectory: string, 
   videoCodec: string,
   keepAudio: boolean,
-  index?: number
+  index?: number,
+  customOutputName?: string
 ): string {
   // Create preset-specific folder for better organization
   const presetFolder = createPresetFolder(outputDirectory, presetKey);
   
   // Create user-friendly filename
-  const outputFileName = createUserFriendlyFilename(file, presetKey, videoCodec, keepAudio, index);
+  const outputFileName = createUserFriendlyFilename(file, presetKey, videoCodec, keepAudio, index, customOutputName);
   
   return path.join(presetFolder, outputFileName);
 }

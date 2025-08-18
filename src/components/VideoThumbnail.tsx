@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, FileVideo, Play } from 'lucide-react';
 import { Button } from './ui';
+import CompressionStatusIndicator from './CompressionStatusIndicator';
+import type { CompressionStatus } from '../types';
 
 interface VideoThumbnailProps {
   filePath: string;
@@ -12,6 +14,9 @@ interface VideoThumbnailProps {
   onPlay?: (filePath: string) => Promise<void>;
   size?: 'small' | 'medium' | 'large' | 'responsive';
   className?: string;
+  // New compression status props
+  compressionStatuses?: CompressionStatus[];
+  onRecompress?: (filePath: string, presetId: string) => void;
 }
 
 const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
@@ -22,7 +27,9 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
   onGetThumbnailDataUrl,
   onPlay,
   size = 'medium',
-  className = ''
+  className = '',
+  compressionStatuses = [],
+  onRecompress
 }) => {
   const [currentThumbnail, setCurrentThumbnail] = useState<string | undefined>(thumbnail);
   const [thumbnailDataUrl, setThumbnailDataUrl] = useState<string | undefined>();
@@ -42,6 +49,17 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
     medium: 'w-8 h-8',
     large: 'w-12 h-12',
     responsive: 'w-8 h-8' // Default icon size for responsive
+  };
+
+  // Get status indicator size based on thumbnail size
+  const getStatusSize = () => {
+    switch (size) {
+      case 'small': return 'small';
+      case 'medium': return 'medium';
+      case 'large': return 'large';
+      case 'responsive': return 'medium';
+      default: return 'medium';
+    }
   };
 
   useEffect(() => {
@@ -148,6 +166,21 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
         >
           <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
         </motion.div>
+      )}
+
+      {/* Compression status indicators */}
+      {compressionStatuses.length > 0 && (
+        <div className="absolute top-2 right-2 flex flex-col gap-1">
+          {compressionStatuses.map((status, index) => (
+            <CompressionStatusIndicator
+              key={`${status.filePath}-${status.presetId}`}
+              status={status}
+              size={getStatusSize()}
+              onRecompress={onRecompress ? () => onRecompress(filePath, status.presetId) : undefined}
+              className="shadow-lg"
+            />
+          ))}
+        </div>
       )}
     </motion.div>
   );

@@ -6,7 +6,7 @@ import OverlayApp from './OverlayApp';
 import SettingsWindow from './components/SettingsWindow';
 import AboutWindow from './components/AboutWindow';
 import DefaultsWindow from './components/DefaultsWindow';
-import BatchRenameWindow from './components/BatchRenameWindow';
+import CompressionOutputNamingWindow from './components/BatchRenameWindow';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');
@@ -30,7 +30,7 @@ if (isOverlay) {
 } else if (isDefaults) {
   ComponentToRender = () => <DefaultsWindow onClose={() => window.close()} />;
 } else if (isBatchRename) {
-  ComponentToRender = () => <BatchRenameWindow onClose={() => window.close()} />;
+  ComponentToRender = () => <CompressionOutputNamingWindow onClose={() => window.close()} />;
 } else {
   ComponentToRender = App;
 }

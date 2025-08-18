@@ -7,6 +7,47 @@ export interface FileInfo {
   thumbnail?: string;
 }
 
+// New interface for tracking compression status per file and preset
+export interface CompressionStatus {
+  filePath: string;
+  presetId: string;
+  status: 'pending' | 'compressing' | 'completed' | 'error' | 'failed';
+  progress: number;
+  outputPath?: string;
+  error?: string;
+  completedAt?: number; // timestamp when compression completed
+}
+
+// New interface for overwrite confirmation
+export interface OverwriteConfirmation {
+  filePath: string;
+  presetId: string;
+  existingOutputPath: string;
+  newOutputPath: string;
+}
+
+// New interface for batch overwrite confirmation
+export interface BatchOverwriteConfirmation {
+  files: Array<{
+    filePath: string;
+    presetId: string;
+    existingOutputPath: string;
+    newOutputPath: string;
+    fileName: string;
+    existingFileName: string;
+    newFileName: string;
+  }>;
+  onConfirm: (filesToOverwrite: string[]) => void;
+  onCancel: () => void;
+  onClose: () => void;
+}
+
+// New interface for compression output naming
+export interface CompressionOutputNaming {
+  filePath: string;
+  customOutputName: string;
+}
+
 export interface AdvancedSettings {
   crf: number;
   videoBitrate: string;
@@ -108,6 +149,9 @@ export interface VideoWorkspaceProps {
   onShowInFinder: (filePath: string) => Promise<void>;
   onOpenFile: (filePath: string) => Promise<void>;
   onAddMoreVideos: () => void;
+  // New compression status tracking
+  compressionStatuses: Record<string, CompressionStatus>;
+  onRecompressFile: (filePath: string, presetId: string) => void;
 }
 
 export interface VideoListProps {
@@ -122,6 +166,9 @@ export interface VideoListProps {
   onGetThumbnailDataUrl?: (filePath: string) => Promise<string>;
   onShowInFinder: (filePath: string) => Promise<void>;
   onOpenFile: (filePath: string) => Promise<void>;
+  // New compression status tracking
+  compressionStatuses: Record<string, CompressionStatus>;
+  onRecompressFile: (filePath: string, presetId: string) => void;
 }
 
 export interface AppHeaderProps {
@@ -216,6 +263,7 @@ export interface PresetRecommendationsProps {
 // Hook return types
 export interface UseVideoCompressionReturn {
   selectedFiles: string[];
+  setSelectedFiles: React.Dispatch<React.SetStateAction<string[]>>;
   fileInfos: Record<string, FileInfo>;
   isCompressing: boolean;
   compressionProgress: Record<string, number>;
@@ -233,6 +281,13 @@ export interface UseVideoCompressionReturn {
   getTotalProgress: () => number;
   closeProgress: () => void;
   cancelCompression: () => void;
+  // New compression status tracking
+  compressionStatuses: Record<string, CompressionStatus>;
+  overwriteConfirmation: OverwriteConfirmation | null;
+  batchOverwriteConfirmation: BatchOverwriteConfirmation | null;
+  handleRecompressFile: (filePath: string, presetId: string) => Promise<void>;
+  confirmOverwrite: () => Promise<void>;
+  cancelOverwrite: () => void;
 }
 
 export interface UseSettingsReturn {

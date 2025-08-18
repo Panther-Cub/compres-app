@@ -26,7 +26,9 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
   onGetThumbnailDataUrl,
   onShowInFinder,
   onOpenFile,
-  onAddMoreVideos
+  onAddMoreVideos,
+  compressionStatuses,
+  onRecompressFile
 }) => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
 
@@ -82,26 +84,27 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
               </Button>
             </Tooltip>
             {selectedFiles.length > 0 && (
-              <Tooltip id="rename-tooltip" content="Batch rename selected files">
+              <Tooltip id="rename-tooltip" content="Set custom names for compressed output files">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
                     if (window.electronAPI && window.electronAPI.createBatchRenameWindow) {
                       window.electronAPI.createBatchRenameWindow().then(result => {
-                        // Batch rename window created successfully
+                        // Compression output naming window created successfully
                       }).catch(error => {
-                        // Error creating batch rename window
+                        // Error creating compression output naming window
                       });
                     }
                   }}
                   className="non-draggable outline-button text-sm"
                 >
                   <Edit3 className="w-3 h-3 mr-2" />
-                  Rename Files
+                  Output Names
                 </Button>
               </Tooltip>
             )}
+            
           </div>
         </motion.div>
 
@@ -119,6 +122,8 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
             onGetThumbnailDataUrl={onGetThumbnailDataUrl}
             onShowInFinder={onShowInFinder}
             onOpenFile={onOpenFile}
+            compressionStatuses={compressionStatuses}
+            onRecompressFile={onRecompressFile}
           />
         </div>
 

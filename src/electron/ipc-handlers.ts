@@ -101,6 +101,15 @@ export function setupIpcHandlers(): void {
     }
   });
 
+  ipcMain.handle('get-preset-metadata', async (event, presetId: string) => {
+    try {
+      const { getPresetMetadata } = require('../../shared/presetRegistry');
+      return getPresetMetadata(presetId);
+    } catch (error) {
+      throw error;
+    }
+  });
+
   ipcMain.handle('get-custom-presets', async () => {
     try {
       return getCustomPresets();
@@ -363,6 +372,18 @@ export function setupIpcHandlers(): void {
       });
     } catch (error) {
       throw error;
+    }
+  });
+
+  ipcMain.handle('check-file-exists', async (event, filePath: string) => {
+    console.log('IPC: check-file-exists called with:', filePath);
+    try {
+      const exists = fs.existsSync(filePath);
+      console.log('IPC: File exists check result:', exists);
+      return exists;
+    } catch (error) {
+      console.error('Error checking file existence:', error);
+      return false;
     }
   });
 
@@ -664,6 +685,106 @@ export function setupIpcHandlers(): void {
       return { success: true };
     } catch (error) {
       return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('get-selected-files', async () => {
+    try {
+      const mainWindow = getMainWindow();
+      if (!mainWindow) {
+        throw new Error('Main window not available');
+      }
+      
+      // Get selected files from main window
+      const selectedFiles = await mainWindow.webContents.executeJavaScript(`
+        (() => {
+          // Access the selected files from the main window's state
+          if (window.selectedFiles) {
+            return window.selectedFiles;
+          }
+          return [];
+        })()
+      `);
+      
+      return selectedFiles || [];
+    } catch (error) {
+      console.error('Error getting selected files:', error);
+      return [];
+    }
+  });
+
+  ipcMain.handle('send-batch-rename-results', async (event, results) => {
+    try {
+      const mainWindow = getMainWindow();
+      if (!mainWindow) {
+        throw new Error('Main window not available');
+      }
+      
+      // Send rename results back to main window
+      mainWindow.webContents.send('batch-rename-results', results);
+      return { success: true };
+    } catch (error) {
+      throw error;
+    }
+  });
+
+  // Compression output naming handlers
+  ipcMain.handle('save-compression-output-naming', async (event, naming: Array<{ filePath: string; customOutputName: string }>) => {
+    try {
+      const mainWindow = getMainWindow();
+      if (!mainWindow) {
+        throw new Error('Main window not available');
+      }
+      
+      
+      
+      // Store the naming preferences in the main window's state
+      const result = await mainWindow.webContents.executeJavaScript(`
+        (() => {
+          try {
+            // Store compression output naming preferences
+            if (!window.compressionOutputNaming) {
+              window.compressionOutputNaming = {};
+            }
+            
+            const namingData = ${JSON.stringify(naming)};
+            namingData.forEach(item => {
+              window.compressionOutputNaming[item.filePath] = item.customOutputName;
+            });
+            
+            return { success: true, stored: Object.keys(window.compressionOutputNaming).length };
+          } catch (error) {
+            return { success: false, error: error.message };
+          }
+        })()
+      `);
+      
+      return { success: true, result };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('send-compression-naming-results', async (event, results) => {
+    try {
+      const mainWindow = getMainWindow();
+      if (!mainWindow) {
+        throw new Error('Main window not available');
+      }
+      
+      
+      // Send compression naming results back to main window
+      mainWindow.webContents.send('compression-naming-results', results);
+      
+      // Also send to the batch rename window if it exists
+      const batchRenameWindow = require('./window-manager').getBatchRenameWindow();
+      if (batchRenameWindow) {
+        batchRenameWindow.webContents.send('compression-naming-results', results);
+      }
+      
+      return { success: true };
+    } catch (error) {
+      throw error;
     }
   });
 }

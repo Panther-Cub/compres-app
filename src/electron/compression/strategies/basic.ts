@@ -13,11 +13,12 @@ export async function compressFileWithPreset(
   taskKey: string,
   mainWindow: BrowserWindow,
   advancedSettings?: any,
-  batchProgressManager?: any
+  batchProgressManager?: any,
+  customOutputName?: string
 ): Promise<CompressionResult> {
   // Extract fileName from taskKey to ensure consistency
   const fileName = taskKey.split('::')[0];
-  const outputPath = buildOutputPath(file, presetKey, outputDirectory, preset.settings.videoCodec, keepAudio);
+  const outputPath = buildOutputPath(file, presetKey, outputDirectory, preset.settings.videoCodec, keepAudio, undefined, customOutputName);
   
   const context: CompressionContext = {
     file,

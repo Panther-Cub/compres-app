@@ -16,10 +16,12 @@ export function createElectronAPI(): ElectronAPI {
     getPresets: () => ipcRenderer.invoke('get-presets'),
     getAllPresets: () => ipcRenderer.invoke('get-all-presets'),
     getCustomPresets: () => ipcRenderer.invoke('get-custom-presets'),
+    getPresetMetadata: (presetId: string) => ipcRenderer.invoke('get-preset-metadata', presetId),
     addCustomPreset: (presetId: string, preset: any) => ipcRenderer.invoke('add-custom-preset', presetId, preset),
     removeCustomPreset: (presetId: string) => ipcRenderer.invoke('remove-custom-preset', presetId),
     isCustomPreset: (presetId: string) => ipcRenderer.invoke('is-custom-preset', presetId),
     getFileInfo: (filePath: string) => ipcRenderer.invoke('get-file-info', filePath),
+    checkFileExists: (filePath: string) => ipcRenderer.invoke('check-file-exists', filePath),
     cancelCompression: () => ipcRenderer.invoke('cancel-compression'),
     
     // Thumbnails and file operations
@@ -50,6 +52,10 @@ export function createElectronAPI(): ElectronAPI {
     // Window management
     createDefaultsWindow: () => ipcRenderer.invoke('create-defaults-window'),
     createBatchRenameWindow: () => ipcRenderer.invoke('create-batch-rename-window'),
+    getSelectedFiles: () => ipcRenderer.invoke('get-selected-files'),
+    sendBatchRenameResults: (results: any) => ipcRenderer.invoke('send-batch-rename-results', results),
+    saveCompressionOutputNaming: (naming: any) => ipcRenderer.invoke('save-compression-output-naming', naming),
+    sendCompressionNamingResults: (results: any) => ipcRenderer.invoke('send-compression-naming-results', results),
     
     // Event listeners - FIXED: Added missing compression event handlers
     onCompressionStarted: (callback: (data: any) => void) => {
@@ -66,6 +72,18 @@ export function createElectronAPI(): ElectronAPI {
     
     onOverlayFilesDropped: (callback: (filePaths: string[]) => void) => {
       ipcRenderer.on('overlay-files-dropped', (event, filePaths) => callback(filePaths));
+    },
+    
+    onBatchRenameResults: (callback: (results: any[]) => void) => {
+      ipcRenderer.on('batch-rename-results', (event, results) => callback(results));
+    },
+    
+    onCompressionNamingResults: (callback: (results: any) => void) => {
+      ipcRenderer.on('compression-naming-results', (event, results) => callback(results));
+    },
+    
+    onBatchRenameWindowClosed: (callback: () => void) => {
+      ipcRenderer.on('batch-rename-window-closed', () => callback());
     },
     
     // Menu events

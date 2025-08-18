@@ -9,7 +9,9 @@ import type { UpdateStatusData } from './electron/preload/api-interface';
 import {
   AppHeader,
   VideoDropZone,
-  VideoWorkspace
+  VideoWorkspace,
+  OverwriteConfirmationWindow,
+  BatchOverwriteConfirmationWindow
 } from './components';
 
 function App() {
@@ -23,13 +25,21 @@ function App() {
   
   const {
     selectedFiles,
+    setSelectedFiles,
     fileInfos,
     isCompressing,
     error,
     handleFileSelect,
     removeFile,
     compressVideos,
-    reset
+    reset,
+    // New compression status tracking
+    compressionStatuses,
+    overwriteConfirmation,
+    batchOverwriteConfirmation,
+    handleRecompressFile,
+    confirmOverwrite,
+    cancelOverwrite
   } = useVideoCompression();
 
   const {
@@ -76,6 +86,57 @@ function App() {
     // Expose themeManager globally for IPC access
     (window as any).themeManager = themeManager;
   }, []);
+
+  // Expose selected files to window object for batch rename window access
+  useEffect(() => {
+    (window as any).selectedFiles = selectedFiles;
+  }, [selectedFiles]);
+
+  // Listen for compression naming results
+  useEffect(() => {
+    const handleCompressionNamingResults = (results: any) => {
+      // Check for any errors
+      if (!results.success) {
+        return;
+      }
+
+      // Force a re-render to update the UI with new custom output names
+      // This will make the video list show the custom output names
+      setSelectedFiles((prev: string[]) => [...prev]);
+      
+      // Also force a re-render by updating a state variable
+      setTimeout(() => {
+        setSelectedFiles((prev: string[]) => [...prev]);
+      }, 100);
+    };
+
+    // Add event listener for compression naming results
+    if (window.electronAPI && window.electronAPI.onCompressionNamingResults) {
+      window.electronAPI.onCompressionNamingResults(handleCompressionNamingResults);
+    }
+
+    return () => {
+      // Cleanup event listener if needed
+    };
+  }, [setSelectedFiles]);
+
+  // Listen for batch rename window closed event
+  useEffect(() => {
+    const handleBatchRenameWindowClosed = () => {
+      console.log('Batch rename window closed, checking for custom names');
+      // Force a re-render to update the UI with any new custom output names
+      setSelectedFiles((prev: string[]) => [...prev]);
+    };
+
+    // Add event listener for batch rename window closed
+    if (window.electronAPI && window.electronAPI.onBatchRenameWindowClosed) {
+      window.electronAPI.onBatchRenameWindowClosed(handleBatchRenameWindowClosed);
+    }
+
+    return () => {
+      // Cleanup event listener if needed
+    };
+  }, [setSelectedFiles]);
 
   // Drag and drop handlers
   const [isDragOver, setIsDragOver] = useState(false);
@@ -448,6 +509,8 @@ function App() {
               onShowInFinder={handleShowInFinder}
               onOpenFile={handleOpenFile}
               onAddMoreVideos={handleAddMoreVideos}
+              compressionStatuses={compressionStatuses}
+              onRecompressFile={handleRecompressFile}
             />
           )}
         </AnimatePresence>
@@ -472,6 +535,30 @@ function App() {
                 <p className="text-sm">{error}</p>
               </div>
             </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Overwrite Confirmation Window */}
+        <AnimatePresence>
+          {overwriteConfirmation && (
+            <OverwriteConfirmationWindow
+              confirmation={overwriteConfirmation}
+              onConfirm={confirmOverwrite}
+              onCancel={cancelOverwrite}
+              onClose={cancelOverwrite}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Batch Overwrite Confirmation Window */}
+        <AnimatePresence>
+          {batchOverwriteConfirmation && (
+            <BatchOverwriteConfirmationWindow
+              confirmation={batchOverwriteConfirmation}
+              onConfirm={batchOverwriteConfirmation.onConfirm}
+              onCancel={batchOverwriteConfirmation.onCancel}
+              onClose={batchOverwriteConfirmation.onClose}
+            />
           )}
         </AnimatePresence>
       </main>

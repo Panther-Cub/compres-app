@@ -28,6 +28,14 @@ export interface ElectronAPI {
   getPresets: () => Promise<Record<string, Preset>>;
   getAllPresets: () => Promise<Record<string, Preset>>;
   getCustomPresets: () => Promise<Record<string, Preset>>;
+  getPresetMetadata: (presetId: string) => Promise<{
+    id: string;
+    name: string;
+    folderName: string;
+    fileSuffix: string;
+    defaultKeepAudio: boolean;
+    description: string;
+  } | undefined>;
   addCustomPreset: (presetId: string, preset: Preset) => Promise<{ success: boolean; presetId: string }>;
   removeCustomPreset: (presetId: string) => Promise<{ success: boolean; presetId: string }>;
   isCustomPreset: (presetId: string) => Promise<boolean>;
@@ -38,6 +46,7 @@ export interface ElectronAPI {
     height: number;
     codec: string;
   }>;
+  checkFileExists: (filePath: string) => Promise<boolean>;
   cancelCompression: () => Promise<{ success: boolean }>;
   
   // Thumbnails and file operations
@@ -68,12 +77,19 @@ export interface ElectronAPI {
   // Window management
   createDefaultsWindow: () => Promise<{ success: boolean }>;
   createBatchRenameWindow: () => Promise<{ success: boolean }>;
+  getSelectedFiles: () => Promise<string[]>;
+  sendBatchRenameResults: (results: { success: boolean; oldPath: string; newPath?: string; error?: string }[]) => Promise<{ success: boolean }>;
+  saveCompressionOutputNaming: (naming: Array<{ filePath: string; customOutputName: string }>) => Promise<{ success: boolean; error?: string }>;
+  sendCompressionNamingResults: (results: { success: boolean; error?: string }) => Promise<{ success: boolean }>;
   
   // Event listeners - FIXED: Added missing compression event handlers
   onCompressionStarted: (callback: (data: CompressionEventData) => void) => void;
   onCompressionProgress: (callback: (data: CompressionProgressData) => void) => void;
   onCompressionComplete: (callback: (data: CompressionCompleteData) => void) => void;
   onOverlayFilesDropped: (callback: (filePaths: string[]) => void) => void;
+  onBatchRenameResults: (callback: (results: { success: boolean; oldPath: string; newPath?: string; error?: string }[]) => void) => void;
+  onCompressionNamingResults: (callback: (results: { success: boolean; error?: string }) => void) => void;
+  onBatchRenameWindowClosed: (callback: () => void) => void;
   
   // Menu events
   onShowAboutModal: (callback: () => void) => void;

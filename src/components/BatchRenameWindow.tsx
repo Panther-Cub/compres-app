@@ -4,12 +4,13 @@ import { motion } from 'framer-motion';
 import { Button, Input, Label, RadioGroup, RadioGroupItem } from './ui';
 import { getFileName } from '../utils/formatters';
 import { macAnimations } from '../lib/animations';
+import type { CompressionOutputNaming } from '../types';
 
-interface BatchRenameWindowProps {
+interface CompressionOutputNamingWindowProps {
   onClose: () => void;
 }
 
-interface RenamePattern {
+interface NamingPattern {
   id: string;
   name: string;
   description: string;
@@ -17,14 +18,14 @@ interface RenamePattern {
   example: string;
 }
 
-const BatchRenameWindow: React.FC<BatchRenameWindowProps> = ({ onClose }) => {
+const CompressionOutputNamingWindow: React.FC<CompressionOutputNamingWindowProps> = ({ onClose }) => {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [selectedPattern, setSelectedPattern] = useState<string>('custom');
   const [customPrefix, setCustomPrefix] = useState<string>('Video');
   const [startNumber, setStartNumber] = useState<number>(1);
   const [previewNames, setPreviewNames] = useState<Record<string, string>>({});
 
-  const renamePatterns: RenamePattern[] = [
+  const namingPatterns: NamingPattern[] = [
     {
       id: 'custom',
       name: 'Custom Prefix',
@@ -59,13 +60,14 @@ const BatchRenameWindow: React.FC<BatchRenameWindowProps> = ({ onClose }) => {
   useEffect(() => {
     const loadSelectedFiles = async () => {
       try {
-        if (window.electronAPI) {
-          // This would need to be implemented to get files from main window
-          // For now, we'll use a placeholder
-          setSelectedFiles([]);
+        if (window.electronAPI && window.electronAPI.getSelectedFiles) {
+          const files = await window.electronAPI.getSelectedFiles();
+          console.log('Loaded selected files:', files);
+          setSelectedFiles(files);
         }
       } catch (error) {
         console.error('Error loading selected files:', error);
+        setSelectedFiles([]);
       }
     };
     
@@ -78,7 +80,7 @@ const BatchRenameWindow: React.FC<BatchRenameWindowProps> = ({ onClose }) => {
 
     selectedFiles.forEach((file, index) => {
       const originalName = getFileName(file);
-      const extension = file.split('.').pop() || 'mp4';
+      const extension = 'mp4'; // Always mp4 for compressed output
       const number = startNumber + index;
 
       let newName = '';
@@ -118,15 +120,38 @@ const BatchRenameWindow: React.FC<BatchRenameWindowProps> = ({ onClose }) => {
     generatePreviewNames();
   }, [generatePreviewNames]);
 
-  const handleRename = async () => {
+  const handleSaveNaming = async () => {
     try {
-      if (window.electronAPI) {
-        // This would need to be implemented to send rename data back to main window
-        console.log('Renaming files:', previewNames);
-        onClose();
+      // Store the naming preferences directly in the main window
+      if (!(window as any).compressionOutputNaming) {
+        (window as any).compressionOutputNaming = {};
       }
+      
+      // Store each custom name
+      selectedFiles.forEach(file => {
+        (window as any).compressionOutputNaming[file] = previewNames[file];
+      });
+      
+      // Try to save via API as well
+      if (window.electronAPI && window.electronAPI.saveCompressionOutputNaming) {
+        // Convert to CompressionOutputNaming format
+        const outputNaming: CompressionOutputNaming[] = selectedFiles.map(file => ({
+          filePath: file,
+          customOutputName: previewNames[file]
+        }));
+        
+        // Save the naming preferences
+        const results = await window.electronAPI.saveCompressionOutputNaming(outputNaming);
+        
+        // Send results back to main window
+        if (window.electronAPI.sendCompressionNamingResults) {
+          await window.electronAPI.sendCompressionNamingResults(results);
+        }
+      }
+      
+      onClose();
     } catch (error) {
-      console.error('Error renaming files:', error);
+      // swallow
     }
   };
 
@@ -141,7 +166,7 @@ const BatchRenameWindow: React.FC<BatchRenameWindowProps> = ({ onClose }) => {
       <div className="draggable-region fixed top-0 left-0 right-0 z-50 h-10 border-b border-border/20 flex items-center justify-between px-4 select-none flex-shrink-0">
         <div className="flex items-center gap-3 pl-20">
           <FileVideo className="w-3 h-3 text-foreground/70" />
-          <span className="text-[0.625rem] font-normal text-foreground/70">Batch Rename</span>
+          <span className="text-[0.625rem] font-normal text-foreground/70">Compression Output Naming</span>
         </div>
       </div>
 
@@ -156,30 +181,26 @@ const BatchRenameWindow: React.FC<BatchRenameWindowProps> = ({ onClose }) => {
           >
             {/* Header */}
             <div className="space-y-2">
-              <h2 className="text-lg font-medium">Batch Rename Files</h2>
+              <h2 className="text-lg font-medium">Compression Output Naming</h2>
               <p className="text-sm text-muted-foreground">
-                Rename {selectedFiles.length} selected video files
+                Set custom names for {selectedFiles.length} compressed output files
+              </p>
+              <p className="text-xs text-muted-foreground">
+                This only affects the compressed file names, not your original files
               </p>
             </div>
 
-            {/* Rename Pattern Selection */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium">Rename Pattern</h3>
-              <RadioGroup
-                value={selectedPattern}
-                onValueChange={setSelectedPattern}
-                className="space-y-3"
-              >
-                {renamePatterns.map((pattern) => (
+            {/* Naming Pattern Selection */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Naming Pattern</Label>
+              <RadioGroup value={selectedPattern} onValueChange={setSelectedPattern}>
+                {namingPatterns.map((pattern) => (
                   <div key={pattern.id} className="flex items-center space-x-2">
                     <RadioGroupItem value={pattern.id} id={pattern.id} />
-                    <Label htmlFor={pattern.id} className="flex-1">
-                      <div>
-                        <div className="font-medium text-sm">{pattern.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {pattern.description}
-                        </div>
-                      </div>
+                    <Label htmlFor={pattern.id} className="text-sm">
+                      <div className="font-medium">{pattern.name}</div>
+                      <div className="text-muted-foreground">{pattern.description}</div>
+                      <div className="text-xs text-muted-foreground">Example: {pattern.example}</div>
                     </Label>
                   </div>
                 ))}
@@ -189,15 +210,12 @@ const BatchRenameWindow: React.FC<BatchRenameWindowProps> = ({ onClose }) => {
             {/* Custom Prefix Input */}
             {selectedPattern === 'custom' && (
               <div className="space-y-2">
-                <Label htmlFor="custom-prefix" className="text-sm font-medium">
-                  Custom Prefix
-                </Label>
+                <Label htmlFor="customPrefix" className="text-sm font-medium">Custom Prefix</Label>
                 <Input
-                  id="custom-prefix"
+                  id="customPrefix"
                   value={customPrefix}
                   onChange={(e) => setCustomPrefix(e.target.value)}
-                  placeholder="Enter prefix..."
-                  className="w-full"
+                  placeholder="Enter custom prefix"
                 />
               </div>
             )}
@@ -205,16 +223,14 @@ const BatchRenameWindow: React.FC<BatchRenameWindowProps> = ({ onClose }) => {
             {/* Start Number Input */}
             {(selectedPattern === 'custom' || selectedPattern === 'date') && (
               <div className="space-y-2">
-                <Label htmlFor="start-number" className="text-sm font-medium">
-                  Start Number
-                </Label>
+                <Label htmlFor="startNumber" className="text-sm font-medium">Start Number</Label>
                 <Input
-                  id="start-number"
+                  id="startNumber"
                   type="number"
                   value={startNumber}
                   onChange={(e) => setStartNumber(parseInt(e.target.value) || 1)}
-                  min="1"
-                  className="w-full"
+                  min={1}
+                  placeholder="1"
                 />
               </div>
             )}
@@ -228,10 +244,10 @@ const BatchRenameWindow: React.FC<BatchRenameWindowProps> = ({ onClose }) => {
                     <div key={file} className="flex items-center justify-between p-2 bg-muted/30 rounded-md">
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-muted-foreground truncate">
-                          {getFileName(file)}
+                          Original: {getFileName(file)}
                         </p>
                         <p className="text-sm font-medium truncate">
-                          {previewNames[file] || getFileName(file)}
+                          Compressed: {previewNames[file] || getFileName(file)}
                         </p>
                       </div>
                     </div>
@@ -250,11 +266,11 @@ const BatchRenameWindow: React.FC<BatchRenameWindowProps> = ({ onClose }) => {
                 Cancel
               </Button>
               <Button
-                onClick={handleRename}
+                onClick={handleSaveNaming}
                 disabled={selectedFiles.length === 0}
                 className="flex-1"
               >
-                Rename Files
+                Save Naming
               </Button>
             </div>
           </motion.div>
@@ -264,4 +280,4 @@ const BatchRenameWindow: React.FC<BatchRenameWindowProps> = ({ onClose }) => {
   );
 };
 
-export default BatchRenameWindow;
+export default CompressionOutputNamingWindow;
