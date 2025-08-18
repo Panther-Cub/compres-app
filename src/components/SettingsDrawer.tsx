@@ -51,7 +51,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   defaultAdvancedSettings,
   setDefaultAdvancedSettings,
   saveUserDefaults,
-  resetToDefaults
+  resetToDefaults,
+  getFinalOutputPath
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('presets');
 
@@ -509,6 +510,11 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                           placeholder="Enter folder name..."
                           className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                         />
+                      </div>
+                      
+                      {/* Show the final output path */}
+                      <div className="p-2 bg-muted/20 rounded text-xs text-muted-foreground">
+                        <span className="font-medium">Final path:</span> {getFinalOutputPath?.() || 'No path available'}
                       </div>
                       
                       {outputFolderName === defaultOutputFolderName && (

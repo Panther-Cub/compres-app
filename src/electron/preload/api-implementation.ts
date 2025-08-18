@@ -22,6 +22,7 @@ export function createElectronAPI(): ElectronAPI {
     isCustomPreset: (presetId: string) => ipcRenderer.invoke('is-custom-preset', presetId),
     getFileInfo: (filePath: string) => ipcRenderer.invoke('get-file-info', filePath),
     checkFileExists: (filePath: string) => ipcRenderer.invoke('check-file-exists', filePath),
+    checkExistingOutputFiles: (data: any) => ipcRenderer.invoke('check-existing-output-files', data),
     cancelCompression: () => ipcRenderer.invoke('cancel-compression'),
     
     // Thumbnails and file operations
@@ -57,6 +58,12 @@ export function createElectronAPI(): ElectronAPI {
     saveCompressionOutputNaming: (naming: any) => ipcRenderer.invoke('save-compression-output-naming', naming),
     sendCompressionNamingResults: (results: any) => ipcRenderer.invoke('send-compression-naming-results', results),
     
+    // Defaults sync across windows
+    notifyUserDefaultsUpdated: (defaults: any) => ipcRenderer.send('user-defaults-updated', defaults),
+    onUserDefaultsUpdated: (callback: (defaults: any) => void) => {
+      ipcRenderer.on('user-defaults-updated', (_event, defaults) => callback(defaults));
+    },
+    
     // Event listeners - FIXED: Added missing compression event handlers
     onCompressionStarted: (callback: (data: any) => void) => {
       ipcRenderer.on('compression-started', (event, data) => callback(data));
@@ -88,7 +95,7 @@ export function createElectronAPI(): ElectronAPI {
     
     // Menu events
     onShowAboutModal: (callback: () => void) => {
-    
+      
     },
     
     onTriggerFileSelect: (callback: () => void) => {
@@ -104,16 +111,16 @@ export function createElectronAPI(): ElectronAPI {
       ipcRenderer.removeAllListeners(channel);
     },
     
-      // Update manager
-  checkForUpdates: () => ipcRenderer.invoke('update:check'),
-  downloadUpdate: () => ipcRenderer.invoke('update:download'),
-  installUpdate: () => ipcRenderer.invoke('update:install'),
-  getUpdateStatus: () => ipcRenderer.invoke('update:get-status'),
-  getUpdateSettings: () => ipcRenderer.invoke('update:get-settings'),
-  saveUpdateSettings: (settings: any) => ipcRenderer.invoke('update:save-settings', settings),
-
-  onUpdateStatus: (callback: (data: any) => void) => {
-    ipcRenderer.on('update-status', (_, data) => callback(data));
-  }
+    // Update manager
+    checkForUpdates: () => ipcRenderer.invoke('update:check'),
+    downloadUpdate: () => ipcRenderer.invoke('update:download'),
+    installUpdate: () => ipcRenderer.invoke('update:install'),
+    getUpdateStatus: () => ipcRenderer.invoke('update:get-status'),
+    getUpdateSettings: () => ipcRenderer.invoke('update:get-settings'),
+    saveUpdateSettings: (settings: any) => ipcRenderer.invoke('update:save-settings', settings),
+  
+    onUpdateStatus: (callback: (data: any) => void) => {
+      ipcRenderer.on('update-status', (_, data) => callback(data));
+    }
   };
 }

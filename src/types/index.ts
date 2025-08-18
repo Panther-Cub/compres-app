@@ -93,7 +93,7 @@ export interface Settings {
   presetSettings: Record<string, PresetSettings>;
   onPresetSettingsChange: (presetId: string, settings: PresetSettings) => void;
   outputDirectory: string;
-  onSelectOutputDirectory: () => void;
+  onSelectOutputDirectory: () => Promise<void>;
   defaultOutputDirectory: string;
   onSetDefaultOutputDirectory: (directory: string) => void;
   outputFolderName: string;
@@ -118,6 +118,7 @@ export interface Settings {
   saveUserDefaults: () => void;
   resetToDefaults: () => void;
   handleReorderPresets: (newOrder: string[]) => void;
+  getFinalOutputPath: () => string;
 }
 
 // Theme types
@@ -214,7 +215,7 @@ export interface SettingsDrawerProps {
   presetSettings: Record<string, PresetSettings>;
   onPresetSettingsChange: (presetId: string, settings: PresetSettings) => void;
   outputDirectory: string;
-  onSelectOutputDirectory: () => void;
+  onSelectOutputDirectory: () => Promise<void>;
   defaultOutputDirectory: string;
   onSetDefaultOutputDirectory: (directory: string) => void;
   outputFolderName: string;
@@ -240,6 +241,7 @@ export interface SettingsDrawerProps {
   setDefaultAdvancedSettings: (settings: AdvancedSettings) => void;
   saveUserDefaults: () => void;
   resetToDefaults: () => void;
+  getFinalOutputPath: () => string;
 }
 
 export interface AdvancedSettingsProps {
@@ -304,19 +306,18 @@ export interface UseSettingsReturn {
   showCustomPresetModal: boolean;
   advancedSettings: AdvancedSettings;
   handlePresetToggle: (presetId: string) => void;
-  handleSelectOutputDirectory: () => void;
-  setDefaultOutputDirectory: (directory: string) => void;
+  handleSelectOutputDirectory: () => Promise<void>;
   handleOutputFolderNameChange: (name: string) => Promise<void>;
-  setDefaultOutputFolderName: (name: string) => void;
+  handleSetDefaultOutputDirectory: (directory: string) => void;
+  handleSetDefaultOutputFolderName: (name: string) => void;
   toggleDrawer: () => void;
   toggleAdvanced: () => void;
   handleAdvancedSettingsChange: (settings: AdvancedSettings) => void;
   handleSaveCustomPreset: () => void;
   handleCustomPresetSave: (customPreset: Preset) => Promise<void>;
   handleCustomPresetRemove: (presetId: string) => Promise<void>;
-  setShowCustomPresetModal: (show: boolean) => void;
   handleReorderPresets: (newOrder: string[]) => void;
-  // New persistent settings methods
+  // New default settings properties
   defaultPresets: string[];
   setDefaultPresets: (presets: string[]) => void;
   defaultPresetSettings: Record<string, PresetSettings>;
@@ -325,6 +326,11 @@ export interface UseSettingsReturn {
   setDefaultAdvancedSettings: (settings: AdvancedSettings) => void;
   saveUserDefaults: () => void;
   resetToDefaults: () => void;
+  getFinalOutputPath: () => string;
+  // Add missing properties that are returned by the hook
+  setDefaultOutputDirectory: (directory: string) => void;
+  setDefaultOutputFolderName: (name: string) => void;
+  setShowCustomPresetModal: (show: boolean) => void;
 }
 
 // New interface for persistent user settings

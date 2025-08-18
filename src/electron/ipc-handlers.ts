@@ -103,7 +103,7 @@ export function setupIpcHandlers(): void {
 
   ipcMain.handle('get-preset-metadata', async (event, presetId: string) => {
     try {
-      const { getPresetMetadata } = require('../../shared/presetRegistry');
+      const { getPresetMetadata } = require('../shared/presetRegistry');
       return getPresetMetadata(presetId);
     } catch (error) {
       throw error;
@@ -246,56 +246,75 @@ export function setupIpcHandlers(): void {
     try {
       const homeDir = os.homedir();
       const desktopDir = path.join(homeDir, 'Desktop');
-      const folderToUse = folderName || APP_CONSTANTS.DEFAULT_OUTPUT_DIR;
-      const compressedVideosDir = path.join(desktopDir, folderToUse);
       
-      // Create the directory if it doesn't exist
-      if (!fs.existsSync(compressedVideosDir)) {
-        try {
-          fs.mkdirSync(compressedVideosDir, { recursive: true });
-        } catch (error) {
+      // If a specific folder name is provided, create Desktop/folderName
+      if (folderName && folderName.trim()) {
+        const customDir = path.join(desktopDir, folderName.trim());
+        
+        // Create the directory if it doesn't exist
+        if (!fs.existsSync(customDir)) {
+          try {
+            fs.mkdirSync(customDir, { recursive: true });
+          } catch (error) {
+            return desktopDir;
+          }
+        }
+        
+        // Verify the directory is writable using the utility
+        const validation = FileValidation.validateDirectory(customDir);
+        if (!validation.isValid) {
           return desktopDir;
         }
+        
+        return customDir;
       }
       
-      // Verify the directory is writable using the utility
-      const validation = FileValidation.validateDirectory(compressedVideosDir);
-      if (!validation.isValid) {
-        return desktopDir;
-      }
-      
-      return compressedVideosDir;
+      // Default behavior: return just the Desktop directory
+      return desktopDir;
     } catch (error) {
       throw error;
     }
   });
 
   ipcMain.handle('select-output-directory', async () => {
+    console.log('IPC: select-output-directory called');
     const mainWindow = getMainWindow();
     if (!mainWindow) {
+      console.error('IPC: Main window not available');
       throw new Error(ERROR_MESSAGES.WINDOW.NOT_AVAILABLE);
     }
     
     try {
+      // Default to Desktop directory for the file picker
+      const homeDir = os.homedir();
+      const desktopDir = path.join(homeDir, 'Desktop');
+      console.log('IPC: Opening dialog with default path:', desktopDir);
+      
       const result = await dialog.showOpenDialog(mainWindow, {
         properties: ['openDirectory'],
-        defaultPath: getDefaultOutputDirectory()
+        defaultPath: desktopDir
       });
       
+      console.log('IPC: Dialog result:', result);
       if (result.canceled || result.filePaths.length === 0) {
+        console.log('IPC: Dialog canceled or no files selected');
         return '';
       }
       
       const selectedDir = result.filePaths[0];
+      console.log('IPC: Selected directory:', selectedDir);
       
       // Validate the selected directory using the utility
       const validation = FileValidation.validateDirectory(selectedDir);
       if (!validation.isValid) {
+        console.error('IPC: Directory validation failed:', validation.error);
         throw new Error(validation.error || ERROR_MESSAGES.DIRECTORY.VALIDATION_FAILED);
       }
       
+      console.log('IPC: Returning selected directory:', selectedDir);
       return selectedDir;
     } catch (error) {
+      console.error('IPC: Error in select-output-directory:', error);
       throw error;
     }
   });
@@ -384,6 +403,83 @@ export function setupIpcHandlers(): void {
     } catch (error) {
       console.error('Error checking file existence:', error);
       return false;
+    }
+  });
+
+  // Check for existing output files using the same path construction logic as compression manager
+  ipcMain.handle('check-existing-output-files', async (event, data: {
+    files: string[];
+    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
+    outputDirectory: string;
+    customOutputNames?: Record<string, string>;
+  }) => {
+    console.log('IPC: check-existing-output-files called with:', data);
+    const { files, presetConfigs, outputDirectory, customOutputNames } = data;
+    const existingFiles: Array<{
+      filePath: string;
+      presetId: string;
+      existingOutputPath: string;
+      fileName: string;
+      existingFileName: string;
+    }> = [];
+
+    try {
+      // Import the same utilities used by the compression manager
+      const { buildOutputPath } = require('./compression/utils');
+      const { videoPresets } = require('./compression/presets');
+      const { getPresetMetadata } = require('../shared/presetRegistry');
+
+      console.log('Checking files for existing output...');
+      for (const file of files) {
+        for (const presetConfig of presetConfigs) {
+          const preset = videoPresets[presetConfig.presetId];
+          if (!preset) {
+            console.log(`Preset not found: ${presetConfig.presetId}`);
+            continue;
+          }
+
+          // Get custom output name if available
+          const customOutputName = customOutputNames?.[file];
+          console.log(`Checking ${file} with preset ${presetConfig.presetId}, custom name: ${customOutputName}`);
+
+          // Use the same path construction logic as the compression manager
+          const outputPath = buildOutputPath(
+            file,
+            presetConfig.presetId,
+            outputDirectory,
+            preset.settings.videoCodec,
+            presetConfig.keepAudio,
+            undefined, // index - we don't need it for existence check
+            customOutputName
+          );
+
+          console.log(`Expected output path: ${outputPath}`);
+
+          // Check if the file exists
+          const exists = fs.existsSync(outputPath);
+          console.log(`File exists: ${exists}`);
+          
+          if (exists) {
+            const fileName = path.basename(file);
+            const existingFileName = path.basename(outputPath);
+            
+            existingFiles.push({
+              filePath: file,
+              presetId: presetConfig.presetId,
+              existingOutputPath: outputPath,
+              fileName,
+              existingFileName
+            });
+            console.log(`Added to existing files: ${fileName} (${presetConfig.presetId})`);
+          }
+        }
+      }
+
+      console.log(`IPC: Returning ${existingFiles.length} existing files`);
+      return existingFiles;
+    } catch (error) {
+      console.error('Error checking existing output files:', error);
+      throw error;
     }
   });
 
@@ -786,5 +882,19 @@ export function setupIpcHandlers(): void {
     } catch (error) {
       throw error;
     }
+  });
+
+  // Broadcast user defaults updates to all relevant windows
+  ipcMain.on('user-defaults-updated', (_event, defaults) => {
+    try {
+      const main = getMainWindow();
+      if (main) {
+        main.webContents.send('user-defaults-updated', defaults);
+      }
+      const defaultsWin = require('./window-manager').getDefaultsWindow?.();
+      if (defaultsWin) {
+        defaultsWin.webContents.send('user-defaults-updated', defaults);
+      }
+    } catch (_) {}
   });
 }

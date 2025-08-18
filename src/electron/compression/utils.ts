@@ -146,6 +146,17 @@ export function buildOutputPath(
   index?: number,
   customOutputName?: string
 ): string {
+  // Ensure the main output directory exists first
+  if (!fs.existsSync(outputDirectory)) {
+    try {
+      fs.mkdirSync(outputDirectory, { recursive: true });
+      console.log(`Created main output directory: ${outputDirectory}`);
+    } catch (error) {
+      console.warn(`Failed to create main output directory: ${outputDirectory}`, error);
+      throw new Error(`Failed to create output directory: ${outputDirectory}`);
+    }
+  }
+  
   // Create preset-specific folder for better organization
   const presetFolder = createPresetFolder(outputDirectory, presetKey);
   

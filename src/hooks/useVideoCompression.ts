@@ -378,41 +378,47 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     });
   }, []);
 
-  // Helper function to construct expected output path using the same logic as compression process
-  const constructExpectedOutputPath = useCallback(async (
-    file: string,
-    presetConfig: { presetId: string; keepAudio: boolean },
-    outputDirectory: string,
-    customOutputName?: string
-  ): Promise<string> => {
-    // Get preset metadata for proper naming - prefer IPC, fallback to shared registry helpers
-    let folderName = getPresetFolderName(presetConfig.presetId);
-    let fileSuffix = getPresetSuffix(presetConfig.presetId);
+  // Helper function to check for existing output files using the same logic as compression manager
+  const checkExistingOutputFiles = useCallback(async (
+    files: string[],
+    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>,
+    outputDirectory: string
+  ): Promise<Array<{
+    filePath: string;
+    presetId: string;
+    existingOutputPath: string;
+    fileName: string;
+    existingFileName: string;
+  }>> => {
+    console.log('checkExistingOutputFiles called with:', { files, presetConfigs, outputDirectory });
+    console.log('window.electronAPI available:', !!window.electronAPI);
+    console.log('window.electronAPI methods:', window.electronAPI ? Object.keys(window.electronAPI) : 'N/A');
     
+    if (!window.electronAPI) {
+      console.log('window.electronAPI not available');
+      return [];
+    }
+
     try {
-      const presetMetadata = await window.electronAPI?.getPresetMetadata?.(presetConfig.presetId);
-      if (presetMetadata) {
-        folderName = presetMetadata.folderName || folderName;
-        fileSuffix = presetMetadata.fileSuffix || fileSuffix;
-      }
+      // Get custom output names if available
+      const customOutputNames = (window as any).compressionOutputNaming || {};
+      console.log('Custom output names:', customOutputNames);
+      
+      // Use the new IPC method that uses the same path construction logic as the compression manager
+      console.log('Calling window.electronAPI.checkExistingOutputFiles...');
+      const existingFiles = await window.electronAPI.checkExistingOutputFiles({
+        files,
+        presetConfigs,
+        outputDirectory,
+        customOutputNames
+      });
+      
+      console.log('IPC returned existing files:', existingFiles);
+      return existingFiles;
     } catch (error) {
-      console.warn('Could not get preset metadata, using fallback:', error);
+      console.error('Error checking existing output files:', error);
+      return [];
     }
-    
-    const audioSuffix = presetConfig.keepAudio ? ' - audio' : ' - muted';
-    const presetFolder = `${outputDirectory}/${folderName}`;
-    
-    let outputFileName: string;
-    if (customOutputName) {
-      const cleanCustomName = customOutputName.replace(/\.[^/.]+$/, '');
-      outputFileName = `${cleanCustomName}${fileSuffix}${audioSuffix}.mp4`;
-    } else {
-      const fileName = getFileName(file);
-      const baseName = fileName.replace(/\.[^/.]+$/, '');
-      outputFileName = `${baseName}${fileSuffix}${audioSuffix}.mp4`;
-    }
-    
-    return `${presetFolder}/${outputFileName}`;
   }, []);
 
   const compressVideos = useCallback(async (
@@ -430,51 +436,15 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
       return;
     }
     
-    // Check for existing output files in the output directory before starting compression
-    const existingOutputFiles: Array<{ filePath: string; presetId: string; existingOutputPath: string }> = [];
+    // Check for existing output files using the same logic as compression manager
+    console.log('Checking for existing output files...');
+    console.log('Selected files:', selectedFiles);
+    console.log('Preset configs:', presetConfigs);
+    console.log('Output directory:', outputDirectory);
     
-    // Checking for existing output files
+    const existingOutputFiles = await checkExistingOutputFiles(selectedFiles, presetConfigs, outputDirectory);
     
-          for (const file of selectedFiles) {
-        for (const presetConfig of presetConfigs) {
-          // Check for custom output naming preferences
-          let customOutputName = null;
-          if ((window as any).compressionOutputNaming && (window as any).compressionOutputNaming[file]) {
-            customOutputName = (window as any).compressionOutputNaming[file];
-            // Using custom output name
-          }
-          
-          // Construct the expected path using the same logic as the compression process
-          const expectedOutputPath = await constructExpectedOutputPath(file, presetConfig, outputDirectory, customOutputName);
-          
-          // File path construction completed
-          
-          try {
-          // Check if the output file already exists using Electron API
-          // Checking file existence
-          
-          if (window.electronAPI) {
-            // Try using getFileInfo as a way to check if file exists
-            try {
-              // Checking file existence via getFileInfo
-              await window.electronAPI.getFileInfo(expectedOutputPath);
-              // File exists
-              existingOutputFiles.push({
-                filePath: file,
-                presetId: presetConfig.presetId,
-                existingOutputPath: expectedOutputPath
-              });
-            } catch (fileError) {
-              // File does not exist
-            }
-          } else {
-            console.warn('window.electronAPI not available');
-          }
-        } catch (error) {
-          console.warn('Could not check file existence:', error);
-        }
-      }
-    }
+    console.log('Existing output files found:', existingOutputFiles);
     
     // Found existing output files
     
@@ -483,21 +453,15 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
       // Showing batch overwrite confirmation
       
       // Prepare batch confirmation data
-      const batchFiles = existingOutputFiles.map(existing => {
-        const fileName = getFileName(existing.filePath);
-        const existingFileName = existing.existingOutputPath.split('/').pop() || '';
-        const newFileName = existing.existingOutputPath.split('/').pop() || '';
-        
-        return {
-          filePath: existing.filePath,
-          presetId: existing.presetId,
-          existingOutputPath: existing.existingOutputPath,
-          newOutputPath: existing.existingOutputPath, // Same path since we're overwriting
-          fileName,
-          existingFileName,
-          newFileName
-        };
-      });
+      const batchFiles = existingOutputFiles.map(existing => ({
+        filePath: existing.filePath,
+        presetId: existing.presetId,
+        existingOutputPath: existing.existingOutputPath,
+        newOutputPath: existing.existingOutputPath, // Same path since we're overwriting
+        fileName: existing.fileName,
+        existingFileName: existing.existingFileName,
+        newFileName: existing.existingFileName
+      }));
       
       setBatchOverwriteConfirmation({
         files: batchFiles,
@@ -679,8 +643,18 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     const initialProgress: Record<string, number> = {};
     const initialStatuses: Record<string, CompressionStatus> = {};
     
+    // Create a set of files to skip for faster lookup
+    const filesToSkip = new Set(existingFilesToRemove);
+    
     for (const file of selectedFiles) {
       for (const presetConfig of presetConfigs) {
+        const statusKey = `${file}::${presetConfig.presetId}`;
+        
+        // Skip files that are in the existingFilesToRemove list
+        if (filesToSkip.has(statusKey)) {
+          continue;
+        }
+        
         // Use consistent file naming with the manager
         const fileName = getFileName(file);
         const taskKey = getTaskKey(fileName, presetConfig.presetId);
@@ -696,7 +670,6 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
         totalTasksRef.current++;
 
         // Initialize compression status - use full file path for consistency
-        const statusKey = `${file}::${presetConfig.presetId}`;
         initialStatuses[statusKey] = {
           filePath: file,
           presetId: presetConfig.presetId,
@@ -712,17 +685,35 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
     
     try {
       if (window.electronAPI) {
+        // Filter files and preset configs to only include ones that should be compressed
+        const filesToCompress: string[] = [];
+        const presetConfigsToCompress: Array<{ presetId: string; keepAudio: boolean }> = [];
+        
+        for (const file of selectedFiles) {
+          for (const presetConfig of presetConfigs) {
+            const statusKey = `${file}::${presetConfig.presetId}`;
+            
+            // Only include files that are not in the existingFilesToRemove list
+            if (!filesToSkip.has(statusKey)) {
+              if (!filesToCompress.includes(file)) {
+                filesToCompress.push(file);
+              }
+              presetConfigsToCompress.push(presetConfig);
+            }
+          }
+        }
+        
         if (advancedSettings) {
           await window.electronAPI.compressVideosAdvanced({
-            files: selectedFiles,
-            presetConfigs,
+            files: filesToCompress,
+            presetConfigs: presetConfigsToCompress,
             outputDirectory,
             advancedSettings
           });
         } else {
           await window.electronAPI.compressVideos({
-            files: selectedFiles,
-            presetConfigs,
+            files: filesToCompress,
+            presetConfigs: presetConfigsToCompress,
             outputDirectory,
             advancedSettings: undefined
           });

@@ -217,6 +217,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
               setDefaultAdvancedSettings={settings.setDefaultAdvancedSettings}
               saveUserDefaults={settings.saveUserDefaults}
               resetToDefaults={settings.resetToDefaults}
+              getFinalOutputPath={settings.getFinalOutputPath}
             />
           </motion.div>
         )}

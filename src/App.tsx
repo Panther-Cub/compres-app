@@ -73,7 +73,8 @@ function App() {
     setDefaultAdvancedSettings,
     saveUserDefaults,
     resetToDefaults,
-    handleReorderPresets
+    handleReorderPresets,
+    getFinalOutputPath
   } = useSettings();
 
   const { theme, toggleTheme } = useTheme();
@@ -263,6 +264,10 @@ function App() {
   }, [selectedFiles.length, ensureOverlayHidden]);
 
   const handleCompress = (): void => {
+    console.log('handleCompress called');
+    console.log('Selected presets:', selectedPresets);
+    console.log('Selected files:', selectedFiles);
+    console.log('Output path:', getFinalOutputPath());
     
     // Only use advanced settings if they're enabled AND have been modified from defaults
     const defaultAdvancedSettings = {
@@ -286,9 +291,11 @@ function App() {
       keepAudio: presetSettings[presetId]?.keepAudio ?? true
     }));
     
+    console.log('Calling compressVideos with:', { presetConfigs, outputPath: getFinalOutputPath(), advancedSettings: hasCustomAdvancedSettings ? advancedSettings : undefined });
+    
     compressVideos(
-      presetConfigs, 
-      outputDirectory, 
+      presetConfigs,
+      getFinalOutputPath(),
       hasCustomAdvancedSettings ? advancedSettings : undefined
     );
   };
@@ -396,6 +403,8 @@ function App() {
   const handleReset = useCallback(async () => {
     // First reset the compression state
     reset();
+    // Then reset settings to user defaults
+    resetToDefaults();
     // Then show the default window based on user settings
     try {
       if (window.electronAPI) {
@@ -417,7 +426,7 @@ function App() {
       // Fallback to overlay if there's an error
       await handleShowOverlay();
     }
-  }, [reset, handleShowOverlay]);
+  }, [reset, resetToDefaults, handleShowOverlay]);
 
   const settings = {
     presets,
@@ -452,7 +461,8 @@ function App() {
     setDefaultAdvancedSettings,
     saveUserDefaults,
     resetToDefaults,
-    handleReorderPresets
+    handleReorderPresets,
+    getFinalOutputPath
   };
 
   return (

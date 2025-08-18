@@ -58,6 +58,18 @@ export interface ElectronAPI {
     codec: string;
   }>;
   checkFileExists: (filePath: string) => Promise<boolean>;
+  checkExistingOutputFiles: (data: {
+    files: string[];
+    presetConfigs: Array<{ presetId: string; keepAudio: boolean }>;
+    outputDirectory: string;
+    customOutputNames?: Record<string, string>;
+  }) => Promise<Array<{
+    filePath: string;
+    presetId: string;
+    existingOutputPath: string;
+    fileName: string;
+    existingFileName: string;
+  }>>;
   cancelCompression: () => Promise<{ success: boolean }>;
   
   // Thumbnails and file operations
@@ -93,6 +105,10 @@ export interface ElectronAPI {
   saveCompressionOutputNaming: (naming: Array<{ filePath: string; customOutputName: string }>) => Promise<{ success: boolean; error?: string }>;
   sendCompressionNamingResults: (results: { success: boolean; error?: string }) => Promise<{ success: boolean }>;
   
+  // Defaults sync across windows
+  notifyUserDefaultsUpdated: (defaults: { defaultPresets?: string[]; defaultOutputDirectory?: string; defaultOutputFolderName?: string }) => void;
+  onUserDefaultsUpdated: (callback: (defaults: { defaultPresets?: string[]; defaultOutputDirectory?: string; defaultOutputFolderName?: string }) => void) => void;
+  
   // Event listeners - FIXED: Added missing compression event handlers
   onCompressionStarted: (callback: (data: CompressionEventData) => void) => void;
   onCompressionProgress: (callback: (data: CompressionProgressData) => void) => void;
@@ -113,7 +129,7 @@ export interface ElectronAPI {
   // Update manager
   checkForUpdates: () => Promise<{ success: boolean; error?: string; data?: UpdateData }>;
   downloadUpdate: () => Promise<{ success: boolean; error?: string; data?: UpdateData }>;
-  installUpdate: () => Promise<{ success: boolean; error?: string; message?: string }>;
+  installUpdate: () => Promise<{ success: boolean; error?: string; message?: string }>; 
   getUpdateStatus: () => Promise<{ status: string; progress?: number; version?: string; releaseNotes?: string; error?: string; currentVersion?: string }>;
   getUpdateSettings: () => Promise<{ autoUpdateEnabled: boolean; lastUpdateVersion: string | null; lastAppVersion: string | null }>;
   saveUpdateSettings: (settings: { autoUpdateEnabled: boolean; lastUpdateVersion?: string | null; lastAppVersion?: string | null }) => Promise<void>;

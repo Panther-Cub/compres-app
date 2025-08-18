@@ -22,6 +22,7 @@ function createElectronAPI(): any {
     isCustomPreset: (presetId: string) => ipcRenderer.invoke('is-custom-preset', presetId),
     getFileInfo: (filePath: string) => ipcRenderer.invoke('get-file-info', filePath),
     checkFileExists: (filePath: string) => ipcRenderer.invoke('check-file-exists', filePath),
+    checkExistingOutputFiles: (data: any) => ipcRenderer.invoke('check-existing-output-files', data),
     cancelCompression: () => ipcRenderer.invoke('cancel-compression'),
     
     // Thumbnails and file operations
@@ -121,5 +122,9 @@ function createElectronAPI(): any {
   };
 }
 
+// Create the API
+const api = createElectronAPI();
+console.log('Preload script loaded, exposing electronAPI with methods:', Object.keys(api));
+
 // Expose the Electron API to the renderer process
-contextBridge.exposeInMainWorld('electronAPI', createElectronAPI());
+contextBridge.exposeInMainWorld('electronAPI', api);

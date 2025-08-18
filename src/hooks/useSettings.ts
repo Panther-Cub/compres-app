@@ -88,22 +88,31 @@ export const useSettings = (): UseSettingsReturn => {
 
   // Reset to default settings
   const resetToDefaults = useCallback((): void => {
+    // Force reload defaults from localStorage to ensure we get the latest values
+    const userDefaults = loadUserDefaults();
+    
     // Check if user has actually set defaults
-    const hasUserSetDefaults = defaultPresets.length > 0 || defaultOutputDirectory !== '';
+    const hasUserSetDefaults = userDefaults.defaultPresets.length > 0 || userDefaults.defaultOutputDirectory !== '';
     
     if (hasUserSetDefaults) {
       // Reset to user's saved defaults
-      setSelectedPresets(defaultPresets);
-      setPresetSettings(defaultPresetSettings);
-      setAdvancedSettings(defaultAdvancedSettings);
+      setSelectedPresets(userDefaults.defaultPresets);
+      setPresetSettings(userDefaults.defaultPresetSettings);
+      setAdvancedSettings(userDefaults.defaultAdvancedSettings);
+      // Also reset output directory and folder name to user defaults
+      setOutputDirectory(userDefaults.defaultOutputDirectory);
+      setOutputFolderName(userDefaults.defaultOutputFolderName);
     } else {
       // Reset to empty selection (no user defaults set)
       setSelectedPresets([]);
       setPresetSettings({});
       setAdvancedSettings(DEFAULT_USER_SETTINGS.defaultAdvancedSettings);
+      // Reset to system defaults
+      setOutputDirectory('');
+      setOutputFolderName(DEFAULT_USER_SETTINGS.defaultOutputFolderName);
     }
     setDrawerOpen(DEFAULT_USER_SETTINGS.drawerOpen);
-  }, [defaultPresets, defaultPresetSettings, defaultAdvancedSettings, defaultOutputDirectory]);
+  }, [loadUserDefaults]);
 
   // Initialize settings on mount
   useEffect(() => {
@@ -167,11 +176,36 @@ export const useSettings = (): UseSettingsReturn => {
         } else {
           try {
             if (!window.electronAPI) {
-      return;
-    }
-    const defaultDir = await window.electronAPI.getDefaultOutputDirectory(userDefaults.defaultOutputFolderName);
-            setDefaultOutputDirectory(defaultDir);
-            setOutputDirectory(defaultDir);
+              return;
+            }
+            
+            // Load saved defaults from localStorage
+            const savedDefaults = localStorage.getItem('compres-user-defaults');
+            if (savedDefaults) {
+              const parsed = JSON.parse(savedDefaults);
+              
+              // Use saved default output directory if available
+              if (parsed.defaultOutputDirectory) {
+                setDefaultOutputDirectory(parsed.defaultOutputDirectory);
+                setOutputDirectory(parsed.defaultOutputDirectory);
+              } else {
+                // Fall back to Desktop
+                const defaultDir = await window.electronAPI.getDefaultOutputDirectory();
+                setDefaultOutputDirectory(defaultDir);
+                setOutputDirectory(defaultDir);
+              }
+              
+              // Use saved default folder name if available
+              if (parsed.defaultOutputFolderName) {
+                setDefaultOutputFolderName(parsed.defaultOutputFolderName);
+                setOutputFolderName(parsed.defaultOutputFolderName);
+              }
+            } else {
+              // No saved defaults, use Desktop as ultimate default
+              const defaultDir = await window.electronAPI.getDefaultOutputDirectory();
+              setDefaultOutputDirectory(defaultDir);
+              setOutputDirectory(defaultDir);
+            }
           } catch (err) {
             // Error getting default output directory
           }
@@ -209,6 +243,38 @@ export const useSettings = (): UseSettingsReturn => {
     }
   }, [defaultPresets, defaultPresetSettings, defaultAdvancedSettings, defaultOutputDirectory, defaultOutputFolderName, saveUserDefaults]);
 
+  // Listen for defaults updates from other windows and sync current state
+  useEffect(() => {
+    if (!window.electronAPI || !window.electronAPI.onUserDefaultsUpdated) {
+      return;
+    }
+    const handler = (defaults: { defaultPresets?: string[]; defaultOutputDirectory?: string; defaultOutputFolderName?: string }) => {
+      try {
+        if (defaults.defaultPresets) setDefaultPresets(defaults.defaultPresets);
+        if (defaults.defaultOutputDirectory) {
+          setDefaultOutputDirectory(defaults.defaultOutputDirectory);
+          // Only update current session outputDirectory if user hasn't selected a custom one this session
+          if (!outputDirectory || outputDirectory === defaultOutputDirectory) {
+            setOutputDirectory(defaults.defaultOutputDirectory);
+          }
+        }
+        if (defaults.defaultOutputFolderName) {
+          setDefaultOutputFolderName(defaults.defaultOutputFolderName);
+          if (!outputFolderName || outputFolderName === defaultOutputFolderName) {
+            setOutputFolderName(defaults.defaultOutputFolderName);
+          }
+        }
+      } catch (_) {}
+    };
+    window.electronAPI.onUserDefaultsUpdated(handler);
+    return () => {
+      try {
+        window.electronAPI?.removeAllListeners?.('user-defaults-updated');
+      } catch (_) {}
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outputDirectory, defaultOutputDirectory, outputFolderName, defaultOutputFolderName]);
+
   const handlePresetToggle = useCallback((presetKey: string): void => {
     setSelectedPresets(prev => {
       const newSelection = prev.includes(presetKey) 
@@ -243,18 +309,23 @@ export const useSettings = (): UseSettingsReturn => {
   }, []);
 
   const handleSelectOutputDirectory = useCallback(async (): Promise<void> => {
-    try {
-      // Check if we're in Electron environment
-      if (!window.electronAPI) {
-        return;
+    console.log('handleSelectOutputDirectory called');
+    console.log('window.electronAPI:', !!window.electronAPI);
+    console.log('selectOutputDirectory function:', !!window.electronAPI?.selectOutputDirectory);
+    
+    if (window.electronAPI && window.electronAPI.selectOutputDirectory) {
+      try {
+        console.log('Calling selectOutputDirectory...');
+        const directory: string = await window.electronAPI.selectOutputDirectory();
+        console.log('Selected directory:', directory);
+        if (directory) {
+          setOutputDirectory(directory);
+        }
+      } catch (error: any) {
+        console.error('Error selecting output directory:', error);
       }
-    const directory = await window.electronAPI.selectOutputDirectory();
-      if (directory) {
-        setOutputDirectory(directory);
-      }
-    } catch (err) {
-      console.error('Error selecting output directory:', err);
-      throw err;
+    } else {
+      console.error('electronAPI or selectOutputDirectory not available');
     }
   }, []);
 
@@ -265,16 +336,7 @@ export const useSettings = (): UseSettingsReturn => {
 
   const handleOutputFolderNameChange = useCallback(async (name: string): Promise<void> => {
     setOutputFolderName(name);
-    
-    // Update the output directory to use the new folder name
-    if (window.electronAPI && name.trim()) {
-      try {
-        const newOutputDir = await window.electronAPI.getDefaultOutputDirectory(name.trim());
-        setOutputDirectory(newOutputDir);
-      } catch (error) {
-        console.error('Error updating output directory with new folder name:', error);
-      }
-    }
+    // Don't modify the output directory here - keep them separate
   }, []);
 
   const handleSetDefaultOutputFolderName = useCallback((name: string): void => {
@@ -342,6 +404,19 @@ export const useSettings = (): UseSettingsReturn => {
     setSelectedPresets(newOrder);
   }, []);
 
+  const getFinalOutputPath = useCallback((): string => {
+    // Use the selected output directory, or fall back to default
+    const baseDirectory = outputDirectory || defaultOutputDirectory;
+    
+    // If user provided a folder name, append it to the base directory
+    if (outputFolderName && outputFolderName.trim()) {
+      return `${baseDirectory}/${outputFolderName.trim()}`;
+    }
+    
+    // Otherwise just use the base directory
+    return baseDirectory;
+  }, [outputDirectory, defaultOutputDirectory, outputFolderName]);
+
   return {
     selectedPresets,
     presetSettings,
@@ -357,17 +432,17 @@ export const useSettings = (): UseSettingsReturn => {
     advancedSettings,
     handlePresetToggle,
     handleSelectOutputDirectory,
-    setDefaultOutputDirectory: handleSetDefaultOutputDirectory,
     handleOutputFolderNameChange,
-    setDefaultOutputFolderName: handleSetDefaultOutputFolderName,
+    handleSetDefaultOutputDirectory,
+    handleSetDefaultOutputFolderName,
     toggleDrawer,
     toggleAdvanced,
     handleAdvancedSettingsChange,
     handleSaveCustomPreset,
     handleCustomPresetSave,
     handleCustomPresetRemove,
-    setShowCustomPresetModal,
-    // New persistent settings methods
+    handleReorderPresets,
+    // New default settings properties
     defaultPresets,
     setDefaultPresets,
     defaultPresetSettings,
@@ -376,6 +451,9 @@ export const useSettings = (): UseSettingsReturn => {
     setDefaultAdvancedSettings,
     saveUserDefaults,
     resetToDefaults,
-    handleReorderPresets
+    getFinalOutputPath,
+    setDefaultOutputDirectory: handleSetDefaultOutputDirectory,
+    setDefaultOutputFolderName: handleSetDefaultOutputFolderName,
+    setShowCustomPresetModal
   };
 };

@@ -15,7 +15,8 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
   const [presets, setPresets] = useState<Record<string, Preset>>({});
   const [defaultPresets, setDefaultPresets] = useState<string[]>([]);
   const [defaultOutputDirectory, setDefaultOutputDirectory] = useState<string>('');
-  const [defaultOutputFolderName, setDefaultOutputFolderName] = useState<string>('');
+  const [defaultOutputFolderName, setDefaultOutputFolderName] = useState<string>('Compressed Videos');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [activeTab, setActiveTab] = useState<TabType>('presets');
 
   // Load data on component mount
@@ -26,8 +27,20 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
           const allPresets = await window.electronAPI.getAllPresets();
           setPresets(allPresets);
           
-          // Load other settings from localStorage or API
-          // This would need to be implemented based on your data storage approach
+          // Get the Desktop directory as the ultimate default
+          const homeDir = await window.electronAPI.getDefaultOutputDirectory();
+          
+          // Load saved defaults from localStorage
+          const savedDefaults = localStorage.getItem('compres-user-defaults');
+          if (savedDefaults) {
+            const parsed = JSON.parse(savedDefaults);
+            setDefaultPresets(parsed.defaultPresets || []);
+            setDefaultOutputDirectory(parsed.defaultOutputDirectory || homeDir);
+            setDefaultOutputFolderName(parsed.defaultOutputFolderName || 'Compressed Videos');
+          } else {
+            // No saved defaults, use Desktop as the ultimate default
+            setDefaultOutputDirectory(homeDir);
+          }
         }
       } catch (error) {
         console.error('Error loading defaults data:', error);
@@ -37,21 +50,55 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
     loadData();
   }, []);
 
-  const saveUserDefaults = async () => {
+  const handleSaveDefaults = async () => {
     try {
-      // Save to localStorage or API
-      console.log('Saving user defaults...');
+      setSaveStatus('saving');
+      
+      // Save defaults to localStorage
+      const defaults = {
+        defaultPresets,
+        defaultOutputDirectory,
+        defaultOutputFolderName
+      };
+      localStorage.setItem('compres-user-defaults', JSON.stringify(defaults));
+      
+      // Notify other windows
+      if (window.electronAPI && window.electronAPI.notifyUserDefaultsUpdated) {
+        window.electronAPI.notifyUserDefaultsUpdated(defaults);
+      }
+      
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 3000);
     } catch (error) {
-      console.error('Error saving defaults:', error);
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
     }
   };
 
-  const resetToDefaults = async () => {
+  const handleResetToDefaults = async () => {
     try {
+      // Reset to ultimate defaults
       setDefaultPresets([]);
-      // Reset to defaults
+      
+      // Get Desktop as the ultimate default
+      if (window.electronAPI) {
+        const homeDir = await window.electronAPI.getDefaultOutputDirectory();
+        setDefaultOutputDirectory(homeDir);
+      }
+      setDefaultOutputFolderName('Compressed Videos');
+      
+      // Persist and notify
+      const defaults = {
+        defaultPresets: [],
+        defaultOutputDirectory,
+        defaultOutputFolderName: 'Compressed Videos'
+      };
+      localStorage.setItem('compres-user-defaults', JSON.stringify(defaults));
+      if (window.electronAPI && window.electronAPI.notifyUserDefaultsUpdated) {
+        window.electronAPI.notifyUserDefaultsUpdated(defaults);
+      }
     } catch (error) {
-      // Error resetting defaults
+      // ignore
     }
   };
 
@@ -102,12 +149,10 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
   const handleSaveCurrentAsDefaults = () => {
     // This function would need to get current values from the main app
     // For now, just save the current defaults
-    saveUserDefaults();
+    handleSaveDefaults();
   };
 
-  const handleResetToDefaults = () => {
-    resetToDefaults();
-  };
+
 
   const handleDefaultPresetToggle = (presetId: string) => {
     const newDefaultPresets = defaultPresets.includes(presetId) 
@@ -239,9 +284,17 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => {
-                        // This would need to be implemented with file picker
-                        console.log('Select directory');
+                      onClick={async () => {
+                        try {
+                          if (window.electronAPI && window.electronAPI.selectOutputDirectory) {
+                            const directory = await window.electronAPI.selectOutputDirectory();
+                            if (directory) {
+                              setDefaultOutputDirectory(directory);
+                            }
+                          }
+                        } catch (error) {
+                          console.error('Error selecting default output directory:', error);
+                        }
                       }}
                       className="text-xs"
                     >
@@ -306,11 +359,15 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleSaveCurrentAsDefaults}
+                onClick={handleSaveDefaults}
+                disabled={saveStatus === 'saving'}
                 className="w-full text-xs"
               >
                 <Save className="w-3 h-3 mr-1" />
-                Save Current Session as Defaults
+                {saveStatus === 'saving' ? 'Saving...' : 
+                 saveStatus === 'saved' ? 'Saved!' : 
+                 saveStatus === 'error' ? 'Error!' : 
+                 'Save Defaults'}
               </Button>
             </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
