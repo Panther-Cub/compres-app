@@ -219,9 +219,31 @@ export abstract class BaseCompressionStrategy {
         console.log(`Output file verified: ${outputPath} (${stats.size} bytes)`);
       } catch (verifyError) {
         console.error(`Output file verification failed:`, verifyError);
+        // Update batch progress if available
+        if (this.context.batchProgressManager) {
+          try {
+            this.context.batchProgressManager.markTaskFailed(taskKey, String(verifyError));
+          } catch (batchError) {
+            console.warn('Error updating batch progress:', batchError);
+          }
+        }
+        // Send failure event instead of throwing to avoid uncaught exceptions
+        try {
+          sendCompressionEvent('compression-complete', {
+            type: 'compression-complete',
+            taskKey: taskKey,
+            file: fileName,
+            preset: presetKey,
+            outputPath,
+            success: false,
+            keepAudio: this.context.keepAudio
+          }, mainWindow);
+        } catch (completeError) {
+          console.warn('Error sending completion event:', completeError);
+        }
         activeCompressions.delete(taskKey);
         memoryManager.removeCompression(taskKey);
-        throw new Error(`Output verification failed: ${verifyError}`);
+        return;
       }
       
       // Send final 100% progress before completion
@@ -272,7 +294,7 @@ export abstract class BaseCompressionStrategy {
       } catch (cleanupError) {
         console.error('Error during cleanup in handleEnd:', cleanupError);
       }
-      throw error;
+      // Do not throw to avoid uncaught exceptions from event callbacks
     }
   }
 
@@ -304,9 +326,23 @@ export abstract class BaseCompressionStrategy {
         }
       }
       
+      // Send failure completion event to UI
+      try {
+        sendCompressionEvent('compression-complete', {
+          type: 'compression-complete',
+          taskKey: taskKey,
+          file: fileName,
+          preset: presetKey,
+          outputPath,
+          success: false,
+          keepAudio: this.context.keepAudio
+        }, this.context.mainWindow);
+      } catch (completeError) {
+        console.warn('Error sending failure completion event:', completeError);
+      }
+      
       activeCompressions.delete(taskKey);
       memoryManager.removeCompression(taskKey);
-      throw new Error(compressionError.message);
     } catch (error) {
       console.error('Error in handleError:', error);
       // Ensure cleanup happens even if there's an error
@@ -316,7 +352,7 @@ export abstract class BaseCompressionStrategy {
       } catch (cleanupError) {
         console.error('Error during cleanup in handleError:', cleanupError);
       }
-      throw error;
+      // Do not throw to avoid uncaught exceptions from event callbacks
     }
   }
 

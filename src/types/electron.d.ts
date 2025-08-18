@@ -81,8 +81,34 @@ interface ElectronAPI {
   showMainWindow: () => Promise<{ success: boolean }>;
   
   // Settings management
-  getStartupSettings: () => Promise<{ openAtLogin: boolean; defaultWindow: string; performanceSettings?: { maxConcurrentCompressions: number }; showRecommendedPresets: boolean }>;
-  saveStartupSettings: (settings: { openAtLogin: boolean; defaultWindow: string; performanceSettings?: { maxConcurrentCompressions: number }; showRecommendedPresets?: boolean }) => Promise<{ success: boolean }>;
+  getStartupSettings: () => Promise<{ 
+    openAtLogin: boolean; 
+    defaultWindow: string; 
+    performanceSettings?: { 
+      maxConcurrentCompressions: number;
+      enableThermalThrottling: boolean;
+      thermalThrottleThreshold: number;
+      adaptiveConcurrency: boolean;
+      hardwareAccelerationPriority: 'thermal' | 'speed' | 'balanced';
+      maxCpuUsage: number;
+      enablePauseOnOverheat: boolean;
+    }; 
+    showRecommendedPresets: boolean 
+  }>;
+  saveStartupSettings: (settings: { 
+    openAtLogin: boolean; 
+    defaultWindow: string; 
+    performanceSettings?: { 
+      maxConcurrentCompressions: number;
+      enableThermalThrottling: boolean;
+      thermalThrottleThreshold: number;
+      adaptiveConcurrency: boolean;
+      hardwareAccelerationPriority: 'thermal' | 'speed' | 'balanced';
+      maxCpuUsage: number;
+      enablePauseOnOverheat: boolean;
+    }; 
+    showRecommendedPresets?: boolean 
+  }) => Promise<{ success: boolean }>;
   getDefaultWindow: () => Promise<string>;
   
   // App information
@@ -90,6 +116,23 @@ interface ElectronAPI {
   
   // Theme management
   getCurrentTheme: () => Promise<string>;
+  
+  // Thermal monitoring
+  getThermalStatus: () => Promise<{
+    thermalPressure: number;
+    isThrottling: boolean;
+    recommendedAction: 'normal' | 'reduce_concurrency' | 'pause' | 'resume';
+    cpuTemperature?: number;
+    cpuUsage?: number;
+  }>;
+  updateThermalSettings: (settings: {
+    enableThermalThrottling: boolean;
+    thermalThrottleThreshold: number;
+    adaptiveConcurrency: boolean;
+    hardwareAccelerationPriority: 'thermal' | 'speed' | 'balanced';
+    maxCpuUsage: number;
+    enablePauseOnOverheat: boolean;
+  }) => Promise<{ success: boolean }>;
   
   // Window management
   createDefaultsWindow: () => Promise<{ success: boolean }>;
@@ -108,6 +151,12 @@ interface ElectronAPI {
   onCompressionProgress: (callback: (data: CompressionProgressData) => void) => void;
   onCompressionComplete: (callback: (data: CompressionCompleteData) => void) => void;
   onUpdateCompressionStatusesForPreset: (callback: (data: { presetId: string; keepAudio: boolean }) => void) => void;
+  
+  // Thermal monitoring events
+  onThermalStatusUpdated: (callback: (data: any) => void) => void;
+  onCompressionPausedThermal: (callback: (data: any) => void) => void;
+  onCompressionResumedThermal: (callback: (data: any) => void) => void;
+  
   onOverlayFilesDropped: (callback: (filePaths: string[]) => void) => void;
   onBatchRenameResults: (callback: (results: { success: boolean; oldPath: string; newPath?: string; error?: string }[]) => void) => void;
   onCompressionNamingResults: (callback: (results: { success: boolean; error?: string }) => void) => void;

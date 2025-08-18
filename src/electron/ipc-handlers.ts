@@ -10,6 +10,7 @@ import {
   isCustomPreset,
   getCustomPresets
 } from './compression';
+import { ThermalMonitor } from './compression/thermal-monitor';
 import { 
   addCustomPresetWithPersistence, 
   removeCustomPresetWithPersistence 
@@ -72,6 +73,38 @@ export function setupIpcHandlers(): void {
     }
     
     return await compressionManager.getSystemRecommendations();
+  });
+
+  // Thermal monitoring
+  ipcMain.handle('get-thermal-status', async (event) => {
+    if (!compressionManager) {
+      throw new Error('Compression manager not initialized');
+    }
+    
+    // Get thermal status from the thermal monitor
+    const status = await ThermalMonitor.getInstance().getCurrentStatus();
+    
+    return {
+      thermalPressure: status.thermalPressure,
+      isThrottling: status.isThrottling,
+      recommendedAction: status.recommendedAction,
+      cpuTemperature: status.cpuTemperature,
+      cpuUsage: status.cpuUsage
+    };
+  });
+
+  ipcMain.handle('update-thermal-settings', async (event, settings: any) => {
+    if (!compressionManager) {
+      throw new Error('Compression manager not initialized');
+    }
+    
+    try {
+      ThermalMonitor.getInstance().updateSettings(settings);
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating thermal settings:', error);
+      throw error;
+    }
   });
 
   // Custom preset management
@@ -501,6 +534,22 @@ export function setupIpcHandlers(): void {
     }
   });
 
+  // Thermal event listeners
+  ipcMain.on('thermal-status-updated', (event, data) => {
+    // Forward thermal status updates to renderer
+    event.sender.send('thermal-status-updated', data);
+  });
+
+  ipcMain.on('compression-paused-thermal', (event, data) => {
+    // Forward thermal pause events to renderer
+    event.sender.send('compression-paused-thermal', data);
+  });
+
+  ipcMain.on('compression-resumed-thermal', (event, data) => {
+    // Forward thermal resume events to renderer
+    event.sender.send('compression-resumed-thermal', data);
+  });
+
   ipcMain.handle('cancel-compression', async () => {
     if (!compressionManager) {
       throw new Error('Compression manager not initialized');
@@ -746,7 +795,19 @@ export function setupIpcHandlers(): void {
     }
   });
 
-  ipcMain.handle('save-startup-settings', async (event, settings: { openAtLogin: boolean; defaultWindow: string; performanceSettings?: { maxConcurrentCompressions: number } }) => {
+  ipcMain.handle('save-startup-settings', async (event, settings: { 
+    openAtLogin: boolean; 
+    defaultWindow: string; 
+    performanceSettings?: { 
+      maxConcurrentCompressions: number;
+      enableThermalThrottling: boolean;
+      thermalThrottleThreshold: number;
+      adaptiveConcurrency: boolean;
+      hardwareAccelerationPriority: 'thermal' | 'speed' | 'balanced';
+      maxCpuUsage: number;
+      enablePauseOnOverheat: boolean;
+    } 
+  }) => {
     try {
       // Save settings using the utility
       Settings.saveStartupSettings(settings);

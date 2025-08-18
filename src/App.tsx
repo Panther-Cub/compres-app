@@ -11,7 +11,8 @@ import {
   VideoDropZone,
   VideoWorkspace,
   OverwriteConfirmationWindow,
-  BatchOverwriteConfirmationWindow
+  BatchOverwriteConfirmationWindow,
+  ThermalStatusIndicator
 } from './components';
 
 function App() {
@@ -74,7 +75,9 @@ function App() {
     batchOverwriteConfirmation,
     handleRecompressFile,
     confirmOverwrite,
-    cancelOverwrite
+    cancelOverwrite,
+    // Thermal monitoring
+    thermalStatus
   } = useVideoCompression(presetSettings);
 
   const { theme, toggleTheme } = useTheme();
@@ -572,6 +575,12 @@ function App() {
             />
           )}
         </AnimatePresence>
+
+        {/* Thermal Status Indicator */}
+        <ThermalStatusIndicator
+          isVisible={isCompressing && thermalStatus !== null}
+          thermalStatus={thermalStatus}
+        />
       </main>
 
 

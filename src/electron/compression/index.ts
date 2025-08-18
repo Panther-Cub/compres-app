@@ -6,6 +6,7 @@ export { HardwareDetection } from './hardware-detection';
 export { BatchProgressManager } from './batch-progress-manager';
 export { CompressionErrorHandler } from './error-handler';
 export { MemoryManager, MemoryUtils } from './memory-manager';
+export { ThermalMonitor } from './thermal-monitor';
 export { ValidationUtils } from './validation';
 export { sendCompressionEvent, createTaskKey, getFileName, buildOutputPath, ensureOutputDirectory } from './utils';
 export { compressFileWithPreset } from './strategies';

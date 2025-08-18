@@ -96,49 +96,34 @@ export const videoPresets: Record<string, VideoPreset> = {
     }
   },
 
-  // MAC CATEGORY - Hardware accelerated for Mac users
-  'mac-fast': {
-    name: 'Mac Fast',
-    description: 'Hardware accelerated for quick compression (VideoToolbox)',
+  // MAC CATEGORY - Optimized for macOS
+  'mac-standard': {
+    name: 'Mac Standard',
+    description: 'Standard quality for macOS devices',
     category: 'mac',
     settings: {
       videoCodec: 'h264_videotoolbox',
       videoBitrate: '1500k',
       audioCodec: 'aac',
-      audioBitrate: '96k',
-      resolution: '1280x720',
-      fps: 30,
-      crf: 25,
-      preset: 'medium'
-    }
-  },
-  'mac-efficient': {
-    name: 'Mac Efficient',
-    description: 'HEVC hardware encoding for maximum compression',
-    category: 'mac',
-    settings: {
-      videoCodec: 'hevc_videotoolbox',
-      videoBitrate: '800k',
-      audioCodec: 'aac',
-      audioBitrate: '64k',
-      resolution: '1280x720',
-      fps: 30,
-      crf: 28,
-      preset: 'medium'
-    }
-  },
-  'mac-quality': {
-    name: 'Mac Quality',
-    description: 'High quality with hardware acceleration',
-    category: 'mac',
-    settings: {
-      videoCodec: 'hevc_videotoolbox',
-      videoBitrate: '2500k',
-      audioCodec: 'aac',
       audioBitrate: '128k',
       resolution: '1920x1080',
       fps: 30,
-      crf: 22,
+      crf: 23,
+      preset: 'medium'
+    }
+  },
+  'mac-high': {
+    name: 'Mac High Quality',
+    description: 'High quality for macOS devices',
+    category: 'mac',
+    settings: {
+      videoCodec: 'h264_videotoolbox',
+      videoBitrate: '3000k',
+      audioCodec: 'aac',
+      audioBitrate: '192k',
+      resolution: '1920x1080',
+      fps: 30,
+      crf: 18,
       preset: 'slow'
     }
   }

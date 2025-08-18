@@ -22,6 +22,7 @@ import { BatchProgressManager } from './batch-progress-manager';
 import { CompressionErrorHandler } from './error-handler';
 import { Settings } from '../utils/settings';
 import { MemoryManager, MemoryUtils } from './memory-manager';
+import { ThermalMonitor, ThermalStatus } from './thermal-monitor';
 
 // Manager class to handle compression operations
 export class CompressionManager {
@@ -35,6 +36,9 @@ export class CompressionManager {
   private userSetConcurrency: boolean = false; // Track if user explicitly set concurrency
   private memoryManager: MemoryManager;
   private memoryMonitorInterval: NodeJS.Timeout | null = null;
+  private thermalMonitor: ThermalMonitor;
+  private isPausedForThermal: boolean = false;
+  private thermalInitialized: boolean = false;
 
   constructor(mainWindow: BrowserWindow) {
     this.mainWindow = mainWindow;
@@ -42,6 +46,155 @@ export class CompressionManager {
     this.maxConcurrentCompressions = Math.max(1, Math.min(4, require('os').cpus().length - 1));
     this.memoryManager = MemoryManager.getInstance();
     this.memoryManager.initialize(mainWindow);
+    this.thermalMonitor = ThermalMonitor.getInstance();
+    this.initializeThermalMonitoring();
+  }
+
+  /**
+   * Initialize thermal monitoring
+   */
+  private initializeThermalMonitoring(): void {
+    try {
+      if (this.thermalInitialized) {
+        return;
+      }
+      // Load thermal settings from user preferences
+      const startupSettings = Settings.getStartupSettings();
+      if (startupSettings.performanceSettings) {
+        this.thermalMonitor.updateSettings(startupSettings.performanceSettings);
+      }
+
+      // Set up thermal monitoring event handlers
+      this.thermalMonitor.on('throttling-changed', (isThrottling: boolean) => {
+        this.handleThermalThrottlingChange(isThrottling);
+      });
+
+      this.thermalMonitor.on('action-recommended', (action: ThermalStatus['recommendedAction']) => {
+        this.handleThermalActionRecommendation(action);
+      });
+
+      this.thermalMonitor.on('thermal-pressure-updated', (pressure: number) => {
+        this.handleThermalPressureUpdate(pressure);
+      });
+
+      // Start thermal monitoring
+      this.thermalMonitor.startMonitoring();
+
+      this.thermalInitialized = true;
+
+    } catch (error) {
+      console.error('Error initializing thermal monitoring:', error);
+    }
+  }
+
+  /**
+   * Handle thermal throttling changes
+   */
+  private handleThermalThrottlingChange(isThrottling: boolean): void {
+    console.log(`Thermal throttling ${isThrottling ? 'enabled' : 'disabled'}`);
+    
+    if (isThrottling) {
+      this.adjustConcurrencyForThermal();
+    }
+  }
+
+  /**
+   * Handle thermal action recommendations
+   */
+  private async handleThermalActionRecommendation(action: ThermalStatus['recommendedAction']): Promise<void> {
+    switch (action) {
+      case 'pause':
+        if (!this.isPausedForThermal) {
+          console.log('Thermal action: Pausing compression due to high temperature/CPU usage');
+          await this.pauseCompressionForThermal();
+        }
+        break;
+      case 'resume':
+        if (this.isPausedForThermal) {
+          console.log('Thermal action: Resuming compression after thermal issues resolved');
+          await this.resumeCompressionFromThermal();
+        }
+        break;
+      case 'reduce_concurrency':
+        console.log('Thermal action: Reducing compression concurrency due to thermal pressure');
+        this.adjustConcurrencyForThermal();
+        break;
+      case 'normal':
+        // No action needed, no logging
+        break;
+    }
+  }
+
+  /**
+   * Handle thermal pressure updates
+   */
+  private async handleThermalPressureUpdate(pressure: number): Promise<void> {
+    // Send thermal status to UI
+    try {
+      const status = await this.thermalMonitor.getCurrentStatus();
+      sendCompressionEvent('thermal-status-updated', {
+        type: 'thermal-status-updated',
+        thermalPressure: pressure,
+        isThrottling: status.isThrottling,
+        recommendedAction: status.recommendedAction
+      }, this.mainWindow);
+    } catch (error) {
+      console.warn('Error sending thermal status update:', error);
+    }
+  }
+
+  /**
+   * Pause compression due to thermal issues
+   */
+  private async pauseCompressionForThermal(): Promise<void> {
+    if (this.isPausedForThermal) return;
+    
+    this.isPausedForThermal = true;
+    console.log('Pausing compression due to thermal issues');
+    
+    try {
+      const status = await this.thermalMonitor.getCurrentStatus();
+      sendCompressionEvent('compression-paused-thermal', {
+        type: 'compression-paused-thermal',
+        reason: 'System temperature too high',
+        thermalStatus: status
+      }, this.mainWindow);
+    } catch (error) {
+      console.warn('Error sending thermal pause event:', error);
+    }
+  }
+
+  /**
+   * Resume compression after thermal issues resolve
+   */
+  private async resumeCompressionFromThermal(): Promise<void> {
+    if (!this.isPausedForThermal) return;
+    
+    this.isPausedForThermal = false;
+    console.log('Resuming compression after thermal issues resolved');
+    
+    try {
+      const status = await this.thermalMonitor.getCurrentStatus();
+      sendCompressionEvent('compression-resumed-thermal', {
+        type: 'compression-resumed-thermal',
+        thermalStatus: status
+      }, this.mainWindow);
+    } catch (error) {
+      console.warn('Error sending thermal resume event:', error);
+    }
+  }
+
+  /**
+   * Adjust concurrency based on thermal status
+   */
+  private adjustConcurrencyForThermal(): void {
+    if (!this.userSetConcurrency) {
+      const recommendedConcurrency = this.thermalMonitor.getRecommendedConcurrency(this.maxConcurrentCompressions);
+      if (recommendedConcurrency !== this.maxConcurrentCompressions) {
+        console.log(`Adjusting concurrency from ${this.maxConcurrentCompressions} to ${recommendedConcurrency} due to thermal pressure`);
+        this.maxConcurrentCompressions = recommendedConcurrency;
+      }
+    }
   }
 
   /**
@@ -263,9 +416,9 @@ export class CompressionManager {
       }, this.mainWindow);
     }
     
-    // Hard limit to prevent system overload
-    if (totalTasks > 50) {
-      const error = `Too many compression tasks (${totalTasks}). Maximum allowed is 50. Please select fewer files or presets.`;
+    // Hard limit to prevent system overload (raised for larger batch operations)
+    if (totalTasks > 500) {
+      const error = `Too many compression tasks (${totalTasks}). Maximum allowed is 500. Please select fewer files or presets.`;
       throw new Error(error);
     }
     
@@ -711,6 +864,13 @@ export class CompressionManager {
     }
   }
 
+  /**
+   * Stop thermal monitoring
+   */
+  private stopThermalMonitoring(): void {
+    this.thermalMonitor.stopMonitoring();
+  }
+
   // Cancel all active compressions with proper cleanup
   cancelCompression(): { success: boolean } {
     // Cancelling all active compressions
@@ -737,6 +897,9 @@ export class CompressionManager {
     // Clear all maps using memory manager
     activeCompressions.clear();
     this.memoryManager.cleanupCompression();
+    
+    // Stop thermal monitoring
+    this.stopThermalMonitoring();
     
     // Send cancellation event to UI
     sendCompressionEvent('compression-cancelled', {

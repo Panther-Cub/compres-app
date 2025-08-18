@@ -98,12 +98,31 @@ export class Settings {
   /**
    * Get startup settings
    */
-  static getStartupSettings(): { openAtLogin: boolean; defaultWindow: string; performanceSettings?: { maxConcurrentCompressions: number }; showRecommendedPresets: boolean } {
+  static getStartupSettings(): { 
+    openAtLogin: boolean; 
+    defaultWindow: string; 
+    performanceSettings?: { 
+      maxConcurrentCompressions: number;
+      enableThermalThrottling: boolean;
+      thermalThrottleThreshold: number;
+      adaptiveConcurrency: boolean;
+      hardwareAccelerationPriority: 'thermal' | 'speed' | 'balanced';
+      maxCpuUsage: number;
+      enablePauseOnOverheat: boolean;
+    }; 
+    showRecommendedPresets: boolean 
+  } {
     return {
       openAtLogin: this.getSetting('openAtLogin', APP_CONSTANTS.DEFAULT_OPEN_AT_LOGIN),
       defaultWindow: this.getSetting('defaultWindow', APP_CONSTANTS.DEFAULT_WINDOW),
       performanceSettings: {
-        maxConcurrentCompressions: this.getSetting('maxConcurrentCompressions', 2)
+        maxConcurrentCompressions: this.getSetting('maxConcurrentCompressions', 1), // Reduced default for thermal safety
+        enableThermalThrottling: this.getSetting('enableThermalThrottling', true),
+        thermalThrottleThreshold: this.getSetting('thermalThrottleThreshold', 85), // Celsius
+        adaptiveConcurrency: this.getSetting('adaptiveConcurrency', true),
+        hardwareAccelerationPriority: this.getSetting('hardwareAccelerationPriority', 'thermal'),
+        maxCpuUsage: this.getSetting('maxCpuUsage', 70), // Percentage
+        enablePauseOnOverheat: this.getSetting('enablePauseOnOverheat', true)
       },
       showRecommendedPresets: this.getSetting('showRecommendedPresets', true)
     };
@@ -112,12 +131,31 @@ export class Settings {
   /**
    * Save startup settings
    */
-  static saveStartupSettings(settings: { openAtLogin: boolean; defaultWindow: string; performanceSettings?: { maxConcurrentCompressions: number }; showRecommendedPresets?: boolean }): void {
+  static saveStartupSettings(settings: { 
+    openAtLogin: boolean; 
+    defaultWindow: string; 
+    performanceSettings?: { 
+      maxConcurrentCompressions: number;
+      enableThermalThrottling: boolean;
+      thermalThrottleThreshold: number;
+      adaptiveConcurrency: boolean;
+      hardwareAccelerationPriority: 'thermal' | 'speed' | 'balanced';
+      maxCpuUsage: number;
+      enablePauseOnOverheat: boolean;
+    }; 
+    showRecommendedPresets?: boolean 
+  }): void {
     this.setSetting('openAtLogin', settings.openAtLogin);
     this.setSetting('defaultWindow', settings.defaultWindow);
     
-    if (settings.performanceSettings?.maxConcurrentCompressions) {
+    if (settings.performanceSettings) {
       this.setSetting('maxConcurrentCompressions', settings.performanceSettings.maxConcurrentCompressions);
+      this.setSetting('enableThermalThrottling', settings.performanceSettings.enableThermalThrottling);
+      this.setSetting('thermalThrottleThreshold', settings.performanceSettings.thermalThrottleThreshold);
+      this.setSetting('adaptiveConcurrency', settings.performanceSettings.adaptiveConcurrency);
+      this.setSetting('hardwareAccelerationPriority', settings.performanceSettings.hardwareAccelerationPriority);
+      this.setSetting('maxCpuUsage', settings.performanceSettings.maxCpuUsage);
+      this.setSetting('enablePauseOnOverheat', settings.performanceSettings.enablePauseOnOverheat);
     }
     
     if (settings.showRecommendedPresets !== undefined) {

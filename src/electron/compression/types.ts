@@ -118,7 +118,10 @@ export type CompressionEventData =
   | HardwareDetectionEvent 
   | BatchProgressEvent 
   | CompressionCancelledEvent
-  | CompressionWarningEvent;
+  | CompressionWarningEvent
+  | ThermalStatusUpdatedEvent
+  | CompressionPausedThermalEvent
+  | CompressionResumedThermalEvent;
 
 export interface AdvancedCompressionSettings {
   crf?: number;
@@ -159,4 +162,34 @@ export interface CompressionWarningEvent {
   totalTasks: number;
   estimatedTimeMinutes: number;
   maxConcurrent: number;
+}
+
+export interface ThermalStatusUpdatedEvent {
+  type: 'thermal-status-updated';
+  thermalPressure: number;
+  isThrottling: boolean;
+  recommendedAction: 'normal' | 'reduce_concurrency' | 'pause' | 'resume';
+}
+
+export interface CompressionPausedThermalEvent {
+  type: 'compression-paused-thermal';
+  reason: string;
+  thermalStatus: {
+    cpuTemperature: number;
+    cpuUsage: number;
+    isThrottling: boolean;
+    recommendedAction: 'normal' | 'reduce_concurrency' | 'pause' | 'resume';
+    thermalPressure: number;
+  };
+}
+
+export interface CompressionResumedThermalEvent {
+  type: 'compression-resumed-thermal';
+  thermalStatus: {
+    cpuTemperature: number;
+    cpuUsage: number;
+    isThrottling: boolean;
+    recommendedAction: 'normal' | 'reduce_concurrency' | 'pause' | 'resume';
+    thermalPressure: number;
+  };
 }

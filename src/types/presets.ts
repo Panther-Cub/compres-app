@@ -44,14 +44,14 @@ export const simplePresets: Record<string, SimplePreset> = {
   },
 
   // MAC CATEGORY
-  'mac-fast': {
-    name: 'Mac Fast',
-    description: 'Hardware accelerated for Mac (fast encoding)',
+  'mac-standard': {
+    name: 'Mac Standard',
+    description: 'Standard quality for macOS devices',
     category: 'mac'
   },
-  'mac-efficient': {
-    name: 'Mac Efficient',
-    description: 'Hardware accelerated for Mac (smaller files)',
+  'mac-high': {
+    name: 'Mac High Quality',
+    description: 'High quality for macOS devices',
     category: 'mac'
   }
 };

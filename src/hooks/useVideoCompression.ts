@@ -34,6 +34,13 @@ export const useVideoCompression = (presetSettings?: Record<string, PresetSettin
   const [compressionStatuses, setCompressionStatuses] = useState<Record<string, CompressionStatus>>({});
   const [overwriteConfirmation, setOverwriteConfirmation] = useState<OverwriteConfirmation | null>(null);
   const [batchOverwriteConfirmation, setBatchOverwriteConfirmation] = useState<BatchOverwriteConfirmation | null>(null);
+  const [thermalStatus, setThermalStatus] = useState<{
+    thermalPressure: number;
+    isThrottling: boolean;
+    recommendedAction: 'normal' | 'reduce_concurrency' | 'pause' | 'resume';
+    cpuTemperature?: number;
+    cpuUsage?: number;
+  } | null>(null);
   
   // Track all compression tasks
   const compressionTasksRef = useRef<Map<string, CompressionTask>>(new Map());
@@ -258,6 +265,33 @@ export const useVideoCompression = (presetSettings?: Record<string, PresetSettin
       try {
         window.electronAPI.onCompressionProgress(handleCompressionProgress);
         window.electronAPI.onCompressionComplete(handleCompressionComplete);
+        
+        // Add thermal monitoring event listeners
+        if (window.electronAPI.onThermalStatusUpdated) {
+          window.electronAPI.onThermalStatusUpdated((data: any) => {
+            setThermalStatus({
+              thermalPressure: data.thermalPressure,
+              isThrottling: data.isThrottling,
+              recommendedAction: data.recommendedAction,
+              cpuTemperature: data.cpuTemperature,
+              cpuUsage: data.cpuUsage
+            });
+          });
+        }
+        
+        if (window.electronAPI.onCompressionPausedThermal) {
+          window.electronAPI.onCompressionPausedThermal((data: any) => {
+            console.log('Compression paused due to thermal issues:', data);
+            // Could show a notification or update UI state
+          });
+        }
+        
+        if (window.electronAPI.onCompressionResumedThermal) {
+          window.electronAPI.onCompressionResumedThermal((data: any) => {
+            console.log('Compression resumed after thermal issues resolved:', data);
+            // Could show a notification or update UI state
+          });
+        }
       } catch (error) {
         console.error('Error setting up compression event listeners:', error);
       }
@@ -267,6 +301,9 @@ export const useVideoCompression = (presetSettings?: Record<string, PresetSettin
         try {
           window.electronAPI.removeAllListeners('compression-progress');
           window.electronAPI.removeAllListeners('compression-complete');
+          window.electronAPI.removeAllListeners('thermal-status-updated');
+          window.electronAPI.removeAllListeners('compression-paused-thermal');
+          window.electronAPI.removeAllListeners('compression-resumed-thermal');
         } catch (error) {
           console.error('Error cleaning up compression event listeners:', error);
         }
@@ -940,6 +977,8 @@ export const useVideoCompression = (presetSettings?: Record<string, PresetSettin
     batchOverwriteConfirmation,
     handleRecompressFile,
     confirmOverwrite,
-    cancelOverwrite
+    cancelOverwrite,
+    // Thermal monitoring
+    thermalStatus
   };
 };

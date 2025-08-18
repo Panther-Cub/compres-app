@@ -51,6 +51,10 @@ export function createElectronAPI(): ElectronAPI {
     // Theme management
     getCurrentTheme: () => ipcRenderer.invoke('get-current-theme'),
     
+    // Thermal monitoring
+    getThermalStatus: () => ipcRenderer.invoke('get-thermal-status'),
+    updateThermalSettings: (settings: any) => ipcRenderer.invoke('update-thermal-settings', settings),
+    
     // Window management
     createDefaultsWindow: () => ipcRenderer.invoke('create-defaults-window'),
     createBatchRenameWindow: () => ipcRenderer.invoke('create-batch-rename-window'),
@@ -79,6 +83,19 @@ export function createElectronAPI(): ElectronAPI {
   },
   onUpdateCompressionStatusesForPreset: (callback: (data: any) => void) => {
     ipcRenderer.on('update-compression-statuses-for-preset', (event, data) => callback(data));
+  },
+  
+  // Thermal monitoring events
+  onThermalStatusUpdated: (callback: (data: any) => void) => {
+    ipcRenderer.on('thermal-status-updated', (event, data) => callback(data));
+  },
+  
+  onCompressionPausedThermal: (callback: (data: any) => void) => {
+    ipcRenderer.on('compression-paused-thermal', (event, data) => callback(data));
+  },
+  
+  onCompressionResumedThermal: (callback: (data: any) => void) => {
+    ipcRenderer.on('compression-resumed-thermal', (event, data) => callback(data));
   },
     
     onOverlayFilesDropped: (callback: (filePaths: string[]) => void) => {

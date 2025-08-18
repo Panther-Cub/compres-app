@@ -29,7 +29,13 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
     showRecommendedPresets: true
   });
   const [performanceSettings, setPerformanceSettings] = useState({
-    maxConcurrentCompressions: 2
+    maxConcurrentCompressions: 2,
+    enableThermalThrottling: true,
+    thermalThrottleThreshold: 85,
+    adaptiveConcurrency: true,
+    hardwareAccelerationPriority: 'thermal' as 'thermal' | 'speed' | 'balanced',
+    maxCpuUsage: 70,
+    enablePauseOnOverheat: true
   });
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -87,7 +93,15 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
         
         // Load performance settings if available
         if (settings.performanceSettings) {
-          setPerformanceSettings(settings.performanceSettings);
+          setPerformanceSettings({
+            maxConcurrentCompressions: settings.performanceSettings.maxConcurrentCompressions ?? 2,
+            enableThermalThrottling: (settings.performanceSettings as any).enableThermalThrottling ?? true,
+            thermalThrottleThreshold: (settings.performanceSettings as any).thermalThrottleThreshold ?? 85,
+            adaptiveConcurrency: (settings.performanceSettings as any).adaptiveConcurrency ?? true,
+            hardwareAccelerationPriority: (settings.performanceSettings as any).hardwareAccelerationPriority ?? 'thermal',
+            maxCpuUsage: (settings.performanceSettings as any).maxCpuUsage ?? 70,
+            enablePauseOnOverheat: (settings.performanceSettings as any).enablePauseOnOverheat ?? true
+          });
         }
       }
     } catch (error) {
@@ -221,6 +235,89 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
                 <p className="text-xs text-muted-foreground">
                   Higher values compress more videos simultaneously but use more system resources
                 </p>
+              </div>
+
+              {/* Thermal Management */}
+              <div className="space-y-3 pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="thermal-throttling" className="text-sm">Enable Thermal Throttling</Label>
+                  <Switch
+                    id="thermal-throttling"
+                    checked={performanceSettings.enableThermalThrottling}
+                    onCheckedChange={(checked) => handlePerformanceSettingChange('enableThermalThrottling', checked)}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Automatically reduce compression load when system temperature is high
+                </p>
+
+                {performanceSettings.enableThermalThrottling && (
+                  <>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <Label htmlFor="thermal-threshold">Thermal Threshold (°C)</Label>
+                        <span className="text-muted-foreground">{performanceSettings.thermalThrottleThreshold}°C</span>
+                      </div>
+                      <input
+                        id="thermal-threshold"
+                        type="range"
+                        min="70"
+                        max="95"
+                        value={performanceSettings.thermalThrottleThreshold}
+                        onChange={(e) => handlePerformanceSettingChange('thermalThrottleThreshold', parseInt(e.target.value))}
+                        className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer slider"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>70°C (Safe)</span>
+                        <span>95°C (Hot)</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <Label htmlFor="cpu-usage">Max CPU Usage (%)</Label>
+                        <span className="text-muted-foreground">{performanceSettings.maxCpuUsage}%</span>
+                      </div>
+                      <input
+                        id="cpu-usage"
+                        type="range"
+                        min="50"
+                        max="90"
+                        value={performanceSettings.maxCpuUsage}
+                        onChange={(e) => handlePerformanceSettingChange('maxCpuUsage', parseInt(e.target.value))}
+                        className="w-full h-2 bg-border rounded-lg appearance-none cursor-pointer slider"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>50% (Conservative)</span>
+                        <span>90% (Aggressive)</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="adaptive-concurrency" className="text-sm">Adaptive Concurrency</Label>
+                      <Switch
+                        id="adaptive-concurrency"
+                        checked={performanceSettings.adaptiveConcurrency}
+                        onCheckedChange={(checked) => handlePerformanceSettingChange('adaptiveConcurrency', checked)}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Automatically adjust concurrent compressions based on system load
+                    </p>
+
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="pause-overheat" className="text-sm">Pause on Overheat</Label>
+                      <Switch
+                        id="pause-overheat"
+                        checked={performanceSettings.enablePauseOnOverheat}
+                        onCheckedChange={(checked) => handlePerformanceSettingChange('enablePauseOnOverheat', checked)}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Pause compression when system temperature is critically high
+                    </p>
+                  </>
+                )}
               </div>
             </CardContent>
           </Card>

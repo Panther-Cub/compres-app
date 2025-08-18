@@ -291,6 +291,14 @@ export interface UseVideoCompressionReturn {
   handleRecompressFile: (filePath: string, presetId: string) => Promise<void>;
   confirmOverwrite: () => Promise<void>;
   cancelOverwrite: () => void;
+  // Thermal monitoring
+  thermalStatus: {
+    thermalPressure: number;
+    isThrottling: boolean;
+    recommendedAction: 'normal' | 'reduce_concurrency' | 'pause' | 'resume';
+    cpuTemperature?: number;
+    cpuUsage?: number;
+  } | null;
 }
 
 export interface UseSettingsReturn {
