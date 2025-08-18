@@ -109,10 +109,14 @@ export interface ElectronAPI {
   notifyUserDefaultsUpdated: (defaults: { defaultPresets?: string[]; defaultOutputDirectory?: string; defaultOutputFolderName?: string }) => void;
   onUserDefaultsUpdated: (callback: (defaults: { defaultPresets?: string[]; defaultOutputDirectory?: string; defaultOutputFolderName?: string }) => void) => void;
   
+  // Compression status management
+  updateCompressionStatusesForPreset: (presetId: string, keepAudio: boolean) => Promise<{ success: boolean }>;
+  
   // Event listeners - FIXED: Added missing compression event handlers
   onCompressionStarted: (callback: (data: CompressionEventData) => void) => void;
   onCompressionProgress: (callback: (data: CompressionProgressData) => void) => void;
   onCompressionComplete: (callback: (data: CompressionCompleteData) => void) => void;
+  onUpdateCompressionStatusesForPreset: (callback: (data: { presetId: string; keepAudio: boolean }) => void) => void;
   onOverlayFilesDropped: (callback: (filePaths: string[]) => void) => void;
   onBatchRenameResults: (callback: (results: { success: boolean; oldPath: string; newPath?: string; error?: string }[]) => void) => void;
   onCompressionNamingResults: (callback: (results: { success: boolean; error?: string }) => void) => void;

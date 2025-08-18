@@ -98,6 +98,7 @@ export interface CompressionCompleteEvent {
   outputPath?: string;
   success: boolean;
   error?: string;
+  keepAudio?: boolean;
 }
 
 export interface CompressionErrorEvent {

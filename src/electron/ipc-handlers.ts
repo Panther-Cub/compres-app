@@ -14,7 +14,7 @@ import {
   addCustomPresetWithPersistence, 
   removeCustomPresetWithPersistence 
 } from './compression/custom-preset-manager';
-import { getDefaultOutputDirectory } from './compression/utils';
+
 import { 
   getMainWindow, 
   showMainWindow, 
@@ -427,7 +427,6 @@ export function setupIpcHandlers(): void {
       // Import the same utilities used by the compression manager
       const { buildOutputPath } = require('./compression/utils');
       const { videoPresets } = require('./compression/presets');
-      const { getPresetMetadata } = require('../shared/presetRegistry');
 
       console.log('Checking files for existing output...');
       for (const file of files) {
@@ -508,6 +507,15 @@ export function setupIpcHandlers(): void {
     }
     
     return compressionManager.cancelCompression();
+  });
+
+  // Update compression statuses for a preset
+  ipcMain.handle('update-compression-statuses-for-preset', async (event, presetId: string, keepAudio: boolean) => {
+    if (!compressionManager) {
+      throw new Error('Compression manager not initialized');
+    }
+    
+    return await compressionManager.updateCompressionStatusesForPreset(presetId, keepAudio);
   });
 
   ipcMain.handle('get-compression-status', async () => {

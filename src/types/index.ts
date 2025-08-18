@@ -16,6 +16,7 @@ export interface CompressionStatus {
   outputPath?: string;
   error?: string;
   completedAt?: number; // timestamp when compression completed
+  keepAudio?: boolean; // whether audio was kept for this compression
 }
 
 // New interface for overwrite confirmation

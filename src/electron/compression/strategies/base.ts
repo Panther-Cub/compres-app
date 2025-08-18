@@ -245,7 +245,8 @@ export abstract class BaseCompressionStrategy {
           file: fileName,
           preset: presetKey,
           outputPath,
-          success: true
+          success: true,
+          keepAudio: this.context.keepAudio
         }, mainWindow);
       } catch (completeError) {
         console.warn('Error sending completion event:', completeError);

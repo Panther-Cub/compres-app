@@ -58,6 +58,7 @@ export interface CompressionCompleteData {
   preset: string;
   outputPath?: string;
   error?: string;
+  keepAudio?: boolean;
 }
 
 export interface UpdateData {

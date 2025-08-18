@@ -1,6 +1,6 @@
 
 
-import type { AdvancedSettings, Preset, CompressionResult, CompressionEventData, CompressionProgressData, CompressionCompleteData, UpdateData, UpdateStatusData } from './shared';
+import type { AdvancedSettings, Preset, CompressionResult, CompressionEventData, CompressionProgressData, CompressionCompleteData } from './shared';
 
 // Define the ElectronAPI interface locally to avoid importing from electron directory
 interface ElectronAPI {
@@ -64,6 +64,7 @@ interface ElectronAPI {
     existingFileName: string;
   }>>;
   cancelCompression: () => Promise<{ success: boolean }>;
+  updateCompressionStatusesForPreset: (presetId: string, keepAudio: boolean) => Promise<{ success: boolean }>;
   
   // Thumbnails and file operations
   generateThumbnail: (filePath: string) => Promise<string>;
@@ -106,6 +107,7 @@ interface ElectronAPI {
   onCompressionStarted: (callback: (data: CompressionEventData) => void) => void;
   onCompressionProgress: (callback: (data: CompressionProgressData) => void) => void;
   onCompressionComplete: (callback: (data: CompressionCompleteData) => void) => void;
+  onUpdateCompressionStatusesForPreset: (callback: (data: { presetId: string; keepAudio: boolean }) => void) => void;
   onOverlayFilesDropped: (callback: (filePaths: string[]) => void) => void;
   onBatchRenameResults: (callback: (results: { success: boolean; oldPath: string; newPath?: string; error?: string }[]) => void) => void;
   onCompressionNamingResults: (callback: (results: { success: boolean; error?: string }) => void) => void;

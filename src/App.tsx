@@ -24,25 +24,6 @@ function App() {
   const [, setUpdateInfo] = useState<UpdateStatusData | null>(null);
   
   const {
-    selectedFiles,
-    setSelectedFiles,
-    fileInfos,
-    isCompressing,
-    error,
-    handleFileSelect,
-    removeFile,
-    compressVideos,
-    reset,
-    // New compression status tracking
-    compressionStatuses,
-    overwriteConfirmation,
-    batchOverwriteConfirmation,
-    handleRecompressFile,
-    confirmOverwrite,
-    cancelOverwrite
-  } = useVideoCompression();
-
-  const {
     selectedPresets,
     presetSettings,
     setPresetSettings,
@@ -76,6 +57,25 @@ function App() {
     handleReorderPresets,
     getFinalOutputPath
   } = useSettings();
+
+  const {
+    selectedFiles,
+    setSelectedFiles,
+    fileInfos,
+    isCompressing,
+    error,
+    handleFileSelect,
+    removeFile,
+    compressVideos,
+    reset,
+    // New compression status tracking
+    compressionStatuses,
+    overwriteConfirmation,
+    batchOverwriteConfirmation,
+    handleRecompressFile,
+    confirmOverwrite,
+    cancelOverwrite
+  } = useVideoCompression(presetSettings);
 
   const { theme, toggleTheme } = useTheme();
 

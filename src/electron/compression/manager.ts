@@ -742,4 +742,22 @@ export class CompressionManager {
     this.memoryManager.checkForLeaks();
     MemoryUtils.logMemoryUsage('Memory leak check');
   }
+
+  /**
+   * Update compression statuses for a specific preset
+   */
+  async updateCompressionStatusesForPreset(presetId: string, keepAudio: boolean): Promise<{ success: boolean }> {
+    try {
+      // Send custom event to update compression statuses in the UI
+      this.mainWindow.webContents.send('update-compression-statuses-for-preset', {
+        presetId,
+        keepAudio
+      });
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating compression statuses for preset:', error);
+      return { success: false };
+    }
+  }
 }

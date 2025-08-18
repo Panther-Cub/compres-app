@@ -24,6 +24,7 @@ function createElectronAPI(): any {
     checkFileExists: (filePath: string) => ipcRenderer.invoke('check-file-exists', filePath),
     checkExistingOutputFiles: (data: any) => ipcRenderer.invoke('check-existing-output-files', data),
     cancelCompression: () => ipcRenderer.invoke('cancel-compression'),
+    updateCompressionStatusesForPreset: (presetId: string, keepAudio: boolean) => ipcRenderer.invoke('update-compression-statuses-for-preset', presetId, keepAudio),
     
     // Thumbnails and file operations
     generateThumbnail: (filePath: string) => ipcRenderer.invoke('generate-thumbnail', filePath),
@@ -71,6 +72,10 @@ function createElectronAPI(): any {
     
     onCompressionComplete: (callback: (data: any) => void) => {
       ipcRenderer.on('compression-complete', (event, data) => callback(data));
+    },
+    
+    onUpdateCompressionStatusesForPreset: (callback: (data: any) => void) => {
+      ipcRenderer.on('update-compression-statuses-for-preset', (event, data) => callback(data));
     },
     
     onOverlayFilesDropped: (callback: (filePaths: string[]) => void) => {

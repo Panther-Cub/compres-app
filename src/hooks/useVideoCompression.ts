@@ -5,11 +5,12 @@ import type {
   AdvancedSettings,
   CompressionStatus,
   OverwriteConfirmation,
-  BatchOverwriteConfirmation
+  BatchOverwriteConfirmation,
+  PresetSettings
 } from '../types';
 import type { CompressionProgressData, CompressionCompleteData } from '../types/shared';
 import { getFileName } from '../utils/formatters';
-import { getPresetFolderName, getPresetSuffix } from '../shared/presetRegistry';
+
 
 interface CompressionTask {
   file: string;
@@ -20,7 +21,7 @@ interface CompressionTask {
   error?: string;
 }
 
-export const useVideoCompression = (): UseVideoCompressionReturn => {
+export const useVideoCompression = (presetSettings?: Record<string, PresetSettings>): UseVideoCompressionReturn => {
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
   const [fileInfos, setFileInfos] = useState<Record<string, FileInfo>>({});
   const [isCompressing, setIsCompressing] = useState<boolean>(false);
@@ -196,7 +197,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
 
     const handleCompressionComplete = (data: CompressionCompleteData) => {
       try {
-        const { file, preset, taskKey, success, outputPath, error } = data;
+        const { file, preset, taskKey, success, outputPath, error, keepAudio } = data;
         if (!file || !preset) {
           console.warn('Invalid compression complete data:', data);
           return;
@@ -224,7 +225,8 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
               progress: success ? 100 : 0,
               outputPath: success ? outputPath : undefined,
               error: success ? undefined : error,
-              completedAt: success ? Date.now() : undefined
+              completedAt: success ? Date.now() : undefined,
+              keepAudio: keepAudio
             }
           }));
         } else {
@@ -245,7 +247,8 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
                 progress: success ? 100 : 0,
                 outputPath: success ? outputPath : undefined,
                 error: success ? undefined : error,
-                completedAt: success ? Date.now() : undefined
+                completedAt: success ? Date.now() : undefined,
+                keepAudio: keepAudio
               }
             }));
           }
@@ -546,11 +549,13 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
 
         // Initialize compression status - use full file path for consistency
         const statusKey = `${file}::${presetConfig.presetId}`;
+        console.log(`Creating compression status for ${file} with preset ${presetConfig.presetId}, keepAudio: ${presetConfig.keepAudio}`);
         initialStatuses[statusKey] = {
           filePath: file,
           presetId: presetConfig.presetId,
           status: 'pending',
-          progress: 0
+          progress: 0,
+          keepAudio: presetConfig.keepAudio
         };
       }
     }
@@ -737,7 +742,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
   }, [selectedFiles, markTaskComplete, getTaskKey]);
 
   // Function to compress a single file
-  const compressSingleFile = useCallback(async (filePath: string, presetId: string): Promise<void> => {
+  const compressSingleFile = useCallback(async (filePath: string, presetId: string, keepAudio?: boolean): Promise<void> => {
     try {
       const statusKey = `${filePath}::${presetId}`;
       
@@ -756,7 +761,7 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
       const outputDirectory = await window.electronAPI.getDefaultOutputDirectory();
       const result = await window.electronAPI.compressVideos({
         files: [filePath],
-        presetConfigs: [{ presetId, keepAudio: true }],
+        presetConfigs: [{ presetId, keepAudio: keepAudio ?? true }],
         outputDirectory
       });
 
@@ -770,7 +775,8 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
             status: 'completed',
             progress: 100,
             outputPath: result[0].outputPath,
-            completedAt: Date.now()
+            completedAt: Date.now(),
+            keepAudio: keepAudio ?? true
           }
         }));
       } else {
@@ -824,7 +830,8 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
       } else {
         // No existing compression found, proceeding with single file compression
         // No existing compression, proceed normally
-        await compressSingleFile(filePath, presetId);
+        const keepAudio = presetSettings?.[presetId]?.keepAudio ?? true;
+        await compressSingleFile(filePath, presetId, keepAudio);
       }
     } catch (error) {
       console.error('Error handling re-compression:', error);
@@ -873,7 +880,8 @@ export const useVideoCompression = (): UseVideoCompressionReturn => {
           return newStatuses;
         });
         
-        await compressSingleFile(overwriteConfirmation.filePath, overwriteConfirmation.presetId);
+        const keepAudio = presetSettings?.[overwriteConfirmation.presetId]?.keepAudio ?? true;
+        await compressSingleFile(overwriteConfirmation.filePath, overwriteConfirmation.presetId, keepAudio);
       }
     } catch (error) {
       console.error('Error confirming overwrite:', error);

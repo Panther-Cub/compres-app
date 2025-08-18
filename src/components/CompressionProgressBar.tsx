@@ -1,7 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Check, Loader2 } from 'lucide-react';
+import { Check, Loader2, Volume2, VolumeX } from 'lucide-react';
 import type { CompressionStatus } from '../types';
+import { getPresetMetadata } from '../shared/presetRegistry';
 
 interface CompressionProgressBarProps {
   status: CompressionStatus;
@@ -43,6 +44,10 @@ const CompressionProgressBar: React.FC<CompressionProgressBarProps> = ({
         );
 
       case 'completed':
+        const presetMetadata = getPresetMetadata(status.presetId);
+        const presetName = presetMetadata?.name || status.presetId;
+        const hasAudio = status.keepAudio ?? presetMetadata?.defaultKeepAudio ?? true;
+        
         return (
           <motion.div
             className="flex items-center gap-2 text-xs text-green-600"
@@ -52,17 +57,20 @@ const CompressionProgressBar: React.FC<CompressionProgressBarProps> = ({
           >
             <Check className="w-3 h-3" />
             <span>Compression completed</span>
-            {onRecompress && (
-              <button
-                onClick={() => {
-                  console.log('Re-compress button clicked!');
-                  onRecompress();
-                }}
-                className="text-blue-500 hover:text-blue-600 underline text-xs"
-              >
-                Re-compress
-              </button>
-            )}
+            <span className="text-muted-foreground">•</span>
+            <span className="text-muted-foreground">{presetName}</span>
+            <span className="text-muted-foreground">•</span>
+            <div className="flex items-center gap-1">
+              {hasAudio ? (
+                <Volume2 className="w-3 h-3 text-muted-foreground" />
+              ) : (
+                <VolumeX className="w-3 h-3 text-muted-foreground" />
+              )}
+              <span className="text-muted-foreground">
+                {hasAudio ? 'Audio' : 'Muted'}
+              </span>
+            </div>
+
           </motion.div>
         );
 
