@@ -256,24 +256,30 @@ const CompressionOutputNamingWindow: React.FC<CompressionOutputNamingWindowProps
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex gap-2 pt-4">
-              <Button
-                variant="outline"
-                onClick={onClose}
-                className="flex-1"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSaveNaming}
-                disabled={selectedFiles.length === 0}
-                className="flex-1"
-              >
-                Save Naming
-              </Button>
-            </div>
           </motion.div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-border/50 p-4 modal flex-shrink-0">
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            {selectedFiles.length > 0 ? `${selectedFiles.length} files selected` : 'No files selected'}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveNaming}
+              disabled={selectedFiles.length === 0}
+            >
+              Save Naming
+            </Button>
+          </div>
         </div>
       </div>
     </motion.div>
