@@ -73,7 +73,7 @@ export function createPresetFolder(outputDirectory: string, presetKey: string): 
   if (!fs.existsSync(presetFolder)) {
     try {
       fs.mkdirSync(presetFolder, { recursive: true });
-      console.log(`Created preset folder: ${presetFolder}`);
+      // Created preset folder
     } catch (error) {
       console.warn(`Failed to create preset folder: ${presetFolder}, using base directory`);
       return outputDirectory;

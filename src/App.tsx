@@ -123,7 +123,7 @@ function App() {
   // Listen for batch rename window closed event
   useEffect(() => {
     const handleBatchRenameWindowClosed = () => {
-      console.log('Batch rename window closed, checking for custom names');
+      // Batch rename window closed, checking for custom names
       // Force a re-render to update the UI with any new custom output names
       setSelectedFiles((prev: string[]) => [...prev]);
     };

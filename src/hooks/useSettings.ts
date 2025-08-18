@@ -144,7 +144,7 @@ export const useSettings = (): UseSettingsReturn => {
           
           // After presets are loaded, ensure all selected presets have default settings
           if (hasUserSetDefaults) {
-            console.log('Ensuring all selected presets have default settings');
+            // Ensuring all selected presets have default settings
             const updatedPresetSettings = { ...userDefaults.defaultPresetSettings };
             
             // Add default settings for any selected presets that don't have them

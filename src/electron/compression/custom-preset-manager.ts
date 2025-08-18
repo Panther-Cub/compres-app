@@ -33,7 +33,7 @@ export const loadCustomPresetsFromFile = (): Record<string, VideoPreset> => {
         }
       });
       
-      console.log(`Loaded ${Object.keys(validPresets).length} custom presets from file`);
+      // Loaded custom presets from file
       return validPresets;
     }
   } catch (error) {
@@ -49,7 +49,7 @@ export const saveCustomPresetsToFile = (customPresets: Record<string, VideoPrese
     const customPresetsPath = getCustomPresetsPath();
     const data = JSON.stringify(customPresets, null, 2);
     fs.writeFileSync(customPresetsPath, data, 'utf8');
-    console.log(`Saved ${Object.keys(customPresets).length} custom presets to file`);
+    // Saved custom presets to file
   } catch (error) {
     console.error('Error saving custom presets:', error);
   }

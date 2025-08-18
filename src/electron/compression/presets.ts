@@ -167,7 +167,7 @@ export const addCustomPreset = (presetId: string, preset: VideoPreset): void => 
   videoPresets[safePresetId] = customPresetWithCategory;
   customPresets[safePresetId] = customPresetWithCategory;
   
-  console.log(`Custom preset added: ${safePresetId}`);
+      // Custom preset added
 };
 
 // Function to remove a custom preset (in-memory only, file operations in main process)
@@ -176,7 +176,7 @@ export const removeCustomPreset = (presetId: string): void => {
     delete videoPresets[presetId];
     delete customPresets[presetId];
     
-    console.log(`Custom preset removed: ${presetId}`);
+    // Custom preset removed
   }
 };
 
@@ -205,7 +205,7 @@ export const loadCustomPresetsFromData = (customPresetsData: Record<string, Vide
   });
   
   customPresetsLoaded = true;
-  console.log(`Loaded ${Object.keys(customPresets).length} custom presets`);
+  // Loaded custom presets
 };
 
 // Function to check if custom presets are loaded

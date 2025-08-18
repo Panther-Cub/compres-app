@@ -70,7 +70,7 @@ export class HardwareDetection {
       fallbackCodec
     };
 
-    console.log('Hardware capabilities detected:', this.capabilities);
+    // Hardware capabilities detected
     return this.capabilities;
   }
 

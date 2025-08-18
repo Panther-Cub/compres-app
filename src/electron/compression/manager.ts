@@ -349,7 +349,7 @@ export class CompressionManager {
           `);
           customOutputName = customNaming;
           if (customOutputName) {
-            console.log(`Found custom output name for ${file}: ${customOutputName}`);
+            // Found custom output name
           }
         } catch (_) {}
         
@@ -386,7 +386,7 @@ export class CompressionManager {
     // Process compressions with proper concurrency control
     try {
       const results = await this.processWithConcurrencyControl(compressionTasks);
-      console.log('All compressions completed:', results);
+      // All compressions completed
       return results;
     } catch (error) {
       console.error('Batch compression failed:', error);
@@ -471,14 +471,14 @@ export class CompressionManager {
       `);
       customOutputName = customNaming;
       if (customOutputName) {
-        console.log(`Found custom output name for ${file}: ${customOutputName}`);
+        // Found custom output name
       }
     } catch (_) {}
     
     try {
       // Track running compressions with better synchronization
       this.runningCompressions++;
-      console.log(`Starting compression ${this.runningCompressions}/${this.maxConcurrentCompressions}: ${fileName}`);
+      // Starting compression
       
       // Mark task as started in batch progress
       try {
@@ -521,7 +521,7 @@ export class CompressionManager {
         console.warn(`Failed to mark task completed: ${error}`);
       }
       
-      console.log(`Successfully completed compression: ${fileName}`);
+      // Compression completed successfully
       return result;
       
     } catch (error) {
@@ -585,7 +585,7 @@ export class CompressionManager {
       
       // Decrement running compressions with bounds checking
       this.runningCompressions = Math.max(0, this.runningCompressions - 1);
-      console.log(`Completed compression ${this.runningCompressions}/${this.maxConcurrentCompressions}: ${fileName}`);
+      // Compression task completed
     }
   }
 
@@ -602,10 +602,10 @@ export class CompressionManager {
         
         if (capabilities.hasHEVC && preset.settings.videoCodec === 'libx265') {
           optimizedPreset.settings.videoCodec = 'hevc_videotoolbox';
-          console.log(`Optimized preset to use HEVC hardware acceleration`);
+          // Optimized preset to use HEVC hardware acceleration
         } else if (capabilities.hasH264 && preset.settings.videoCodec === 'libx264') {
           optimizedPreset.settings.videoCodec = 'h264_videotoolbox';
-          console.log(`Optimized preset to use H.264 hardware acceleration`);
+                      // Optimized preset to use H.264 hardware acceleration
         }
         
         return optimizedPreset;
@@ -662,13 +662,13 @@ export class CompressionManager {
       `);
       customOutputName = customNaming;
       if (customOutputName) {
-        console.log(`Found custom output name for ${file}: ${customOutputName}`);
+        // Found custom output name
       }
     } catch (_) {}
     
     const outputPath = buildOutputPath(file, presetKey, outputDirectory, preset.settings.videoCodec, keepAudio, fileIndex, customOutputName);
     if (customOutputName) {
-      console.log(`Final output path: ${outputPath}`);
+      // Final output path calculated
     }
     
     // Use advanced settings if provided, otherwise use preset defaults
@@ -718,7 +718,7 @@ export class CompressionManager {
 
   // Cancel all active compressions with proper cleanup
   cancelCompression(): { success: boolean } {
-    console.log('Cancelling all active compressions...');
+    // Cancelling all active compressions
     
     this.isCancelled = true;
     
@@ -732,10 +732,10 @@ export class CompressionManager {
     for (const [taskKey, command] of Array.from(activeCompressions.entries())) {
       try {
         command.kill('SIGKILL');
-        console.log(`Killed compression process: ${taskKey}`);
+        // Killed compression process: ${taskKey}
         killedCount++;
       } catch (err) {
-        console.error('Error killing compression process:', err);
+        console.error(`Error killing compression process ${taskKey}:`, err);
       }
     }
     
@@ -749,7 +749,7 @@ export class CompressionManager {
       killedProcesses: killedCount
     }, this.mainWindow);
     
-    console.log(`Cancellation complete: ${killedCount} processes killed`);
+    // Cancellation complete
     return { success: true };
   }
 
