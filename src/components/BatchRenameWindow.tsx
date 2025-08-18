@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { Button, Input, Label, RadioGroup, RadioGroupItem } from './ui';
 import { getFileName } from '../utils/formatters';
 import { macAnimations } from '../lib/animations';
-import type { CompressionOutputNaming } from '../types';
+import { themeManager } from '../lib/theme';
+import type { CompressionOutputNaming, Theme } from '../types';
 
 interface CompressionOutputNamingWindowProps {
   onClose: () => void;
@@ -55,6 +56,41 @@ const CompressionOutputNamingWindow: React.FC<CompressionOutputNamingWindowProps
       example: 'Cleaned filename'
     }
   ];
+
+  // Force theme application when BatchRenameWindow loads
+  useEffect(() => {
+    // Force apply theme immediately to ensure it's correct
+    themeManager.forceApplyTheme();
+    
+    // Expose themeManager globally for IPC access
+    (window as any).themeManager = themeManager;
+    
+    // Also get the current theme from the main window if available
+    const getCurrentTheme = async () => {
+      try {
+        if (window.electronAPI && window.electronAPI.getCurrentTheme) {
+          const currentTheme = await window.electronAPI.getCurrentTheme();
+          if (currentTheme && ['light', 'dark', 'system'].includes(currentTheme)) {
+            themeManager.setTheme(currentTheme as Theme);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to get current theme:', error);
+      }
+    };
+    
+    getCurrentTheme();
+    
+    // Subscribe to theme changes
+    const unsubscribe = themeManager.subscribe(() => {
+      // Force re-application of theme when it changes
+      setTimeout(() => {
+        themeManager.forceApplyTheme();
+      }, 50);
+    });
+    
+    return unsubscribe;
+  }, []);
 
   // Load selected files from main window
   useEffect(() => {
@@ -163,7 +199,7 @@ const CompressionOutputNamingWindow: React.FC<CompressionOutputNamingWindowProps
       exit={{ opacity: 0 }}
     >
       {/* Draggable Title Bar */}
-      <div className="draggable-region fixed top-0 left-0 right-0 z-50 h-10 border-b border-border/20 flex items-center justify-between px-4 select-none flex-shrink-0">
+              <div className="draggable-region sticky top-0 z-50 h-10 border-b border-border flex items-center justify-between px-4 select-none flex-shrink-0">
         <div className="flex items-center gap-3 pl-20">
           <FileVideo className="w-3 h-3 text-foreground/70" />
           <span className="text-[0.625rem] font-normal text-foreground/70">Compression Output Naming</span>
@@ -261,7 +297,7 @@ const CompressionOutputNamingWindow: React.FC<CompressionOutputNamingWindowProps
       </div>
 
       {/* Footer */}
-      <div className="border-t border-border/50 p-4 modal flex-shrink-0">
+              <div className="border-t border-border p-4 modal flex-shrink-0">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
             {selectedFiles.length > 0 ? `${selectedFiles.length} files selected` : 'No files selected'}

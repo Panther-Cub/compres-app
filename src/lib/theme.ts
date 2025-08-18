@@ -80,7 +80,6 @@ export class ThemeManager {
 
   toggleTheme(): void {
     // Theme toggle disabled - always follows macOS system
-
   }
 
   subscribe(listener: (theme: Theme) => void): () => void {
@@ -100,7 +99,117 @@ export class ThemeManager {
   isNativeVibrancySupported(): boolean {
     return process.platform === 'darwin';
   }
+
+  // Get current system theme (light/dark)
+  getSystemTheme(): 'light' | 'dark' {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+
+  // Check if we're in dark mode
+  isDarkMode(): boolean {
+    return this.getSystemTheme() === 'dark';
+  }
+
+  // Check if we're in light mode
+  isLightMode(): boolean {
+    return this.getSystemTheme() === 'light';
+  }
 }
 
 // Export singleton instance
 export const themeManager = ThemeManager.getInstance();
+
+// Utility functions for semantic colors
+export const getSemanticColor = {
+  // Text colors
+  text: {
+    primary: 'text-foreground',
+    secondary: 'text-muted-foreground',
+    muted: 'text-muted-foreground/60',
+    destructive: 'text-destructive',
+    success: 'text-success',
+    warning: 'text-warning',
+    info: 'text-info',
+  },
+  
+  // Background colors
+  bg: {
+    primary: 'bg-primary',
+    secondary: 'bg-secondary',
+    muted: 'bg-muted',
+    accent: 'bg-accent',
+    destructive: 'bg-destructive',
+    success: 'bg-success',
+    warning: 'bg-warning',
+    info: 'bg-info',
+    card: 'bg-card',
+    popover: 'bg-popover',
+  },
+  
+  // Border colors
+  border: {
+    default: 'border-border',
+    input: 'border-input',
+    primary: 'border-primary',
+    destructive: 'border-destructive',
+    success: 'border-success',
+    warning: 'border-warning',
+    info: 'border-info',
+  },
+  
+  // Ring colors (for focus states)
+  ring: {
+    default: 'ring-ring',
+    primary: 'ring-primary',
+    destructive: 'ring-destructive',
+    success: 'ring-success',
+    warning: 'ring-warning',
+    info: 'ring-info',
+  }
+};
+
+// Utility for getting opacity variants
+export const getColorWithOpacity = (color: string, opacity: number) => `${color}/${opacity * 100}`;
+
+// Common color combinations
+export const colorCombinations = {
+  // Success states
+  success: {
+    bg: 'bg-success/10',
+    text: 'text-success',
+    border: 'border-success/20',
+    hover: 'hover:bg-success/20',
+  },
+  
+  // Error states
+  error: {
+    bg: 'bg-destructive/10',
+    text: 'text-destructive',
+    border: 'border-destructive/20',
+    hover: 'hover:bg-destructive/20',
+  },
+  
+  // Warning states
+  warning: {
+    bg: 'bg-warning/10',
+    text: 'text-warning',
+    border: 'border-warning/20',
+    hover: 'hover:bg-warning/20',
+  },
+  
+  // Info states
+  info: {
+    bg: 'bg-info/10',
+    text: 'text-info',
+    border: 'border-info/20',
+    hover: 'hover:bg-info/20',
+  },
+  
+  // Primary states
+  primary: {
+    bg: 'bg-primary/10',
+    text: 'text-primary',
+    border: 'border-primary/20',
+    hover: 'hover:bg-primary/20',
+  },
+};

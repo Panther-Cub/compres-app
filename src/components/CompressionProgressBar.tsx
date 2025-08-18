@@ -34,7 +34,7 @@ const CompressionProgressBar: React.FC<CompressionProgressBarProps> = ({
             </div>
             <div className="w-full bg-muted/20 rounded-full h-1.5 overflow-hidden">
               <motion.div
-                className="h-full bg-blue-500 rounded-full"
+                className="h-full bg-primary rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${status.progress}%` }}
                 transition={{ duration: 0.3 }}
@@ -50,7 +50,7 @@ const CompressionProgressBar: React.FC<CompressionProgressBarProps> = ({
         
         return (
           <motion.div
-            className="flex items-center gap-2 text-xs text-green-600"
+            className="flex items-center gap-2 text-xs text-success"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
@@ -78,7 +78,7 @@ const CompressionProgressBar: React.FC<CompressionProgressBarProps> = ({
       case 'failed':
         return (
           <motion.div
-            className="flex items-center gap-2 text-xs text-red-600"
+            className="flex items-center gap-2 text-xs text-destructive"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.3 }}
@@ -87,7 +87,7 @@ const CompressionProgressBar: React.FC<CompressionProgressBarProps> = ({
             {onRecompress && (
               <button
                 onClick={onRecompress}
-                className="text-blue-500 hover:text-blue-600 underline text-xs"
+                className="text-primary hover:text-primary/80 underline text-xs"
               >
                 Retry
               </button>

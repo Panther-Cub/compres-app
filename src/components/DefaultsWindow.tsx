@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Star, Save, RotateCcw, Settings, Monitor, Smartphone, Apple, FolderOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Button } from './ui';
+import { Button, Input } from './ui';
 import { macAnimations } from '../lib/animations';
-import { Preset } from '../types';
+import { themeManager } from '../lib/theme';
+import { Preset, Theme } from '../types';
 
 interface DefaultsWindowProps {
   onClose: () => void;
@@ -18,6 +19,41 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
   const [defaultOutputFolderName, setDefaultOutputFolderName] = useState<string>('Compressed Videos');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [activeTab, setActiveTab] = useState<TabType>('presets');
+
+  // Force theme application when DefaultsWindow loads
+  useEffect(() => {
+    // Force apply theme immediately to ensure it's correct
+    themeManager.forceApplyTheme();
+    
+    // Expose themeManager globally for IPC access
+    (window as any).themeManager = themeManager;
+    
+    // Also get the current theme from the main window if available
+    const getCurrentTheme = async () => {
+      try {
+        if (window.electronAPI && window.electronAPI.getCurrentTheme) {
+          const currentTheme = await window.electronAPI.getCurrentTheme();
+          if (currentTheme && ['light', 'dark', 'system'].includes(currentTheme)) {
+            themeManager.setTheme(currentTheme as Theme);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to get current theme:', error);
+      }
+    };
+    
+    getCurrentTheme();
+    
+    // Subscribe to theme changes
+    const unsubscribe = themeManager.subscribe(() => {
+      // Force re-application of theme when it changes
+      setTimeout(() => {
+        themeManager.forceApplyTheme();
+      }, 50);
+    });
+    
+    return unsubscribe;
+  }, []);
 
   // Load data on component mount
   useEffect(() => {
@@ -169,18 +205,18 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
       exit={{ opacity: 0 }}
     >
       {/* Draggable Title Bar */}
-      <div className="draggable-region fixed top-0 left-0 right-0 z-50 h-10 border-b border-border/20 flex items-center justify-between px-4 select-none flex-shrink-0">
+              <div className="draggable-region sticky top-0 z-50 h-10 border-b border-border flex items-center justify-between px-4 select-none flex-shrink-0">
         <div className="flex items-center gap-3 pl-20">
           <Star className="w-3 h-3 text-foreground/70" />
           <span className="text-[0.625rem] font-normal text-foreground/70">Startup Defaults</span>
         </div>
       </div>
 
-      {/* Content with top padding for fixed header */}
-      <div className="flex-1 overflow-y-auto pt-10">
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
         <div className="p-6 space-y-6">
           {/* Tab Navigation */}
-          <div className="flex border-b border-border/20 flex-shrink-0">
+          <div className="flex border-b border-border flex-shrink-0">
             <div className="flex w-full">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
@@ -189,7 +225,7 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium transition-all ${
+                    className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium transition-all rounded-t-lg ${
                       isActive
                         ? 'bg-primary/10 text-primary border-b-2 border-primary'
                         : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
@@ -233,13 +269,15 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
                       {categoryPresets.map(([presetId, preset]) => (
                         <label
                           key={presetId}
-                          className="flex items-center gap-3 p-3 rounded-lg border border-border/20 hover:bg-muted/30 transition-colors cursor-pointer"
+                          className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors cursor-pointer"
+                          onClick={() => handleDefaultPresetToggle(presetId)}
                         >
-                          <input
-                            type="checkbox"
-                            checked={defaultPresets.includes(presetId)}
-                            onChange={() => handleDefaultPresetToggle(presetId)}
-                            className="rounded border-border"
+                          <div 
+                            className={`w-3 h-3 rounded-full border-2 transition-colors ${
+                              defaultPresets.includes(presetId)
+                                ? 'bg-foreground border-foreground'
+                                : 'border-border'
+                            }`}
                           />
                           <div className="flex-1">
                             <p className="text-sm font-medium">{preset.name}</p>
@@ -273,13 +311,13 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
                     Default Output Directory
                   </label>
                   <div className="flex gap-2">
-                    <input
+                    <Input
                       id="default-output-directory-input"
                       type="text"
                       value={defaultOutputDirectory}
                       onChange={(e) => setDefaultOutputDirectory(e.target.value)}
                       placeholder="Enter default output directory..."
-                      className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+                      className="flex-1"
                     />
                     <Button
                       variant="outline"
@@ -321,13 +359,12 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
                     <label htmlFor="default-folder-name-input" className="text-xs font-medium text-muted-foreground">
                       Default Folder Name
                     </label>
-                    <input
+                    <Input
                       id="default-folder-name-input"
                       type="text"
                       value={defaultOutputFolderName}
                       onChange={(e) => setDefaultOutputFolderName(e.target.value)}
                       placeholder="Enter default folder name..."
-                      className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                     />
                   </div>
                   
@@ -345,7 +382,7 @@ const DefaultsWindow: React.FC<DefaultsWindowProps> = ({ onClose }) => {
       </div>
 
       {/* Footer */}
-      <div className="border-t border-border/20 p-4 space-y-3 flex-shrink-0">
+              <div className="border-t border-border p-4 space-y-3 flex-shrink-0">
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground text-center">
             Use the checkboxes above to set which presets are selected on startup

@@ -20,6 +20,7 @@ export const PresetRecommendations: React.FC<PresetRecommendationsProps> = ({
   const [isMac, setIsMac] = useState(false);
   const [hasHardwareAcceleration, setHasHardwareAcceleration] = useState(false);
   const [internalIsCollapsed, setInternalIsCollapsed] = useState(false);
+  const [hasAnimated, setHasAnimated] = useState(false);
   
   // Use external state if provided, otherwise use internal state
   const isCollapsed = externalIsCollapsed !== undefined ? externalIsCollapsed : internalIsCollapsed;
@@ -57,33 +58,34 @@ export const PresetRecommendations: React.FC<PresetRecommendationsProps> = ({
   if (unselectedRecommendations.length === 0) return null;
 
   return (
-    <div className="p-4 bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/20 dark:to-purple-950/20 border border-blue-200/30 dark:border-blue-800/30 rounded-lg">
+    <div className="p-4 bg-primary/3 border border-border rounded-lg">
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="flex items-center gap-2 w-full text-left hover:bg-blue-100/30 dark:hover:bg-blue-900/20 rounded-full p-1 transition-colors cursor-pointer"
+        className="flex items-center gap-2 w-full text-left hover:bg-primary/10 rounded-full p-1 transition-colors cursor-pointer"
       >
         {isCollapsed ? (
-          <ChevronRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <ChevronRight className="w-4 h-4 text-primary" />
         ) : (
-          <ChevronDown className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <ChevronDown className="w-4 h-4 text-primary" />
         )}
-        <Lightbulb className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-        <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100">
+        <Lightbulb className="w-4 h-4 text-primary" />
+        <h3 className="text-sm font-medium text-foreground">
           Recommended Presets ({unselectedRecommendations.length})
         </h3>
         {isMac && hasHardwareAcceleration && (
-          <Sparkles className="w-3 h-3 text-purple-500" />
+          <Sparkles className="w-3 h-3 text-info" />
         )}
       </button>
       
       <AnimatePresence>
         {!isCollapsed && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
+            initial={hasAnimated ? { height: 0, opacity: 0 } : { height: 'auto', opacity: 1 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
+            onAnimationComplete={() => setHasAnimated(true)}
           >
             <div className="flex flex-wrap gap-2 mt-3">
               {unselectedRecommendations.map((presetKey) => {
@@ -96,7 +98,7 @@ export const PresetRecommendations: React.FC<PresetRecommendationsProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={() => onPresetSelect(presetKey)}
-                    className="text-xs bg-white/50 dark:bg-black/20 border-blue-200/50 dark:border-blue-800/50 hover:bg-blue-50/80 dark:hover:bg-blue-950/40"
+                    className="text-xs bg-transparent border-border hover:bg-primary/5"
                   >
                     {preset.name}
                   </Button>
@@ -104,7 +106,7 @@ export const PresetRecommendations: React.FC<PresetRecommendationsProps> = ({
               })}
             </div>
             
-            <p className="text-xs text-blue-700/70 dark:text-blue-300/70 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               {isMac && hasHardwareAcceleration 
                 ? "Hardware-accelerated presets for optimal Mac performance."
                 : "Optimized presets for web and general use."

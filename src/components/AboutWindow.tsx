@@ -3,6 +3,8 @@ import { Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import AppIcon from './AppIcon';
 import { macAnimations } from '../lib/animations';
+import { themeManager } from '../lib/theme';
+import type { Theme } from '../types';
 
 interface AboutWindowProps {
   onClose: () => void;
@@ -10,6 +12,41 @@ interface AboutWindowProps {
 
 const AboutWindow: React.FC<AboutWindowProps> = ({ onClose }) => {
   const [appVersion, setAppVersion] = useState<string>('0.0.0');
+
+  // Force theme application when AboutWindow loads
+  useEffect(() => {
+    // Force apply theme immediately to ensure it's correct
+    themeManager.forceApplyTheme();
+    
+    // Expose themeManager globally for IPC access
+    (window as any).themeManager = themeManager;
+    
+    // Also get the current theme from the main window if available
+    const getCurrentTheme = async () => {
+      try {
+        if (window.electronAPI && window.electronAPI.getCurrentTheme) {
+          const currentTheme = await window.electronAPI.getCurrentTheme();
+          if (currentTheme && ['light', 'dark', 'system'].includes(currentTheme)) {
+            themeManager.setTheme(currentTheme as Theme);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to get current theme:', error);
+      }
+    };
+    
+    getCurrentTheme();
+    
+    // Subscribe to theme changes
+    const unsubscribe = themeManager.subscribe(() => {
+      // Force re-application of theme when it changes
+      setTimeout(() => {
+        themeManager.forceApplyTheme();
+      }, 50);
+    });
+    
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     const getVersion = async () => {
@@ -33,15 +70,11 @@ const AboutWindow: React.FC<AboutWindowProps> = ({ onClose }) => {
       exit={{ opacity: 0 }}
     >
       {/* Draggable Title Bar */}
-      <div className="draggable-region fixed top-0 left-0 right-0 z-50 h-10 border-b border-border/20 flex items-center justify-between px-4 select-none flex-shrink-0">
-        <div className="flex items-center gap-3 pl-20">
-          <AppIcon size={20} className="text-foreground/70" />
-          <span className="text-[0.625rem] font-normal text-foreground/70">About Compres</span>
-        </div>
+              <div className="draggable-region sticky top-0 z-50 h-10 border-b border-border flex items-center justify-between px-4 select-none flex-shrink-0">
       </div>
 
-      {/* Content with top padding for fixed header */}
-      <div className="flex-1 overflow-y-auto pt-10">
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
         <div className="p-6">
         <motion.div 
           className="space-y-6"
@@ -49,6 +82,11 @@ const AboutWindow: React.FC<AboutWindowProps> = ({ onClose }) => {
           initial="initial"
           animate="animate"
         >
+          {/* App Header */}
+          <div className="flex items-center gap-3">
+            <AppIcon size={24} className="text-foreground/70" />
+            <h2 className="text-base font-medium text-foreground">About Compres</h2>
+          </div>
           <div>
             <h3 className="text-sm font-medium mb-2">Version</h3>
             <p className="text-xs text-muted-foreground">{appVersion}</p>
@@ -87,7 +125,7 @@ const AboutWindow: React.FC<AboutWindowProps> = ({ onClose }) => {
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
             >
-              <Heart className="w-4 h-4 text-red-500" />
+              <Heart className="w-4 h-4 text-destructive" />
             </motion.div>
             <p className="text-xs text-muted-foreground">
               Made with love for the web community

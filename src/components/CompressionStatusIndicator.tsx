@@ -41,23 +41,23 @@ const CompressionStatusIndicator: React.FC<CompressionStatusIndicatorProps> = ({
       case 'compressing':
         return (
           <motion.div
-            className={`${sizeClasses[size]} rounded-full bg-blue-500/20 flex items-center justify-center`}
+            className={`${sizeClasses[size]} rounded-full bg-primary/20 flex items-center justify-center`}
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           >
-            <Loader2 className={`${iconSizes[size]} text-blue-500`} />
+            <Loader2 className={`${iconSizes[size]} text-primary`} />
           </motion.div>
         );
 
       case 'completed':
         return (
           <motion.div
-            className={`${sizeClasses[size]} rounded-full bg-green-500/20 flex items-center justify-center`}
+            className={`${sizeClasses[size]} rounded-full bg-success/20 flex items-center justify-center`}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           >
-            <Check className={`${iconSizes[size]} text-green-500`} />
+            <Check className={`${iconSizes[size]} text-success`} />
           </motion.div>
         );
 
@@ -65,12 +65,12 @@ const CompressionStatusIndicator: React.FC<CompressionStatusIndicatorProps> = ({
       case 'failed':
         return (
           <motion.div
-            className={`${sizeClasses[size]} rounded-full bg-red-500/20 flex items-center justify-center`}
+            className={`${sizeClasses[size]} rounded-full bg-destructive/20 flex items-center justify-center`}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
           >
-            <AlertCircle className={`${iconSizes[size]} text-red-500`} />
+            <AlertCircle className={`${iconSizes[size]} text-destructive`} />
           </motion.div>
         );
 
@@ -129,7 +129,7 @@ const CompressionStatusIndicator: React.FC<CompressionStatusIndicatorProps> = ({
               stroke="currentColor"
               strokeWidth="2"
               fill="none"
-              className="text-blue-500/20"
+              className="text-primary/20"
             />
             <motion.circle
               cx="16"
@@ -138,7 +138,7 @@ const CompressionStatusIndicator: React.FC<CompressionStatusIndicatorProps> = ({
               stroke="currentColor"
               strokeWidth="2"
               fill="none"
-              className="text-blue-500"
+              className="text-primary"
               strokeLinecap="round"
               initial={{ pathLength: 0 }}
               animate={{ pathLength: status.progress / 100 }}

@@ -124,30 +124,30 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
           />
           {/* Play button overlay */}
           <motion.div 
-            className="absolute inset-0 bg-black/30 flex items-center justify-center"
+            className="absolute inset-0 bg-foreground/30 flex items-center justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: isHovered ? 1 : 0 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <Play className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 bg-background/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+              <Play className="w-4 h-4 text-background" />
             </div>
           </motion.div>
         </div>
       ) : (
-        <div className="relative w-full h-full bg-foreground/10 rounded-lg flex items-center justify-center border border-border/20">
+        <div className="relative w-full h-full bg-foreground/10 rounded-lg flex items-center justify-center border border-border">
           <FileVideo className={`${iconSizes[size]} text-foreground/70`} />
           
           {/* Generate thumbnail button */}
           <motion.div
-            className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
+            className="absolute inset-0 bg-foreground/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
             initial={{ opacity: 0 }}
             animate={{ opacity: isHovered ? 1 : 0 }}
           >
             <Button
               size="sm"
               variant="secondary"
-              className="w-8 h-8 p-0 bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm"
+              className="w-8 h-8 p-0 bg-background/20 hover:bg-background/30 text-background backdrop-blur-sm"
               onClick={handleGenerateThumbnail}
               disabled={isGenerating}
             >
@@ -160,11 +160,11 @@ const VideoThumbnail: React.FC<VideoThumbnailProps> = ({
       {/* Loading indicator */}
       {isGenerating && (
         <motion.div
-          className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-lg"
+          className="absolute inset-0 bg-foreground/60 flex items-center justify-center rounded-lg"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
         >
-          <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-background/30 border-t-background rounded-full animate-spin" />
         </motion.div>
       )}
 

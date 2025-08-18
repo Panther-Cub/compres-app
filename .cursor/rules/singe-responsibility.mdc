@@ -1,7 +1,12 @@
 ---
 alwaysApply: true
 ---
-The principle is single responsibility per file.
-	•	Components: each file should represent one UI unit (button, form, layout section).
-	•	Hooks: each file should encapsulate one piece of reusable logic (e.g., useAuth, useFetch).
-	•	Utilities: each file should provide one cohesive set of helpers (e.g., date formatting, API client).
+Single responsibility per file.
+- Components: each file should represent one UI unit (button, form, layout section).
+- Hooks: each file should encapsulate one piece of reusable logic (e.g., useAuth, useFetch).
+- Utilities: each file should provide one cohesive set of helpers (e.g., date formatting, API client).
+
+Theming
+- Never use hardcoded tailwind colors for theming
+- Never use custom classes for theming
+- Always ensure 

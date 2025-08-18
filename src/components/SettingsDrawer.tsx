@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Zap, FolderOpen, Sliders, X, Globe, Share2, Monitor, Palette, ChevronDown, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Button, Tooltip } from './ui';
+import { Button, Tooltip, Input } from './ui';
 import { PresetRecommendations } from './PresetRecommendations';
 import AdvancedSettings from './AdvancedSettings';
 
@@ -138,13 +138,13 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
   return (
     <>
       <div 
-        className={`absolute top-0 right-0 h-full w-80 drawer native-vibrancy text-foreground shadow-none transition-transform duration-150 ease-out z-10 ${drawerOpen ? 'translate-x-0' : 'translate-x-full'}`} 
+        className="absolute top-0 right-0 h-full w-80 drawer native-vibrancy text-foreground shadow-none z-10" 
         data-theme="auto"
       >
         <div className="h-full flex flex-col">
           {/* Header */}
           <div className="p-4 flex-shrink-0">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
                 <h2 className="text-base font-medium">Settings</h2>
@@ -162,7 +162,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
             </div>
             
             {/* Tabs */}
-            <div className="flex space-x-1">
+            <div className="flex space-x-1 mt-4">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -172,7 +172,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       onClick={() => setActiveTab(tab.id)}
                       className={`tab-button flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-full text-xs font-medium transition-all ${
                         isActive
-                          ? 'bg-primary text-primary-foreground'
+                          ? 'bg-secondary text-secondary-foreground'
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
@@ -237,7 +237,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               onClick={() => setActiveCategory(categoryKey)}
                               className={`tab-button flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-full text-xs font-medium transition-all ${
                                 isActive
-                                  ? 'bg-primary text-primary-foreground'
+                                  ? 'bg-accent text-accent-foreground'
                                   : 'text-muted-foreground hover:text-foreground'
                               }`}
                             >
@@ -258,50 +258,37 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                       
                       if (!isActiveCategory || categoryPresets.length === 0) return null;
                       
-                      // Special handling for Web category to make it collapsible
-                      const isWebCategory = categoryKey === 'web';
-                      const sectionKey = isWebCategory ? 'webPresets' : categoryKey;
+                      // Make all categories collapsible for consistency
+                      const sectionKey = categoryKey;
                       const isCollapsed = collapsedSections[sectionKey];
                       
                       return (
                         <div key={categoryKey} className="space-y-2">
                           <button
-                            onClick={() => isWebCategory ? toggleSection('webPresets') : undefined}
-                            className={`flex items-center gap-2 w-full text-left hover:bg-muted/50 rounded-full p-2 transition-colors ${
-                              isWebCategory ? 'cursor-pointer' : 'cursor-default'
-                            }`}
+                            onClick={() => toggleSection(sectionKey)}
+                            className="flex items-center gap-2 w-full text-left hover:bg-muted/50 rounded-lg p-3 transition-colors border border-border cursor-pointer"
                           >
-                            {isWebCategory && (
-                              <>
-                                {isCollapsed ? (
-                                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                                ) : (
-                                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                                )}
-                              </>
+                            {isCollapsed ? (
+                              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-muted-foreground" />
                             )}
                             <category.icon className="w-4 h-4 text-muted-foreground" />
                             <h4 className="text-sm font-medium">
-                              {category.name} Presets {isWebCategory && `(${categoryPresets.length})`}
+                              {category.name} Presets ({categoryPresets.length})
                             </h4>
                           </button>
                           
-                          {!isWebCategory && (
-                            <p className="text-xs text-muted-foreground px-2">{category.description}</p>
-                          )}
-                          
                           <AnimatePresence>
-                            {(!isWebCategory || !isCollapsed) && (
-                                                             <motion.div
-                                 initial={isWebCategory ? { height: 0, opacity: 0 } : undefined}
-                                 animate={isWebCategory ? { height: 'auto', opacity: 1 } : undefined}
-                                 exit={isWebCategory ? { height: 0, opacity: 0 } : undefined}
-                                 transition={isWebCategory ? { duration: 0.2 } : undefined}
-                                 className="space-y-2 overflow-hidden"
-                               >
-                                {isWebCategory && (
-                                  <p className="text-xs text-muted-foreground px-2">{category.description}</p>
-                                )}
+                            {!isCollapsed && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="space-y-2 overflow-hidden"
+                              >
+                                <p className="text-xs text-muted-foreground px-2">{category.description}</p>
                                 
                                 <div className="space-y-2">
                                   {categoryPresets.map(([key, preset]) => {
@@ -313,8 +300,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                         key={key}
                                                                                   className={`preset-item p-3 rounded-lg border cursor-pointer transition-all ${
                                                                                       isSelected 
-                                              ? 'border-primary/20 bg-primary/5' 
-                                              : 'border-border'
+                                              ? 'border-border bg-primary/5' 
+                                              : 'border-border hover:bg-primary/5'
                                         }`}
                                         onClick={() => onPresetToggle(key)}
                                       >
@@ -332,8 +319,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                                       }}
                                                       className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
                                                         audioSettings.keepAudio 
-                                                          ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40' 
-                                                          : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
+                                                          ? 'bg-success/10 text-success hover:bg-success/20' 
+                                                          : 'bg-destructive/10 text-destructive hover:bg-destructive/20'
                                                       }`}
                                                     >
                                                       {audioSettings.keepAudio ? 'AUDIO' : 'MUTED'}
@@ -361,9 +348,9 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                                      e.stopPropagation();
                                                      handleCustomPresetRemove(key);
                                                    }}
-                                                   className="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded transition-colors"
+                                                   className="p-1 hover:bg-destructive/10 rounded transition-colors"
                                                  >
-                                                   <X className="w-3 h-3 text-red-500" />
+                                                   <X className="w-3 h-3 text-destructive" />
                                                  </button>
                                                </Tooltip>
                                              )}
@@ -383,7 +370,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
 
                   {/* Active Presets Section */}
                   {activePresets.length > 0 && (
-                    <div className="space-y-2 pt-4 border-t border-border/20">
+                    <div className="space-y-2 pt-4 border-t border-border">
                       <button
                         onClick={() => toggleSection('activePresets')}
                         className="flex items-center gap-2 w-full text-left hover:bg-muted/50 rounded-full p-2 transition-colors"
@@ -412,7 +399,7 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                               return (
                                 <motion.div
                                   key={key}
-                                  className="p-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer"
+                                  className="p-3 rounded-lg border border-border bg-primary/5 hover:bg-primary/10 transition-all cursor-pointer"
                                 >
                                     <div className="flex items-start justify-between">
                                       <div className="flex-1">
@@ -427,8 +414,8 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                                                 }}
                                                 className={`px-2 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${
                                                   audioSettings.keepAudio 
-                                                    ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40' 
-                                                    : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40'
+                                                    ? 'bg-success/10 text-success hover:bg-success/20' 
+                                                    : 'bg-destructive/10 text-destructive hover:bg-destructive/20'
                                                 }`}
                                               >
                                                 {audioSettings.keepAudio ? 'AUDIO' : 'MUTED'}
@@ -502,13 +489,12 @@ const SettingsDrawer: React.FC<SettingsDrawerProps> = ({
                         <label htmlFor="folder-name-input" className="text-xs font-medium text-muted-foreground">
                           Folder Name
                         </label>
-                        <input
+                        <Input
                           id="folder-name-input"
                           type="text"
                           value={outputFolderName}
                           onChange={(e) => onOutputFolderNameChange(e.target.value).catch(console.error)}
                           placeholder="Enter folder name..."
-                          className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                         />
                       </div>
                       

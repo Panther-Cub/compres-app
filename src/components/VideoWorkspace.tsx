@@ -42,15 +42,19 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
     >
       {/* Main Content Area */}
       <motion.div 
-        className={cn(
-          "h-full flex flex-col transition-all duration-150 ease-out semi-transparent",
-          drawerOpen ? "pr-80" : "pr-0"
-        )}
+        className="h-full flex flex-col semi-transparent"
         variants={macAnimations.slideUp}
+        animate={{
+          paddingRight: drawerOpen ? "20rem" : "0rem"
+        }}
+        transition={{
+          duration: 0.3,
+          ease: [0.25, 0.46, 0.45, 0.94]
+        }}
       >
         {/* Top Bar */}
         <motion.div 
-          className="flex items-center justify-between p-4 border-b border-border/20 flex-shrink-0 transparent-area"
+          className="flex items-center justify-between p-4 border-b border-border flex-shrink-0 transparent-area"
           variants={macAnimations.slideUp}
         >
           <div className="flex items-center gap-4">
@@ -59,13 +63,13 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
                 variant="ghost" 
                 size="sm"
                 onClick={onReset}
-                className="non-draggable ghost-button text-sm"
+                className="non-draggable text-sm"
               >
                 <ArrowLeft className="w-3 h-3 mr-2" />
                 Back
               </Button>
             </Tooltip>
-            <div className="h-4 w-px bg-border/30"></div>
+            <div className="h-4 w-px bg-border"></div>
             <span className="text-sm text-muted-foreground/70">
               {selectedFiles.length} video{selectedFiles.length > 1 ? 's' : ''} selected
             </span>
@@ -77,7 +81,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={onAddMoreVideos}
-                className="non-draggable outline-button text-sm"
+                className="non-draggable text-sm"
               >
                 <Plus className="w-3 h-3 mr-2" />
                 Add More Videos
@@ -97,7 +101,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
                       });
                     }
                   }}
-                  className="non-draggable outline-button text-sm"
+                  className="non-draggable text-sm"
                 >
                   <Edit3 className="w-3 h-3 mr-2" />
                   Output Names
@@ -129,7 +133,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
 
         {/* Bottom Actions */}
         <motion.div 
-          className="p-4 border-t border-border/20 flex-shrink-0 transparent-area"
+          className="p-4 border-t border-border flex-shrink-0 transparent-area"
           variants={macAnimations.slideUp}
         >
           <div className="flex gap-3">
@@ -147,7 +151,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
                 <Button 
                   onClick={onCompress}
                   disabled={isCompressing || selectedFiles.length === 0 || selectedPresets.length === 0 || !settings.outputDirectory}
-                  className="mac-button primary-button w-full non-draggable text-sm"
+                  className="mac-button w-full non-draggable text-sm"
                   size="sm"
                 >
                   <Play className="w-3 h-3 mr-2" />
@@ -163,7 +167,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
               <Button 
                 variant="outline"
                 onClick={onToggleDrawer}
-                className="mac-button outline-button non-draggable text-sm"
+                className="mac-button non-draggable text-sm"
                 size="sm"
               >
                 <Settings className="w-3 h-3 mr-2" />
@@ -178,7 +182,7 @@ const VideoWorkspace: React.FC<VideoWorkspaceProps> = ({
       <AnimatePresence>
         {drawerOpen && (
           <motion.div 
-            className="absolute top-0 right-0 h-full w-80 drawer native-vibrancy border-l border-border/20 z-10"
+            className="absolute top-0 right-0 h-full w-80 drawer native-vibrancy border-l border-border z-10"
             variants={drawerVariants}
             initial="closed"
             animate="open"

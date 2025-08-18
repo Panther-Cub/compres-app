@@ -60,27 +60,27 @@ const BatchOverwriteConfirmationWindow: React.FC<BatchOverwriteConfirmationWindo
 
   return (
     <motion.div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-foreground/40 flex items-center justify-center z-50"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
     >
       <motion.div
-        className="overwrite-dialog max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden"
+        className="overwrite-dialog max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden bg-card rounded-lg shadow-xl"
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center gap-3 p-6 border-b border-black/10 dark:border-white/10">
+        <div className="flex items-center gap-3 p-6 border-b border-border">
           <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
             <AlertTriangle className="w-5 h-5 text-yellow-500" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-black/90 dark:text-white/90">Files Already Exist</h3>
-            <p className="text-sm text-black/60 dark:text-white/60">
+            <h3 className="text-lg font-semibold text-foreground">Files Already Exist</h3>
+            <p className="text-sm text-muted-foreground">
               {confirmation.files.length} compressed file{confirmation.files.length !== 1 ? 's' : ''} already exist{confirmation.files.length !== 1 ? '' : 's'}
             </p>
           </div>
@@ -89,14 +89,15 @@ const BatchOverwriteConfirmationWindow: React.FC<BatchOverwriteConfirmationWindo
         {/* Content */}
         <div className="p-6 space-y-4 max-h-[50vh] overflow-y-auto">
           {/* Select All Toggle */}
-          <div className="flex items-center gap-3 p-3 bg-black/5 dark:bg-white/5 rounded-lg">
-            <input
-              type="checkbox"
-              checked={selectAll}
-              onChange={handleSelectAll}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+          <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg cursor-pointer" onClick={handleSelectAll}>
+            <div 
+              className={`w-3 h-3 rounded-full border-2 transition-colors ${
+                selectAll
+                  ? 'bg-foreground border-foreground'
+                  : 'border-border'
+              }`}
             />
-            <span className="text-sm font-medium text-black/90 dark:text-white/90">
+            <span className="text-sm font-medium text-foreground">
               Select All ({selectedFiles.size} of {confirmation.files.length})
             </span>
           </div>
@@ -110,24 +111,26 @@ const BatchOverwriteConfirmationWindow: React.FC<BatchOverwriteConfirmationWindo
               return (
                 <div
                   key={fileKey}
-                  className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                  className={`flex items-center gap-3 p-3 rounded-lg border transition-all cursor-pointer ${
                     isSelected 
-                      ? 'bg-blue-500/10 border-blue-500/20' 
-                      : 'bg-black/5 dark:bg-white/5 border-transparent'
+                      ? 'bg-primary/10 border-primary/20' 
+                      : 'bg-muted/30 border-transparent'
                   }`}
+                  onClick={() => handleSelectFile(fileKey)}
                 >
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => handleSelectFile(fileKey)}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  <div 
+                    className={`w-3 h-3 rounded-full border-2 transition-colors ${
+                      isSelected
+                        ? 'bg-foreground border-foreground'
+                        : 'border-border'
+                    }`}
                   />
                   
                   <div className="flex-1 space-y-2">
                     {/* Original File */}
                     <div className="flex items-center gap-2">
-                      <FileVideo className="w-4 h-4 text-black/60 dark:text-white/60" />
-                      <span className="text-sm font-medium text-black/90 dark:text-white/90">
+                      <FileVideo className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">
                         {file.fileName}
                       </span>
                     </div>
@@ -135,7 +138,7 @@ const BatchOverwriteConfirmationWindow: React.FC<BatchOverwriteConfirmationWindo
                     {/* Existing File */}
                     <div className="flex items-center gap-2 ml-6">
                       <Check className="w-4 h-4 text-yellow-500" />
-                      <span className="text-xs text-black/60 dark:text-white/60">
+                      <span className="text-xs text-muted-foreground">
                         Will replace: {file.existingFileName}
                       </span>
                     </div>
@@ -145,13 +148,13 @@ const BatchOverwriteConfirmationWindow: React.FC<BatchOverwriteConfirmationWindo
             })}
           </div>
 
-          <p className="text-sm text-black/60 dark:text-white/60">
+          <p className="text-sm text-muted-foreground">
             Selected files will be replaced. This action cannot be undone.
           </p>
         </div>
 
         {/* Actions */}
-        <div className="flex gap-3 p-6 border-t border-black/10 dark:border-white/10">
+        <div className="flex gap-3 p-6 border-t border-border">
           <Button
             variant="outline"
             onClick={onCancel}

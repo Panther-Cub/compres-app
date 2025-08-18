@@ -14,7 +14,9 @@ export const textColors = {
   secondary: 'text-muted-foreground',
   muted: 'text-muted-foreground/60',
   destructive: 'text-destructive',
-  success: 'text-green-500'
+  success: 'text-success',
+  warning: 'text-warning',
+  info: 'text-info'
 } as const;
 
 export const spacing = {

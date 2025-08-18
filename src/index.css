@@ -2,136 +2,76 @@
 @tailwind components;
 @tailwind utilities;
 
+/* React Tooltip Styles */
+@import 'react-tooltip/dist/react-tooltip.css';
+
 @layer base {
   :root {
-    /* Native macOS vibrancy-aware color system - Light mode */
-    --foreground: 0 0% 8%;
-    --foreground-muted: 0 0% 45%;
-    --primary: 0 0% 8%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --radius: 0.5rem;
+    /* Light Mode - Simple and Clean */
+    --foreground: 0 0% 0%;
+    --background: 0 0% 100%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 8%;
+    --card-foreground: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 96%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 0% / 0.08;
+    --input: 0 0% 0% / 0.08;
+    --ring: 217 91% 60%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+    --radius: 0.5rem;
   }
 
   .dark {
-    /* Native macOS vibrancy-aware color system - Dark mode */
-    --foreground: 0 0% 98%;
-    --foreground-muted: 0 0% 65%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 16%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 16%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 16%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 20%;
-    --input: 0 0% 16%;
-    --ring: 0 0% 83.1%;
+    /* Dark Mode - Simple and Clean */
+    --foreground: 0 0% 100%;
+    --background: 0 0% 0%;
     --card: 0 0% 0%;
-    --card-foreground: 0 0% 98%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 0%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 10%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100% / 0.08;
+    --input: 0 0% 100% / 0.08;
+    --ring: 217 91% 60%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
   }
 
-  /* Native vibrancy class - let macOS handle everything */
-  .native-vibrancy {
-    /* Remove all custom backgrounds and let macOS vibrancy handle it */
-    background: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-
-  .native-vibrancy * {
-    /* Ensure no elements override native vibrancy */
-    background: transparent !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-  }
-
-  /* Window backdrop blur - now that native vibrancy is disabled */
-
-  /* Override for defaults drawer only - needs backdrop blur */
-.drawer.defaults-drawer {
-  background: rgba(128, 128, 128, 0.3) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  /* Force hardware acceleration */
-  transform: translateZ(0);
-  will-change: transform;
-  /* Alternative blur approach */
-  filter: blur(0px);
-}
-
-.dark .drawer.defaults-drawer {
-  background: rgba(128, 128, 128, 0.3) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-  transform: translateZ(0);
-  will-change: transform;
-  filter: blur(0px);
-}
-
-  /* Minimal content styling that works with native vibrancy */
-  .content-area {
-    /* Very minimal background for content readability */
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    border-radius: 0.5rem;
-  }
-
-  .dark .content-area {
-    background: rgba(0, 0, 0, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.03);
-  }
-
-  /* Card styling that works with native vibrancy */
-  .card {
-    background: rgba(255, 255, 255, 0.015);
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    border-radius: 0.5rem;
-  }
-
-  .dark .card {
-    background: rgba(0, 0, 0, 0.015);
-    border: 1px solid rgba(255, 255, 255, 0.03);
-  }
-
-  /* Modal styling that works with native vibrancy */
-  .modal {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 0.75rem;
-  }
-
-  .dark .modal {
-    background: rgba(0, 0, 0, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-}
-
-@layer base {
   * {
     @apply border-border;
   }
   
   html, body, #root {
     @apply h-full w-full overflow-hidden;
-    background-color: transparent !important;
+    background-color: transparent;
     color: hsl(var(--foreground));
   }
   
@@ -140,7 +80,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-weight: 400;
-    font-size: 0.8125rem; /* 13px - macOS native size */
+    font-size: 0.8125rem;
     line-height: 1.4;
     letter-spacing: -0.01em;
     margin: 0;
@@ -161,434 +101,47 @@
   -webkit-app-region: no-drag;
 }
 
-/* Mac app specific styles */
-.mac-button {
-  -webkit-app-region: no-drag;
-}
-
-/* Ultra-refined typography - macOS native sizing */
-.text-2xs {
-  font-size: 0.625rem; /* 10px */
-  line-height: 0.75rem;
-  font-weight: 400;
-  letter-spacing: 0.01em;
-}
-
-.text-xs {
-  font-size: 0.6875rem; /* 11px */
-  line-height: 0.875rem;
-  font-weight: 400;
-  letter-spacing: 0.01em;
-}
-
-.text-sm {
-  font-size: 0.75rem; /* 12px */
-  line-height: 1rem;
-  font-weight: 400;
-  letter-spacing: 0.005em;
-}
-
-.text-base {
-  font-size: 0.8125rem; /* 13px */
-  line-height: 1.125rem;
-  font-weight: 400;
-  letter-spacing: 0;
-}
-
-.text-lg {
-  font-size: 0.9375rem; /* 15px */
-  line-height: 1.25rem;
-  font-weight: 400;
-  letter-spacing: -0.005em;
-}
-
-.text-xl {
-  font-size: 1rem; /* 16px */
-  line-height: 1.375rem;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-}
-
-/* Snappy button styling */
-.btn {
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  transition: all 0.08s ease-out;
-}
-
-.btn:hover {
-  /* Removed translateY movement */
-}
-
-.btn:active {
-  /* Removed translateY movement */
+/* Custom tooltip styling */
+.react-tooltip {
+  @apply bg-card text-card-foreground border border-border rounded-lg shadow-lg !important;
+  font-size: 0.75rem !important;
+  padding: 0.5rem 0.75rem !important;
+  z-index: 9999 !important;
+  border-radius: 0.75rem !important;
 }
 
 /* Progress bar styling */
 .progress {
-  @apply bg-muted/30;
+  @apply bg-muted;
   border-radius: 9999px;
   overflow: hidden;
 }
 
 .progress-indicator {
-  @apply bg-primary/80;
+  @apply bg-primary;
   transition: width 0.1s ease-out;
   border-radius: 9999px;
 }
 
-/* Interactive element hover effects */
-.interactive {
-  transition: all 0.08s ease-out;
-}
-
-.interactive:hover {
-  background: rgba(255, 255, 255, 0.05);
-  /* Removed translateY movement */
-}
-
-.dark .interactive:hover {
-  background: rgba(0, 0, 0, 0.05);
-  /* Removed translateY movement */
-}
-
-/* List item hover effects */
-.list-item {
-  transition: all 0.08s ease-out;
-}
-
-.list-item:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.dark .list-item:hover {
-  background: rgba(0, 0, 0, 0.03);
-}
-
-/* Menu item hover effects */
-.menu-item {
-  transition: all 0.08s ease-out;
-}
-
-.menu-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.dark .menu-item:hover {
-  background: rgba(0, 0, 0, 0.05);
-}
-
-/* Snappy drop zone styling */
+/* Drop zone styling */
 .drop-zone {
-  @apply border-2 border-dashed border-border/40;
-  background: rgba(255, 255, 255, 0.01);
+  @apply border-2 border-dashed border-border;
   border-radius: 0.5rem;
   transition: all 0.2s ease-out;
   position: relative;
 }
 
-.dark .drop-zone {
-  background: rgba(0, 0, 0, 0.01);
-}
-
 .drop-zone:hover {
   @apply border-border/60;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.dark .drop-zone:hover {
-  background: rgba(0, 0, 0, 0.05);
 }
 
 .drop-zone.drag-over {
   @apply border-primary/50;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.dark .drop-zone.drag-over {
-  background: rgba(0, 0, 0, 0.08);
-}
-
-/* Overlay window specific styles */
-.overlay-window {
-  /* Let native vibrancy handle the background */
-  background: transparent;
-}
-
-.overlay-window * {
-  /* Let native vibrancy handle the background */
-  background: transparent;
-}
-
-/* Waiting animation overlay styling */
-.overlay-drop-zone {
-  /* Let native vibrancy handle the background */
-  background: transparent;
-}
-
-.dark .overlay-drop-zone {
-  /* Let native vibrancy handle the background */
-  background: transparent;
-}
-
-/* Pulsing ring animations */
-@keyframes pulse-ring {
-  0% {
-    transform: scale(1);
-    opacity: 0.3;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 0.1;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 0.3;
-  }
-}
-
-.pulse-ring {
-  animation: pulse-ring 2s ease-in-out infinite;
-}
-
-.pulse-ring-delayed {
-  animation: pulse-ring 2s ease-in-out infinite 0.5s;
-}
-
-/* Floating particles animation */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px) scale(1);
-    opacity: 0.3;
-  }
-  50% {
-    transform: translateY(-20px) scale(1.1);
-    opacity: 0.8;
-  }
-}
-
-.floating-particle {
-  animation: float 4s ease-in-out infinite;
-}
-
-/* Glow effects */
-.glow-primary {
-  filter: drop-shadow(0 0 20px hsl(var(--primary)/0.3));
-}
-
-.glow-border {
-  box-shadow: 
-    0 0 0 1px hsl(var(--primary)/0.2),
-    0 0 20px hsl(var(--primary)/0.1),
-    inset 0 0 20px hsl(var(--primary)/0.05);
-}
-
-/* Snappy file card styling - enhanced with backdrop blur */
-
-.file-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.08);
-  /* Removed translateY movement */
-}
-
-.dark .file-card:hover {
-  background: rgba(0, 0, 0, 0.08);
-  border-color: rgba(255, 255, 255, 0.06);
-  /* Removed translateY movement */
-}
-
-/* Video thumbnail styling */
-.video-thumbnail {
-  @apply relative overflow-hidden rounded-lg;
-  transition: all 0.08s ease-out;
-}
-
-.video-thumbnail img {
-  @apply w-full h-full object-cover;
-  transition: transform 0.08s ease-out;
-}
-
-.video-thumbnail:hover img {
-  transform: scale(1.02);
-}
-
-.video-thumbnail-overlay {
-  @apply absolute inset-0 bg-black/40 flex items-center justify-center;
-  opacity: 0;
-  transition: opacity 0.08s ease-out;
-}
-
-.video-thumbnail:hover .video-thumbnail-overlay {
-  opacity: 1;
-}
-
-/* Action button styling */
-.action-button {
-  @apply transition-all duration-75 ease-out;
-}
-
-/* Drawer styling */
-.drawer {
-  /* Removed shadow for seamless integration */
-  box-shadow: none !important;
-  filter: none !important;
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
-}
-
-/* Ensure no shadows on drawer elements */
-.drawer * {
-  box-shadow: none !important;
-  -webkit-box-shadow: none !important;
-  -moz-box-shadow: none !important;
-}
-
-/* Defaults drawer specific styling */
-.drawer.native-vibrancy {
-  /* Add backdrop blur for glass effect */
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-.dark .drawer.native-vibrancy {
-  background: rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-.drawer.native-vibrancy * {
-  /* Let native vibrancy handle the background */
-  background: transparent;
-}
-
-/* Modal and dialog backdrop blur effects */
-.modal, .dialog, .modal-overlay, .dialog-overlay {
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.modal-content, .dialog-content, .modal .modal, .dialog .dialog {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-.dark .modal-content, .dark .dialog-content, .dark .modal .modal, .dark .dialog .dialog {
-  background: #1c1c1e;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
-}
-
-/* Overwrite dialog specific styling - match macOS native dialogs */
-.overwrite-dialog {
-  background: #ffffff !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  border-radius: 10px !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
-}
-
-.dark .overwrite-dialog {
-  background: #1c1c1e !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-radius: 10px !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* Snappy preset selection styling - enhanced with backdrop blur */
-
-.preset-item:hover {
-  @apply border-border/30;
-  background: rgba(255, 255, 255, 0.05);
-  /* Removed translateY movement */
-}
-
-.dark .preset-item:hover {
-  background: rgba(0, 0, 0, 0.05);
-  /* Removed translateY movement */
-}
-
-.preset-item.selected {
-  @apply border-primary/30;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.dark .preset-item.selected {
-  background: rgba(0, 0, 0, 0.08);
-}
-
-.preset-item.selected::before {
-  opacity: 1;
-  background: linear-gradient(135deg, transparent 0%, rgba(0, 0, 0, 0.1) 100%);
-}
-
-/* Snappy transitions */
-* {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter;
-  transition-timing-function: ease-out;
-  transition-duration: 80ms;
-}
-
-/* Enhanced hover effects for better visual feedback */
-.hover-lift {
-  transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
-}
-
-.hover-lift:hover {
-  /* Removed translateY movement */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.dark .hover-lift:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-.hover-glow {
-  transition: box-shadow 0.08s ease-out;
-}
-
-.hover-glow:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.dark .hover-glow:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Enhanced button hover effects */
-.btn-primary {
-  transition: all 0.08s ease-out;
-}
-
-.btn-primary:hover {
-  /* Removed translateY movement */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.dark .btn-primary:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-/* Enhanced card hover effects */
-.card-hover {
-  transition: all 0.08s ease-out;
-}
-
-.card-hover:hover {
-  /* Removed translateY movement */
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.dark .card-hover:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
 }
 
 /* Focus states */
 .focus-visible {
-  @apply outline-none ring-2 ring-ring/50 ring-offset-2 ring-offset-background;
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
 }
 
 /* Scrollbar styling */
@@ -610,499 +163,9 @@
   @apply bg-border/60;
 }
 
-/* Header styling for better Mac integration */
-.draggable-region {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* Animation keyframes */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-/* Snappy animation classes */
-.animate-fade-in-up {
-  animation: fadeInUp 0.2s ease-out;
-}
-
-.animate-slide-in-right {
-  animation: slideInRight 0.15s ease-out;
-}
-
-.animate-pulse-slow {
-  animation: pulse 2s ease-out infinite;
-}
-
-/* Loading states */
-.loading-shimmer {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-/* Slider styling */
-.slider {
-  -webkit-appearance: none;
-  appearance: none;
-  background: hsl(var(--border));
-  outline: none;
-  border-radius: 0.5rem;
-}
-
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: hsl(var(--primary));
-  cursor: pointer;
-  border: 2px solid hsl(var(--background));
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.08s ease-out;
-}
-
-.slider::-webkit-slider-thumb:hover {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: hsl(var(--primary));
-  cursor: pointer;
-  border: 2px solid hsl(var(--background));
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.08s ease-out;
-}
-
-.slider::-moz-range-thumb:hover {
-  transform: scale(1.05);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Tooltip animations */
-@keyframes tooltipFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes tooltipFadeOut {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-}
-
-/* React-tooltip custom styling */
-.react-tooltip {
-  z-index: 9999 !important;
-  background: rgba(255, 255, 255, 0.98) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  color: rgba(0, 0, 0, 0.9) !important;
-  border-radius: 6px !important;
-  padding: 0.5rem 0.75rem !important;
-  font-size: 12px !important;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
-  font-weight: 400 !important;
-  letter-spacing: -0.01em !important;
-  line-height: 1.2 !important;
-  animation: tooltipFadeIn 0.2s ease-out !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
-}
-
-.dark .react-tooltip {
-  background: rgba(28, 28, 30, 0.98) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  color: rgba(255, 255, 255, 0.9) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
-}
-
-.react-tooltip.show {
-  animation: tooltipFadeIn 0.2s ease-out !important;
-}
-
-.react-tooltip.hide {
-  animation: tooltipFadeOut 0.15s ease-out !important;
-} 
-
-/* Comprehensive hover effects for all interactive elements */
-
-/* Button hover effects - enhanced (no movement) */
-.btn, button, .button {
-  transition: all 0.08s ease-out;
-}
-
-.btn:hover, button:hover, .button:hover {
-  /* Removed translateY movement */
-}
-
-.btn:active, button:active, .button:active {
-  /* Removed translateY movement */
-}
-
-/* Ghost button hover effects */
-.btn-ghost, button[data-variant="ghost"], .ghost-button {
-  transition: all 0.08s ease-out;
-}
-
-.btn-ghost:hover, button[data-variant="ghost"]:hover, .ghost-button:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
-  /* Removed translateY movement */
-}
-
-.dark .btn-ghost:hover, .dark button[data-variant="ghost"]:hover, .dark .ghost-button:hover {
-  background: rgba(0, 0, 0, 0.05) !important;
-}
-
-/* Outline button hover effects */
-.btn-outline, button[data-variant="outline"], .outline-button {
-  transition: all 0.08s ease-out;
-}
-
-.btn-outline:hover, button[data-variant="outline"]:hover, .outline-button:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  /* Removed translateY movement */
-}
-
-.dark .btn-outline:hover, .dark button[data-variant="outline"]:hover, .dark .outline-button:hover {
-  background: rgba(0, 0, 0, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-/* Primary button hover effects */
-.btn-primary, button[data-variant="default"], .primary-button {
-  transition: all 0.08s ease-out;
-}
-
-.btn-primary:hover, button[data-variant="default"]:hover, .primary-button:hover {
-  /* Removed translateY movement */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.dark .btn-primary:hover, .dark button[data-variant="default"]:hover, .dark .primary-button:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-/* Card hover effects - enhanced (no movement) */
-.card, .file-card, .preset-card, .settings-card {
-  transition: all 0.08s ease-out;
-}
-
-.card:hover, .file-card:hover, .preset-card:hover, .settings-card:hover {
-  /* Removed translateY movement */
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.dark .card:hover, .dark .file-card:hover, .dark .preset-card:hover, .dark .settings-card:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-}
-
-/* Tab button hover effects */
-.tab-button, button[role="tab"], .nav-tab {
-  transition: all 0.08s ease-out;
-}
-
-.tab-button:hover, button[role="tab"]:hover, .nav-tab:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
-  /* Removed translateY movement */
-}
-
-.dark .tab-button:hover, .dark button[role="tab"]:hover, .dark .nav-tab:hover {
-  background: rgba(0, 0, 0, 0.05) !important;
-}
-
-/* Preset item hover effects - enhanced */
-.preset-item, .preset-option, .preset-button {
-  transition: all 0.08s ease-out;
-}
-
-.preset-item:hover, .preset-option:hover, .preset-button:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
-  /* Removed translateY movement */
-  border-color: rgba(255, 255, 255, 0.08) !important;
-}
-
-.dark .preset-item:hover, .dark .preset-option:hover, .dark .preset-button:hover {
-  background: rgba(0, 0, 0, 0.05) !important;
-  border-color: rgba(255, 255, 255, 0.06) !important;
-}
-
-/* List item hover effects - enhanced */
-.list-item, .list-option, .menu-item {
-  transition: all 0.08s ease-out;
-}
-
-.list-item:hover, .list-option:hover, .menu-item:hover {
-  background: rgba(255, 255, 255, 0.03) !important;
-  /* Removed translateY movement */
-}
-
-.dark .list-item:hover, .dark .list-option:hover, .dark .menu-item:hover {
-  background: rgba(0, 0, 0, 0.03) !important;
-}
-
-/* Icon button hover effects */
-.icon-button, button[data-icon], .icon-btn {
-  transition: all 0.08s ease-out;
-}
-
-.icon-button:hover, button[data-icon]:hover, .icon-btn:hover {
-  background: rgba(255, 255, 255, 0.05) !important;
-  transform: scale(1.05);
-}
-
-.dark .icon-button:hover, .dark button[data-icon]:hover, .dark .icon-btn:hover {
-  background: rgba(0, 0, 0, 0.05) !important;
-}
-
-/* Action button hover effects */
-.action-button, .action-btn, button[data-action] {
-  transition: all 0.08s ease-out;
-}
-
-.action-button:hover, .action-btn:hover, button[data-action]:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-  /* Removed translateY movement */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.dark .action-button:hover, .dark .action-btn:hover, .dark button[data-action]:hover {
-  background: rgba(0, 0, 0, 0.08) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Tooltip trigger hover effects */
-.tooltip-trigger, [data-tooltip] {
-  transition: all 0.08s ease-out;
-}
-
-.tooltip-trigger:hover, [data-tooltip]:hover {
-  transform: scale(1.02);
-}
-
-/* Modal button hover effects */
-.modal-button, .modal-btn, .dialog-button {
-  transition: all 0.08s ease-out;
-}
-
-.modal-button:hover, .modal-btn:hover, .dialog-button:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-  /* Removed translateY movement */
-}
-
-.dark .modal-button:hover, .dark .modal-btn:hover, .dark .dialog-button:hover {
-  background: rgba(0, 0, 0, 0.08) !important;
-}
-
-/* Settings panel hover effects */
-.settings-panel, .settings-section, .settings-group {
-  transition: all 0.08s ease-out;
-}
-
-.settings-panel:hover, .settings-section:hover, .settings-group:hover {
-  background: rgba(255, 255, 255, 0.02) !important;
-}
-
-.dark .settings-panel:hover, .dark .settings-section:hover, .dark .settings-group:hover {
-  background: rgba(0, 0, 0, 0.02) !important;
-}
-
-/* Enhanced focus states for better accessibility */
-.btn:focus-visible, button:focus-visible, .button:focus-visible,
-.card:focus-visible, .file-card:focus-visible, .preset-card:focus-visible {
-  outline: 2px solid hsl(var(--ring));
-  outline-offset: 2px;
-  /* Removed translateY movement */
-}
-
-/* Disabled state styling */
-.btn:disabled, button:disabled, .button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-.btn:disabled:hover, button:disabled:hover, .button:disabled:hover {
-  transform: none !important;
-  box-shadow: none !important;
-} 
-
-/* Card and content area backgrounds */
-.card, .content-area {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.dark .card, .dark .content-area {
-  background: rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.03);
-}
-
-/* File card enhanced background */
-.file-card {
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.5rem;
-  transition: all 0.08s ease-out;
-}
-
-.dark .file-card {
-  background: rgba(0, 0, 0, 0.12);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* Preset item enhanced background */
-.preset-item {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: all 0.08s ease-out;
-}
-
-.dark .preset-item {
-  background: rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-/* Button backgrounds with blur */
-.btn, button, .button {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.08s ease-out;
-}
-
-.dark .btn, .dark button, .dark .button {
-  background: rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* Input backgrounds with blur */
-input, textarea, select {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.dark input, .dark textarea, .dark select {
-  background: rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-/* Dropdown menu styling - ensure solid background */
-.select-dropdown {
-  background: rgba(255, 255, 255, 0.98) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
-  border-radius: 6px !important;
-}
-
-.dark .select-dropdown {
-  background: rgba(28, 28, 30, 0.98) !important;
-  backdrop-filter: blur(20px) !important;
-  -webkit-backdrop-filter: blur(20px) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
-  border-radius: 6px !important;
-}
-
-/* Native macOS dropdown option styling */
-.select-dropdown button {
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
-  font-size: 13px !important;
-  line-height: 1.2 !important;
-  font-weight: 400 !important;
-  letter-spacing: -0.01em !important;
-}
-
-.select-dropdown button:hover {
-  background: #007AFF !important;
-  color: white !important;
-}
-
-.select-dropdown button:active {
-  background: #0056CC !important;
-  color: white !important;
-}
-
-.dark .select-dropdown button:hover {
-  background: #0A84FF !important;
-  color: white !important;
-}
-
-.dark .select-dropdown button:active {
-  background: #0056CC !important;
-  color: white !important;
+/* Snappy transitions */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter;
+  transition-timing-function: ease-out;
+  transition-duration: 80ms;
 } 

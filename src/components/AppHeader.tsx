@@ -16,7 +16,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   return (
     <motion.header 
-      className="draggable-region fixed top-0 left-0 right-0 z-50 h-10 transparent-area border-b border-border/20 flex items-center justify-between px-4 select-none"
+      className="draggable-region fixed top-0 left-0 right-0 z-50 h-10 transparent-area border-b border-border flex items-center justify-between px-4 select-none"
       variants={macAnimations.fadeIn}
       initial="initial"
       animate="animate"
@@ -51,7 +51,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             variant="ghost"
             size="sm"
             onClick={onShowDefaults}
-            className="non-draggable ghost-button text-[0.625rem]"
+            className="non-draggable text-[0.625rem]"
           >
             <Star className="w-3 h-3" />
           </Button>
@@ -62,7 +62,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
               variant="ghost"
               size="sm"
               onClick={onToggleOverlay}
-              className="non-draggable ghost-button text-[0.625rem]"
+              className="non-draggable text-[0.625rem]"
             >
               <Minimize2 className="w-3 h-3" />
             </Button>
@@ -75,7 +75,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
             variant="ghost"
             size="sm"
             onClick={onBuyCoffee}
-            className="non-draggable ghost-button text-[0.625rem]"
+            className="non-draggable text-[0.625rem]"
           >
             <Coffee className="w-3 h-3 mr-1" />
             Buy Coffee

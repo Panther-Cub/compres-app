@@ -46,7 +46,7 @@ const VideoList: React.FC<VideoListProps> = ({
     <div className="h-full flex flex-col">
       {/* Top Bar */}
       <motion.div 
-        className="flex items-center justify-between p-4 border-b border-border/20 flex-shrink-0"
+        className="flex items-center justify-between p-4 border-b border-border flex-shrink-0"
         variants={macAnimations.slideUp}
         initial="initial"
         animate="animate"
@@ -79,7 +79,7 @@ const VideoList: React.FC<VideoListProps> = ({
           
           {/* Grid Zoom Controls - only show in grid view */}
           {viewMode === 'grid' && (
-            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-border/20">
+            <div className="flex items-center gap-2 ml-4 pl-4 border-l border-border">
               <Tooltip id="zoom-out-tooltip" content="Zoom out">
                 <ZoomOut className="w-3 h-3 text-muted-foreground cursor-pointer" />
               </Tooltip>
