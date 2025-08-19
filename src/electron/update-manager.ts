@@ -493,15 +493,12 @@ export class UpdateManager {
     }
     
     // Also send to update window if it's open
-    try {
-      const { getUpdateWindow } = require('./window-manager');
-      const updateWindow = getUpdateWindow();
-      if (updateWindow && !updateWindow.isDestroyed()) {
-        updateWindow.webContents.send('update-status', this.currentStatus);
-        console.log('UpdateManager: Status sent to update window');
-      }
-    } catch (error) {
-      console.log('UpdateManager: Could not send status to update window:', error);
+    const updateWindow = getUpdateWindow();
+    if (updateWindow && !updateWindow.isDestroyed()) {
+      updateWindow.webContents.send('update-status', this.currentStatus);
+      console.log('UpdateManager: Status sent to update window');
+    } else {
+      console.log('UpdateManager: No update window available to send status');
     }
   }
 

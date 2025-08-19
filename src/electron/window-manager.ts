@@ -352,6 +352,7 @@ export function createUpdateWindow(): BrowserWindow {
     movable: true,
     minimizable: true,
     maximizable: true,
+    alwaysOnTop: true,
     webPreferences: {
       // Remove separate partition to share theme state with main window
     }
