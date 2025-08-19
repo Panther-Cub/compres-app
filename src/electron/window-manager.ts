@@ -9,6 +9,7 @@ let settingsWindow: BrowserWindow | null = null;
 let aboutWindow: BrowserWindow | null = null;
 let defaultsWindow: BrowserWindow | null = null;
 let batchRenameWindow: BrowserWindow | null = null;
+let updateWindow: BrowserWindow | null = null;
 
 /**
  * Create and configure a window with common settings
@@ -328,6 +329,56 @@ export function createBatchRenameWindow(): BrowserWindow {
   return batchRenameWindow;
 }
 
+export function createUpdateWindow(): BrowserWindow {
+  // Don't create multiple update windows
+  if (updateWindow) {
+    updateWindow.focus();
+    return updateWindow;
+  }
+  
+  updateWindow = createWindow({
+    width: APP_CONSTANTS.UPDATE_WINDOW.WIDTH,
+    height: APP_CONSTANTS.UPDATE_WINDOW.HEIGHT,
+    minWidth: APP_CONSTANTS.UPDATE_WINDOW.MIN_WIDTH,
+    minHeight: APP_CONSTANTS.UPDATE_WINDOW.MIN_HEIGHT,
+    titleBarStyle: 'hiddenInset',
+    vibrancy: 'under-window',
+    visualEffectState: 'active',
+    transparent: false,
+    hasShadow: true,
+    backgroundColor: '#00000000',
+    show: false,
+    resizable: true,
+    movable: true,
+    minimizable: true,
+    maximizable: true,
+    webPreferences: {
+      // Remove separate partition to share theme state with main window
+    }
+  });
+
+  loadWindowContent(updateWindow, 'update');
+
+  updateWindow.once('ready-to-show', () => {
+    updateWindow?.show();
+    updateWindow?.focus();
+  });
+
+  updateWindow.on('closed', () => {
+    updateWindow = null;
+    // Ensure main window is focused when update window closes
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore();
+      }
+      mainWindow.show();
+      mainWindow.focus();
+    }
+  });
+
+  return updateWindow;
+}
+
 export function getMainWindow(): BrowserWindow | null {
   return mainWindow;
 }
@@ -350,6 +401,10 @@ export function getDefaultsWindow(): BrowserWindow | null {
 
 export function getBatchRenameWindow(): BrowserWindow | null {
   return batchRenameWindow;
+}
+
+export function getUpdateWindow(): BrowserWindow | null {
+  return updateWindow;
 }
 
 export function showMainWindow(): void {
@@ -409,5 +464,10 @@ export function destroyAllWindows(): void {
   if (batchRenameWindow) {
     batchRenameWindow.destroy();
     batchRenameWindow = null;
+  }
+  
+  if (updateWindow) {
+    updateWindow.destroy();
+    updateWindow = null;
   }
 }

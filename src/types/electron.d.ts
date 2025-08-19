@@ -137,6 +137,8 @@ interface ElectronAPI {
   // Window management
   createDefaultsWindow: () => Promise<{ success: boolean }>;
   createBatchRenameWindow: () => Promise<{ success: boolean }>;
+  createUpdateWindow: () => Promise<{ success: boolean }>;
+  closeUpdateWindow: () => Promise<{ success: boolean }>;
   getSelectedFiles: () => Promise<string[]>;
   sendBatchRenameResults: (results: { success: boolean; oldPath: string; newPath?: string; error?: string }[]) => Promise<{ success: boolean }>;
   saveCompressionOutputNaming: (naming: Array<{ filePath: string; customOutputName: string }>) => Promise<{ success: boolean; error?: string }>;
@@ -178,6 +180,7 @@ interface ElectronAPI {
   getUpdateSettings: () => Promise<any>;
   saveUpdateSettings: (settings: any) => Promise<any>;
   onUpdateStatus: (callback: (data: any) => void) => void;
+  onUpdateWindowClosed: (callback: () => void) => void;
 }
 
 declare global {

@@ -58,6 +58,8 @@ export function createElectronAPI(): ElectronAPI {
     // Window management
     createDefaultsWindow: () => ipcRenderer.invoke('create-defaults-window'),
     createBatchRenameWindow: () => ipcRenderer.invoke('create-batch-rename-window'),
+    createUpdateWindow: () => ipcRenderer.invoke('create-update-window'),
+    closeUpdateWindow: () => ipcRenderer.invoke('close-update-window'),
     getSelectedFiles: () => ipcRenderer.invoke('get-selected-files'),
     sendBatchRenameResults: (results: any) => ipcRenderer.invoke('send-batch-rename-results', results),
     saveCompressionOutputNaming: (naming: any) => ipcRenderer.invoke('save-compression-output-naming', naming),
@@ -142,6 +144,10 @@ export function createElectronAPI(): ElectronAPI {
   
     onUpdateStatus: (callback: (data: any) => void) => {
       ipcRenderer.on('update-status', (_, data) => callback(data));
+    },
+    
+    onUpdateWindowClosed: (callback: () => void) => {
+      ipcRenderer.on('update-window-closed', () => callback());
     }
   };
 }

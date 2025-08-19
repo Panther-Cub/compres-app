@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
-import type { UpdateStatusData } from './types/shared';
 import { useVideoCompression } from './hooks/useVideoCompression';
 import { useSettings } from './hooks/useSettings';
 import { useTheme } from './hooks/useTheme';
@@ -12,8 +11,7 @@ import {
   VideoWorkspace,
   OverwriteConfirmationWindow,
   BatchOverwriteConfirmationWindow,
-  ThermalStatusIndicator,
-  UpdateNotification
+  ThermalStatusIndicator
 } from './components';
 
 function App() {
@@ -21,10 +19,10 @@ function App() {
 
 
   
-  // Update notification state
-  const [showUpdateNotification, setShowUpdateNotification] = useState(false);
-  const [updateInfo, setUpdateInfo] = useState<UpdateStatusData | null>(null);
+
   
+  const [updateWindowOpen, setUpdateWindowOpen] = useState(false);
+
   const {
     selectedPresets,
     presetSettings,
@@ -236,26 +234,37 @@ function App() {
       window.electronAPI.onUpdateStatus((data: any) => {
         console.log('Update status received:', data);
         
-        // Always update the update info
-        setUpdateInfo(data);
-        
-        // Show notification for relevant statuses
-        if (data.status === 'available' || data.status === 'downloaded' || data.status === 'downloading' || data.status === 'checking') {
-          setShowUpdateNotification(true);
-        } else if (data.status === 'error') {
-          // Show error notification briefly
-          setShowUpdateNotification(true);
-          // Auto-hide error notifications after 5 seconds
-          setTimeout(() => {
-            setShowUpdateNotification(false);
-          }, 5000);
-        } else if (data.status === 'not-available') {
-          // Show "no updates" notification briefly
-          setShowUpdateNotification(true);
-          setTimeout(() => {
-            setShowUpdateNotification(false);
-          }, 3000);
+        // Only create update window if it's not already open
+        if (!updateWindowOpen) {
+          if (data.status === 'available' || data.status === 'downloaded' || data.status === 'downloading' || data.status === 'checking') {
+            if (window.electronAPI) {
+              window.electronAPI.createUpdateWindow();
+              setUpdateWindowOpen(true);
+            }
+          } else if (data.status === 'error') {
+            // Show error in update window
+            if (window.electronAPI) {
+              window.electronAPI.createUpdateWindow();
+              setUpdateWindowOpen(true);
+            }
+          } else if (data.status === 'not-available') {
+            // Show "no updates" in update window briefly
+            if (window.electronAPI) {
+              window.electronAPI.createUpdateWindow();
+              setUpdateWindowOpen(true);
+              // Auto-close after 3 seconds
+              setTimeout(() => {
+                window.electronAPI?.closeUpdateWindow();
+                setUpdateWindowOpen(false);
+              }, 3000);
+            }
+          }
         }
+      });
+
+      // Listen for update window close events
+      window.electronAPI.onUpdateWindowClosed(() => {
+        setUpdateWindowOpen(false);
       });
 
       // Cleanup listeners
@@ -266,10 +275,11 @@ function App() {
           window.electronAPI.removeAllListeners('trigger-output-select');
           window.electronAPI.removeAllListeners('overlay-files-dropped');
           window.electronAPI.removeAllListeners('update-status');
+          window.electronAPI.removeAllListeners('update-window-closed');
         }
       };
     }
-  }, [handleSelectFiles, handleSelectOutputDirectory, handleFileSelect]);
+  }, [handleSelectFiles, handleSelectOutputDirectory, handleFileSelect, updateWindowOpen]);
 
   // Ensure overlay is hidden when main window has files
   useEffect(() => {
@@ -396,41 +406,7 @@ function App() {
     window.open('https://ko-fi.com/pantherandcub', '_blank');
   };
 
-  // Update notification handlers
-  const handleUpdateDownload = async () => {
-    try {
-      if (window.electronAPI && window.electronAPI.downloadUpdate) {
-        await window.electronAPI.downloadUpdate();
-      }
-    } catch (error) {
-      console.error('Error downloading update:', error);
-    }
-  };
 
-  const handleUpdateInstall = async () => {
-    try {
-      if (window.electronAPI && window.electronAPI.installUpdate) {
-        await window.electronAPI.installUpdate();
-      }
-    } catch (error) {
-      console.error('Error installing update:', error);
-    }
-  };
-
-  const handleCheckForUpdates = async () => {
-    try {
-      if (window.electronAPI && window.electronAPI.checkForUpdates) {
-        await window.electronAPI.checkForUpdates();
-      }
-    } catch (error) {
-      console.error('Error checking for updates:', error);
-    }
-  };
-
-  const handleCloseUpdateNotification = () => {
-    setShowUpdateNotification(false);
-    setUpdateInfo(null);
-  };
 
 
   // Removed handleToggleOverlay since we now use handleShowOverlay
@@ -537,7 +513,6 @@ function App() {
           }
         }}
         onToggleOverlay={handleShowOverlay}
-        onCheckForUpdates={handleCheckForUpdates}
       />
       
       <main className="h-full pt-10 overflow-hidden">
@@ -629,15 +604,7 @@ function App() {
           thermalStatus={thermalStatus}
         />
 
-        {/* Update Notification */}
-        <UpdateNotification
-          isVisible={showUpdateNotification}
-          updateInfo={updateInfo}
-          onClose={handleCloseUpdateNotification}
-          onDownload={handleUpdateDownload}
-          onInstall={handleUpdateInstall}
-          onCheckForUpdates={handleCheckForUpdates}
-        />
+
       </main>
 
 

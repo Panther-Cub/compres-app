@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import OverlayApp from './OverlayApp';
+import UpdateApp from './UpdateApp';
 import SettingsWindow from './components/SettingsWindow';
 import AboutWindow from './components/AboutWindow';
 import DefaultsWindow from './components/DefaultsWindow';
@@ -14,6 +15,7 @@ const root = ReactDOM.createRoot(rootElement);
 
 // Check which window this is based on URL hash
 const isOverlay = window.location.hash === '#overlay';
+const isUpdate = window.location.hash === '#update';
 const isSettings = window.location.hash === '#settings';
 const isAbout = window.location.hash === '#about';
 const isDefaults = window.location.hash === '#defaults';
@@ -23,6 +25,8 @@ const isBatchRename = window.location.hash === '#batch-rename';
 let ComponentToRender;
 if (isOverlay) {
   ComponentToRender = OverlayApp;
+} else if (isUpdate) {
+  ComponentToRender = UpdateApp;
 } else if (isSettings) {
   ComponentToRender = () => <SettingsWindow onClose={() => window.close()} />;
 } else if (isAbout) {

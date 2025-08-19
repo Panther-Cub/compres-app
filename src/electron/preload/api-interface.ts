@@ -143,6 +143,8 @@ export interface ElectronAPI {
   // Window management
   createDefaultsWindow: () => Promise<{ success: boolean }>;
   createBatchRenameWindow: () => Promise<{ success: boolean }>;
+  createUpdateWindow: () => Promise<{ success: boolean }>;
+  closeUpdateWindow: () => Promise<{ success: boolean }>;
   getSelectedFiles: () => Promise<string[]>;
   sendBatchRenameResults: (results: { success: boolean; oldPath: string; newPath?: string; error?: string }[]) => Promise<{ success: boolean }>;
   saveCompressionOutputNaming: (naming: Array<{ filePath: string; customOutputName: string }>) => Promise<{ success: boolean; error?: string }>;
@@ -187,4 +189,5 @@ export interface ElectronAPI {
   saveUpdateSettings: (settings: { autoUpdateEnabled: boolean; lastUpdateVersion?: string | null; lastAppVersion?: string | null }) => Promise<void>;
 
   onUpdateStatus: (callback: (data: UpdateStatusData) => void) => void;
+  onUpdateWindowClosed: (callback: () => void) => void;
 }

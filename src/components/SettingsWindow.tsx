@@ -434,17 +434,29 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
                                 type: 'success',
                                 message: `Update available: Version ${result.data.version}`
                               });
+                              // Open the update window if available
+                              if (window.electronAPI.createUpdateWindow) {
+                                window.electronAPI.createUpdateWindow();
+                              }
                             } else {
                               setUpdateCheckResult({
                                 type: 'info',
                                 message: 'You have the latest version'
                               });
+                              // Open the update window to show "no updates"
+                              if (window.electronAPI.createUpdateWindow) {
+                                window.electronAPI.createUpdateWindow();
+                              }
                             }
                           } else {
                             setUpdateCheckResult({
                               type: 'error',
                               message: result.error || 'Failed to check for updates'
                             });
+                            // Open the update window to show error
+                            if (window.electronAPI.createUpdateWindow) {
+                              window.electronAPI.createUpdateWindow();
+                            }
                           }
                         }
                       } catch (error) {

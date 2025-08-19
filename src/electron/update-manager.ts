@@ -28,6 +28,7 @@
 import { app, BrowserWindow, Tray, shell, ipcMain, dialog } from 'electron';
 import { APP_CONSTANTS } from './utils/constants';
 import { Settings } from './utils/settings';
+import { getUpdateWindow } from './window-manager';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -482,9 +483,25 @@ export class UpdateManager {
    */
   private updateStatus(status: Partial<UpdateStatus>): void {
     this.currentStatus = { ...this.currentStatus, ...status };
+    console.log('UpdateManager: Sending status update:', this.currentStatus);
     
     if (this.mainWindow) {
       this.mainWindow.webContents.send('update-status', this.currentStatus);
+      console.log('UpdateManager: Status sent to main window');
+    } else {
+      console.log('UpdateManager: No main window available to send status');
+    }
+    
+    // Also send to update window if it's open
+    try {
+      const { getUpdateWindow } = require('./window-manager');
+      const updateWindow = getUpdateWindow();
+      if (updateWindow && !updateWindow.isDestroyed()) {
+        updateWindow.webContents.send('update-status', this.currentStatus);
+        console.log('UpdateManager: Status sent to update window');
+      }
+    } catch (error) {
+      console.log('UpdateManager: Could not send status to update window:', error);
     }
   }
 

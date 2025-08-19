@@ -1,5 +1,5 @@
 import { Menu, shell } from 'electron';
-import { getMainWindow, getOverlayWindow, showMainWindow, hideOverlayWindow, createSettingsWindow, createAboutWindow } from './window-manager';
+import { getMainWindow, getOverlayWindow, showMainWindow, hideOverlayWindow, createSettingsWindow, createAboutWindow, createUpdateWindow } from './window-manager';
 import { UpdateManager } from './update-manager';
 import { APP_CONSTANTS } from './utils/constants';
 
@@ -25,8 +25,12 @@ export function createApplicationMenu(): Menu {
           label: 'Check for Updates...',
           click: async () => {
             try {
+              // Always create the update window for manual checks
+              createUpdateWindow();
               await UpdateManager.getInstance().checkForUpdates(false);
             } catch (error: any) {
+              // Create update window to show error
+              createUpdateWindow();
               // Send error status to renderer
               const mainWindow = getMainWindow();
               if (mainWindow) {

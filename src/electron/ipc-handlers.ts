@@ -853,6 +853,34 @@ export function setupIpcHandlers(): void {
     }
   });
 
+  ipcMain.handle('create-update-window', async () => {
+    try {
+      const { createUpdateWindow } = await import('./window-manager');
+      createUpdateWindow();
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
+
+  ipcMain.handle('close-update-window', async () => {
+    try {
+      const { getUpdateWindow } = await import('./window-manager');
+      const updateWindow = getUpdateWindow();
+      if (updateWindow) {
+        updateWindow.close();
+        // Notify main window that update window closed
+        const mainWindow = getMainWindow();
+        if (mainWindow) {
+          mainWindow.webContents.send('update-window-closed');
+        }
+      }
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: String(error) };
+    }
+  });
+
   ipcMain.handle('get-selected-files', async () => {
     try {
       const mainWindow = getMainWindow();
