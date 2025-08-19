@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Monitor, Zap, Save, Cpu } from 'lucide-react';
+import { Settings, Monitor, Zap, Save, Cpu, Download } from 'lucide-react';
 import { 
   Button, 
   Card, 
@@ -37,8 +37,16 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
     maxCpuUsage: 70,
     enablePauseOnOverheat: true
   });
+  const [updateSettings, setUpdateSettings] = useState({
+    autoUpdateEnabled: true
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isCheckingUpdates, setIsCheckingUpdates] = useState(false);
+  const [updateCheckResult, setUpdateCheckResult] = useState<{
+    type: 'success' | 'error' | 'info';
+    message: string;
+  } | null>(null);
   
 
 
@@ -103,6 +111,18 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
             enablePauseOnOverheat: (settings.performanceSettings as any).enablePauseOnOverheat ?? true
           });
         }
+        
+        // Load update settings if available
+        if (window.electronAPI && window.electronAPI.getUpdateSettings) {
+          try {
+            const updateSettingsData = await window.electronAPI.getUpdateSettings();
+            setUpdateSettings({
+              autoUpdateEnabled: updateSettingsData.autoUpdateEnabled ?? true
+            });
+          } catch (error) {
+            console.error('Error loading update settings:', error);
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -117,6 +137,11 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
           ...startupSettings,
           performanceSettings
         });
+        
+        // Save update settings
+        if (window.electronAPI && window.electronAPI.saveUpdateSettings) {
+          await window.electronAPI.saveUpdateSettings(updateSettings);
+        }
         setHasChanges(false);
       }
     } catch (error) {
@@ -152,6 +177,18 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
 
   const handleRecommendedPresetsToggle = (checked: boolean) => {
     handleSettingChange('showRecommendedPresets', checked);
+  };
+
+  const handleUpdateSettingChange = (key: keyof typeof updateSettings, value: any) => {
+    setUpdateSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
+    setHasChanges(true);
+  };
+
+  const handleAutoUpdateToggle = (checked: boolean) => {
+    handleUpdateSettingChange('autoUpdateEnabled', checked);
   };
 
 
@@ -346,6 +383,106 @@ const SettingsWindow: React.FC<SettingsWindowProps> = ({ onClose }) => {
                   checked={startupSettings.showRecommendedPresets}
                   onCheckedChange={handleRecommendedPresetsToggle}
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Update Settings */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm font-medium">
+                <Download className="w-4 h-4" />
+                Update Settings
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Configure how the app handles software updates
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label htmlFor="auto-update-toggle" className="text-sm">Automatic Update Checks</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Automatically check for updates when the app starts
+                  </p>
+                </div>
+                <Switch
+                  id="auto-update-toggle"
+                  checked={updateSettings.autoUpdateEnabled}
+                  onCheckedChange={handleAutoUpdateToggle}
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm">Manual Update Check</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Check for updates now
+                    </p>
+                  </div>
+                  <Button
+                    onClick={async () => {
+                      setIsCheckingUpdates(true);
+                      setUpdateCheckResult(null);
+                      try {
+                        if (window.electronAPI && window.electronAPI.checkForUpdates) {
+                          const result = await window.electronAPI.checkForUpdates();
+                          if (result.success) {
+                            if (result.data) {
+                              setUpdateCheckResult({
+                                type: 'success',
+                                message: `Update available: Version ${result.data.version}`
+                              });
+                            } else {
+                              setUpdateCheckResult({
+                                type: 'info',
+                                message: 'You have the latest version'
+                              });
+                            }
+                          } else {
+                            setUpdateCheckResult({
+                              type: 'error',
+                              message: result.error || 'Failed to check for updates'
+                            });
+                          }
+                        }
+                      } catch (error) {
+                        console.error('Error checking for updates:', error);
+                        setUpdateCheckResult({
+                          type: 'error',
+                          message: 'Failed to check for updates'
+                        });
+                                              } finally {
+                          setIsCheckingUpdates(false);
+                          // Clear the result after 5 seconds
+                          setTimeout(() => {
+                            setUpdateCheckResult(null);
+                          }, 5000);
+                        }
+                    }}
+                    disabled={isCheckingUpdates}
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <Download className={`w-4 h-4 ${isCheckingUpdates ? 'animate-spin' : ''}`} />
+                    {isCheckingUpdates ? 'Checking...' : 'Check Now'}
+                  </Button>
+                </div>
+
+                {/* Update check result */}
+                {updateCheckResult && (
+                  <div className={`p-2 rounded text-xs ${
+                    updateCheckResult.type === 'success' 
+                      ? 'bg-green-500/10 text-green-600 border border-green-500/20' 
+                      : updateCheckResult.type === 'error'
+                      ? 'bg-red-500/10 text-red-600 border border-red-500/20'
+                      : 'bg-blue-500/10 text-blue-600 border border-blue-500/20'
+                  }`}>
+                    {updateCheckResult.message}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

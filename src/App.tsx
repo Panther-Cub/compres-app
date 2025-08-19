@@ -12,7 +12,8 @@ import {
   VideoWorkspace,
   OverwriteConfirmationWindow,
   BatchOverwriteConfirmationWindow,
-  ThermalStatusIndicator
+  ThermalStatusIndicator,
+  UpdateNotification
 } from './components';
 
 function App() {
@@ -21,8 +22,8 @@ function App() {
 
   
   // Update notification state
-  const [, setShowUpdateNotification] = useState(false);
-  const [, setUpdateInfo] = useState<UpdateStatusData | null>(null);
+  const [showUpdateNotification, setShowUpdateNotification] = useState(false);
+  const [updateInfo, setUpdateInfo] = useState<UpdateStatusData | null>(null);
   
   const {
     selectedPresets,
@@ -233,16 +234,27 @@ function App() {
 
       // Update status events
       window.electronAPI.onUpdateStatus((data: any) => {
-        // Handle different update statuses
-        if (data.status === 'available') {
-          setUpdateInfo(data);
-          setShowUpdateNotification(true);
-        } else if (data.status === 'downloaded') {
-          // Update is ready to install
-          setUpdateInfo(data);
+        console.log('Update status received:', data);
+        
+        // Always update the update info
+        setUpdateInfo(data);
+        
+        // Show notification for relevant statuses
+        if (data.status === 'available' || data.status === 'downloaded' || data.status === 'downloading' || data.status === 'checking') {
           setShowUpdateNotification(true);
         } else if (data.status === 'error') {
-          // Handle update errors silently
+          // Show error notification briefly
+          setShowUpdateNotification(true);
+          // Auto-hide error notifications after 5 seconds
+          setTimeout(() => {
+            setShowUpdateNotification(false);
+          }, 5000);
+        } else if (data.status === 'not-available') {
+          // Show "no updates" notification briefly
+          setShowUpdateNotification(true);
+          setTimeout(() => {
+            setShowUpdateNotification(false);
+          }, 3000);
         }
       });
 
@@ -385,6 +397,40 @@ function App() {
   };
 
   // Update notification handlers
+  const handleUpdateDownload = async () => {
+    try {
+      if (window.electronAPI && window.electronAPI.downloadUpdate) {
+        await window.electronAPI.downloadUpdate();
+      }
+    } catch (error) {
+      console.error('Error downloading update:', error);
+    }
+  };
+
+  const handleUpdateInstall = async () => {
+    try {
+      if (window.electronAPI && window.electronAPI.installUpdate) {
+        await window.electronAPI.installUpdate();
+      }
+    } catch (error) {
+      console.error('Error installing update:', error);
+    }
+  };
+
+  const handleCheckForUpdates = async () => {
+    try {
+      if (window.electronAPI && window.electronAPI.checkForUpdates) {
+        await window.electronAPI.checkForUpdates();
+      }
+    } catch (error) {
+      console.error('Error checking for updates:', error);
+    }
+  };
+
+  const handleCloseUpdateNotification = () => {
+    setShowUpdateNotification(false);
+    setUpdateInfo(null);
+  };
 
 
   // Removed handleToggleOverlay since we now use handleShowOverlay
@@ -491,6 +537,7 @@ function App() {
           }
         }}
         onToggleOverlay={handleShowOverlay}
+        onCheckForUpdates={handleCheckForUpdates}
       />
       
       <main className="h-full pt-10 overflow-hidden">
@@ -580,6 +627,16 @@ function App() {
         <ThermalStatusIndicator
           isVisible={isCompressing && thermalStatus !== null}
           thermalStatus={thermalStatus}
+        />
+
+        {/* Update Notification */}
+        <UpdateNotification
+          isVisible={showUpdateNotification}
+          updateInfo={updateInfo}
+          onClose={handleCloseUpdateNotification}
+          onDownload={handleUpdateDownload}
+          onInstall={handleUpdateInstall}
+          onCheckForUpdates={handleCheckForUpdates}
         />
       </main>
 

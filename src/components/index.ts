@@ -18,3 +18,4 @@ export { default as VideoList } from './VideoList';
 export { default as VideoThumbnail } from './VideoThumbnail';
 export { default as VideoWorkspace } from './VideoWorkspace';
 export { ThermalStatusIndicator } from './ThermalStatusIndicator';
+export { default as UpdateNotification } from './UpdateNotification';

@@ -371,12 +371,11 @@ export class UpdateManager {
           downloadedBytes += chunk.length;
           const progress = totalBytes > 0 ? (downloadedBytes / totalBytes) * 100 : 0;
           
+          // Update progress more frequently for better UX
           this.updateStatus({
             status: 'downloading',
             progress: Math.round(progress)
           });
-          
-
         });
         
         response.pipe(file);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Coffee, Star, Minimize2 } from 'lucide-react';
+import { Coffee, Star, Minimize2, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button, Tooltip } from './ui';
 import AppIcon from './AppIcon';
@@ -12,7 +12,8 @@ const AppHeader: React.FC<AppHeaderProps> = ({
   theme, 
   onToggleTheme, 
   onShowDefaults,
-  onToggleOverlay
+  onToggleOverlay,
+  onCheckForUpdates
 }) => {
   return (
     <motion.header 
@@ -69,6 +70,18 @@ const AppHeader: React.FC<AppHeaderProps> = ({
           </Tooltip>
         )}
 
+        {onCheckForUpdates && (
+          <Tooltip id="update-tooltip" content="Check for updates">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onCheckForUpdates}
+              className="non-draggable text-[0.625rem]"
+            >
+              <Download className="w-3 h-3" />
+            </Button>
+          </Tooltip>
+        )}
 
         <Tooltip id="coffee-tooltip" content="Support the developer">
           <Button

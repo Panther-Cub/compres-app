@@ -180,6 +180,7 @@ export interface AppHeaderProps {
   onToggleTheme: () => void;
   onShowDefaults: () => void;
   onToggleOverlay?: () => void;
+  onCheckForUpdates?: () => void;
 }
 
 export interface ProgressOverlayProps {
