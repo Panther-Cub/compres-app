@@ -25,9 +25,26 @@ export function createApplicationMenu(): Menu {
           label: 'Check for Updates...',
           click: async () => {
             try {
-              // Always create the update window for manual checks
-              createUpdateWindow();
-              await UpdateManager.getInstance().checkForUpdates(false);
+              // Check for updates first
+              const result = await UpdateManager.getInstance().checkForUpdates(false);
+              
+              // Get the current status to see if an update is available
+              const status = UpdateManager.getInstance().getStatus();
+              
+              // Only create update window if there's an update available or an error
+              if (status.status === 'available' || status.status === 'error') {
+                createUpdateWindow();
+              } else if (status.status === 'not-available') {
+                // Show a simple notification that no update is available
+                const mainWindow = getMainWindow();
+                if (mainWindow) {
+                  mainWindow.webContents.send('show-notification', {
+                    title: 'No Updates Available',
+                    message: 'You are already running the latest version.',
+                    type: 'info'
+                  });
+                }
+              }
             } catch (error: any) {
               // Create update window to show error
               createUpdateWindow();
